@@ -35,7 +35,7 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
               style={{
                 width: "65%",
                 paddingInlineStart: sessionPad,
-                fontSize: "clamp(1.55rem, 4.2vw, 3rem)",
+                fontSize: "clamp(2.2rem, 6.4vw, 4.6rem)",
                 lineHeight: 1.08,
                 letterSpacing: "-0.035em",
               }}
