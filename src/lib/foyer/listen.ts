@@ -14,3 +14,19 @@ export function panelDecision(path: string): PanelDecision {
   if (clean === "/play/welcome") return "deny";
   return "allow";
 }
+
+/** Keep the tablet's Host. Rewriting to 127.0.0.1 breaks server functions (Origin ≠ Host). */
+export function panelUpstreamHeaders(
+  incoming: Record<string, string | string[] | undefined>,
+  publicHost: string,
+): Record<string, string | string[] | undefined> {
+  const headers: Record<string, string | string[] | undefined> = { ...incoming };
+  delete headers.connection;
+  delete headers["keep-alive"];
+  delete headers["transfer-encoding"];
+  delete headers["proxy-connection"];
+  headers.host = publicHost;
+  headers["x-forwarded-host"] = publicHost;
+  if (!headers["x-forwarded-proto"]) headers["x-forwarded-proto"] = "http";
+  return headers;
+}

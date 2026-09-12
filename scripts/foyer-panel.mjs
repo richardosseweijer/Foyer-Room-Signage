@@ -1,5 +1,5 @@
 import { createServer, request as proxyRequest } from "node:http";
-import { PANEL_PORT, panelDecision } from "../src/lib/foyer/listen.ts";
+import { PANEL_PORT, panelDecision, panelUpstreamHeaders } from "../src/lib/foyer/listen.ts";
 
 const TARGET_PORT = 8080;
 const TARGET_HOST = "127.0.0.1";
@@ -19,7 +19,8 @@ const server = createServer((req, res) => {
     res.end();
     return;
   }
-  const headers = { ...req.headers, host: `${TARGET_HOST}:${TARGET_PORT}` };
+  const publicHost = String(req.headers.host ?? `127.0.0.1:${PANEL_PORT}`);
+  const headers = panelUpstreamHeaders(req.headers, publicHost);
   const up = proxyRequest(
     {
       hostname: TARGET_HOST,
@@ -45,12 +46,13 @@ const server = createServer((req, res) => {
 });
 
 server.on("upgrade", (req, socket, head) => {
+  const publicHost = String(req.headers.host ?? `127.0.0.1:${PANEL_PORT}`);
   const up = proxyRequest({
     hostname: TARGET_HOST,
     port: TARGET_PORT,
     path: req.url,
     method: "GET",
-    headers: req.headers,
+    headers: panelUpstreamHeaders(req.headers, publicHost),
   });
   up.on("upgrade", (upRes, upSocket, upHead) => {
     socket.write("HTTP/1.1 101 Switching Protocols\r\n");

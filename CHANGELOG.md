@@ -9,6 +9,7 @@
 - INSTALL.md: seatd, GPU, fonts, SSH tunnel for Setup, kiosk on `multi-user.target`
 - `undici` declared (calendar source-bind)
 - Welcome/Setup bind `0.0.0.0:8080` for the config laptop
+- Room panel proxy keeps the tablet Host so glass RPCs work on LAN
 
 ## 0.1.0
 
