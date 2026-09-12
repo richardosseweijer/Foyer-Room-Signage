@@ -15,6 +15,22 @@ Wayfinding is **not** installed by this guide.
 
 Default site PIN after first start: `1234`. Open Setup once and set a stronger PIN.
 
+OS packages this guide installs (npm packages come from `npm ci --include=dev` in §3):
+
+| Package | Why |
+| --- | --- |
+| `git` `ca-certificates` `curl` `gnupg` | Clone and Update from GitHub |
+| `build-essential` | Native Node modules during `npm ci` |
+| `nodejs` 22 | Runtime (`--experimental-strip-types` for the panel) |
+| `iproute2` | `ip` / `ss` |
+| `ufw` | Incoming deny; 8082 only on the rack AP |
+| `seatd` `cage` | Welcome compositor (no full desktop) |
+| `chromium` or `chromium-browser` | Welcome kiosk |
+| `fonts-liberation` `fonts-noto-core` | Type if Google Fonts is unreachable |
+| `mesa-vulkan-drivers` `libgl1-mesa-dri` | GPU for cage |
+
+`undici` is an npm dependency (calendar fetch bound to the outbound NIC). Vite stays in **devDependencies**; that is why `--include=dev` is required even in production.
+
 Commands below are run in a terminal as a normal user that can use `sudo`.
 
 ---
@@ -41,10 +57,10 @@ ls /sys/class/drm/*/status 2>/dev/null | while read f; do echo "$(basename "$(di
 ## 1. Base tools
 
 ```bash
-sudo apt-get install -y git build-essential
+sudo apt-get install -y git build-essential iproute2
 ```
 
-`build-essential` is only needed if `npm install` compiles a native module. It is cheap to include.
+`build-essential` is needed if `npm ci` compiles a native module. `iproute2` gives `ip` and `ss`.
 
 ---
 
@@ -126,14 +142,21 @@ You want:
 | Panel `/play/door` | `200` |
 | Panel `/config` | `404` (Setup is not on the room plate) |
 
-On this PC, open Setup: [http://127.0.0.1:8080/config](http://127.0.0.1:8080/config) — PIN `1234`.
+On this PC, Setup is **loopback only**. From a laptop:
+
+```bash
+ssh -L 18080:127.0.0.1:8080 USER@FOYER-PC
+```
+
+Then open [http://127.0.0.1:18080/config](http://127.0.0.1:18080/config) — PIN `1234`.
 
 In **This PC**:
 
 1. **Welcome video output** — pick the HDMI that faces the room (`0 — …`, `1 — …`).
 2. **Outbound NIC** — pick the interface that can reach Google, not the AV LAN and not the rack AP.
+3. **Timezone** — dropdown (e.g. America/Chicago).
 
-Change the site PIN. Save. Stop both test processes with Ctrl+C in each terminal.
+Then **Update from GitHub** is on this same page after Save. Change the site PIN. Save. Stop both test processes with Ctrl+C in each terminal.
 
 If a page never loads, check binds:
 
@@ -259,10 +282,18 @@ Typical causes: the test server from §4 is still running, `WorkingDirectory` is
 Skip this until §4 and §6 answer `200` on welcome. Ubuntu Server has no desktop until you add a seat.
 
 ```bash
-sudo apt-get install -y cage chromium unclutter
+sudo apt-get install -y seatd cage fonts-liberation fonts-noto-core mesa-vulkan-drivers libgl1-mesa-dri
+sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser
+sudo systemctl enable --now seatd
+sudo usermod -aG video,render "$USER"
+sudo loginctl enable-linger "$USER"
 ```
 
-If `chromium` is missing, try `chromium-browser`.
+Log out and back in (or reboot) so the `video` / `render` groups apply. `echo $XDG_RUNTIME_DIR` should print `/run/user/$(id -u)`.
+
+If `chromium` is missing, try `chromium-browser`. `which chromium chromium-browser` — use that path in the unit below. Snap Chromium under cage often needs `--no-sandbox` on this dedicated PC; add it only if `journalctl -u foyer-kiosk` shows namespace errors.
+
+`unclutter` is X11 and does nothing under cage. Skip it.
 
 Disable blanking and sleep:
 
@@ -277,37 +308,39 @@ Cage needs a real HDMI connected **before** start. Plug the welcome display into
 ```bash
 USER_NAME="$(whoami)"
 HOME_DIR="$HOME"
+CHROME="$(command -v chromium || command -v chromium-browser || echo /usr/bin/chromium)"
+echo "kiosk browser: $CHROME"
 sudo tee /etc/systemd/system/foyer-kiosk.service >/dev/null <<EOF
 [Unit]
 Description=Foyer welcome kiosk (local video)
-After=foyer.service
+After=foyer.service seatd.service
 Requires=foyer.service
+Wants=seatd.service
 StartLimitBurst=5
 StartLimitIntervalSec=60
 
 [Service]
 Type=simple
 User=${USER_NAME}
+SupplementaryGroups=video render
 Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=WLR_LIBINPUT_NO_DEVICES=1
 ExecStartPre=/bin/sleep 2
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --check-for-update-interval=31536000 http://127.0.0.1:8080/
+ExecStart=/usr/bin/cage -s -- ${CHROME} --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --check-for-update-interval=31536000 http://127.0.0.1:8080/
 Restart=always
 RestartSec=5
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now foyer-kiosk
 sudo systemctl status foyer-kiosk --no-pager
 ```
 
-If Chromium is `/usr/bin/chromium-browser`, change `ExecStart` to that path (`which chromium chromium-browser`).
+Cursor: cage `-s` is already “no server decorations”.
 
-If the kiosk stays black: the HDMI is on the other connector, GPU drivers are missing, or cage cannot open the seat. `sudo journalctl -u foyer-kiosk -e` is the next step. You can still confirm welcome in a browser at `http://127.0.0.1:8080/` over SSH port-forward as a last resort.
-
-Cursor: cage `-s` is already “no server decorations”. Add `unclutter` only if a pointer still shows.
+If the kiosk stays black: the HDMI is on the other connector, GPU drivers are missing, seatd is down, or the user is not in `video`/`render`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome over SSH: `ssh -L 18080:127.0.0.1:8080 USER@FOYER-PC` then [http://127.0.0.1:18080/](http://127.0.0.1:18080/).
 
 ---
 
@@ -318,7 +351,7 @@ Use a **dedicated AP in the driverack**, not guest Wi-Fi.
 1. SSID e.g. `foyer-<room>`, WPA2, **no WAN / no internet**.
 2. DHCP from the AP. Give this PC a static address on that subnet, e.g. `10.64.0.1`.
 3. Tablet joins the SSID, opens `http://10.64.0.1:8082/play/door`.
-4. If open glass is off, the plate shows a code. Enter it in Setup → Bind room panel.
+4. Leave **Open glass** on for this rack AP (Setup). There is no pairing-code field in Setup; the plate on this SSID is trusted by that switch.
 
 The panel listener **404s** Setup and welcome. That is correct.
 
@@ -388,7 +421,9 @@ Copy both off the disk before a re-image. A failed write keeps last-good (`.good
 4. Unplug outbound NIC: last calendar remains; welcome still paints.
 5. Unplug the AP: welcome still paints.
 6. Site PIN is no longer `1234`.
-7. Open glass is **off** on a real install.
+7. Open glass is **on** only for the rack AP, **off** if that SSID is shared.
+
+Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC is down, Liberation / Noto still paint.
 
 ---
 
@@ -398,3 +433,4 @@ Copy both off the disk before a re-image. A failed write keeps last-good (`.good
 - Relay production is **8081**. Foyer welcome is **8080** loopback. Room plate is **8082**.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.
 - Tests: `npm test` (Foyer cases live under `src/lib/foyer/*.test.ts`).
+- Setup is loopback. Use `ssh -L 18080:127.0.0.1:8080` from a laptop; do not open 8080 on a NIC.

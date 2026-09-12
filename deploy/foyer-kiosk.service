@@ -2,14 +2,16 @@
 # Chromium path: which chromium || which chromium-browser
 [Unit]
 Description=Foyer welcome kiosk (local video)
-After=foyer.service
+After=foyer.service seatd.service
 Requires=foyer.service
+Wants=seatd.service
 StartLimitBurst=5
 StartLimitIntervalSec=60
 
 [Service]
 Type=simple
 User=USER
+SupplementaryGroups=video render
 Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=WLR_LIBINPUT_NO_DEVICES=1
 ExecStartPre=/bin/sleep 2
@@ -18,4 +20,4 @@ Restart=always
 RestartSec=5
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target

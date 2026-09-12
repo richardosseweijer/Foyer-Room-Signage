@@ -6,6 +6,8 @@
 - Setup timezone is a dropdown
 - Setup **Update from GitHub** (worktree build, `data/` left alone)
 - Bind-panel field removed from Setup
+- INSTALL.md: seatd, GPU, fonts, SSH tunnel for Setup, kiosk on `multi-user.target`
+- `undici` declared (calendar source-bind)
 
 ## 0.1.0
 
