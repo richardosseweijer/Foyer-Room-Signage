@@ -70,6 +70,11 @@ export function TechSheet({
   const [logoBand, setLogoBand] = useState(frame.look.logoBand);
   const [roomId, setRoomId] = useState(frame.roomId ?? "");
   const [picks, setPicks] = useState<Record<string, RoomPick>>(() => initialPicks(frame));
+  const [showNow, setShowNow] = useState(frame.look.slots.now);
+  const [countdown, setCountdown] = useState(frame.look.slots.countdown !== false);
+  const [showNext, setShowNext] = useState(frame.look.slots.next);
+  const [showDescription, setShowDescription] = useState(frame.look.slots.message);
+  const [showStatus, setShowStatus] = useState(frame.look.slots.status);
 
   async function unlock() {
     setError("");
@@ -96,7 +101,20 @@ export function TechSheet({
         data: {
           displayId: frame.displayId,
           session: session || undefined,
-          look: { palette, typeScale: scale, logoOn, logoBand },
+          look: {
+            palette,
+            typeScale: scale,
+            logoOn,
+            logoBand,
+            slots: {
+              ...frame.look.slots,
+              now: showNow,
+              countdown,
+              next: showNext,
+              message: showDescription,
+              status: showStatus,
+            },
+          },
           roomId: frame.template === "wayfinding" ? undefined : roomId || null,
           directory: frame.template === "wayfinding" ? directory : undefined,
         },
@@ -230,6 +248,35 @@ export function TechSheet({
                 ))}
               </select>
             </Field>
+            {frame.template === "welcome" ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-medium text-muted">Welcome pane</p>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={showNow} onChange={(e) => setShowNow(e.target.checked)} />
+                  Session name
+                </label>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={countdown} onChange={(e) => setCountdown(e.target.checked)} />
+                  Countdown
+                </label>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={showNext} onChange={(e) => setShowNext(e.target.checked)} />
+                  Next up
+                </label>
+                <label className="flex items-center gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showDescription}
+                    onChange={(e) => setShowDescription(e.target.checked)}
+                  />
+                  Description
+                </label>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={showStatus} onChange={(e) => setShowStatus(e.target.checked)} />
+                  Open / closed
+                </label>
+              </div>
+            ) : null}
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" checked={logoOn} onChange={(e) => setLogoOn(e.target.checked)} />
               Logo band

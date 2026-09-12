@@ -28,10 +28,11 @@ test("arrow is ignored on door and kept on wayfinding", () => {
   assert.equal(arrowForTemplate("wayfinding", "right"), "right");
 });
 
-test("normalizeLook fills defaults without inventing hex", () => {
+test("normalizeLook fills countdown and keeps named palette", () => {
   const look = normalizeLook({ palette: "ink", arrow: "left" });
   assert.equal(look.palette, "ink");
   assert.equal(look.arrow, "left");
   assert.equal(look.typeScale, defaultLook().typeScale);
   assert.equal(look.logoBand, 14);
+  assert.equal(look.slots.countdown, true);
 });

@@ -72,6 +72,16 @@ test("secrets schema is not a frame", () => {
   assert.equal(parseFrame(secrets).success, false);
 });
 
+test("looks without countdown still parse", () => {
+  const site = sampleSite();
+  const raw = JSON.parse(JSON.stringify(site)) as Site;
+  const slots = raw.looks.d1?.slots as { countdown?: boolean };
+  delete slots.countdown;
+  const parsed = parseSite(raw);
+  assert.equal(parsed.success, true);
+  if (parsed.success) assert.equal(parsed.data.looks.d1?.slots.countdown, true);
+});
+
 test("looks without arrow still parse", () => {
   const site = sampleSite();
   const look = { ...site.looks.d1! };

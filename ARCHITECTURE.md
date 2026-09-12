@@ -45,7 +45,7 @@ There is **no** `src/lib/foyer/index.ts` barrel. Import the module you mean.
 A plate may hold only:
 
 - `v`, `seq`, `displayId`, `roomId`, `template`
-- `look` (palette **name**, arrow, typeScale, logo flags, slots)
+- `look` (palette **name**, arrow, typeScale, logo flags, slots including countdown)
 - `identity` (siteName, roomName, floorLabel, logoUrl or null)
 - `status`, `clock`, `now`, `next`, `directory` (empty on this appliance), `message`
 - `pairing` (bound, or unbound + code)

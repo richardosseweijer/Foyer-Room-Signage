@@ -29,6 +29,7 @@ export function defaultLook(): Look {
       status: true,
       message: true,
       directory: true,
+      countdown: true,
     },
     youAreHereDeg: 0,
   };
@@ -94,6 +95,7 @@ export function normalizeLook(input: Partial<Look> | null | undefined, previous?
       status: next.slots?.status ?? base.slots.status,
       message: next.slots?.message ?? base.slots.message,
       directory: next.slots?.directory ?? base.slots.directory,
+      countdown: next.slots?.countdown ?? base.slots.countdown,
     },
     youAreHereDeg: parseYouAreHere(next.youAreHereDeg ?? base.youAreHereDeg),
   };

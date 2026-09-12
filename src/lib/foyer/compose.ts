@@ -1,4 +1,4 @@
-import { arrowForTemplate, youAreHereForTemplate } from "./look.ts";
+import { arrowForTemplate, normalizeLook, youAreHereForTemplate } from "./look.ts";
 import { sanitizeMeeting, sanitizeMessage, sanitizeTitle } from "./sanitize.ts";
 import { displayBindings, getFloorLabel, getRoom, lookForDisplay, roomCatalog } from "./site.ts";
 import type {
@@ -150,7 +150,7 @@ function paneFor(
 export function composeFrame(input: ComposeInput): Frame {
   const { site, display, calendar, now } = input;
   const bindings = displayBindings(display);
-  const rawLook = input.look ?? lookForDisplay(site, display.id);
+  const rawLook = normalizeLook(input.look ?? lookForDisplay(site, display.id));
   const look: Look = {
     ...rawLook,
     arrow: arrowForTemplate(display.template, rawLook.arrow),

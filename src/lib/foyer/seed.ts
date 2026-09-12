@@ -65,7 +65,16 @@ export function migrateToRoomAppliance(site: Site): Site {
     demoRev: ROOM_APPLIANCE_REV,
     displays: roomDisplays(site.rooms),
     looks: {
-      welcome: site.looks.welcome ?? site.looks["cedar-welcome"] ?? look({ palette: "linen" }),
+      welcome: site.looks.welcome ?? site.looks["cedar-welcome"] ?? look({
+        palette: "linen",
+        slots: {
+          ...defaultLook().slots,
+          next: false,
+          status: false,
+          message: false,
+          countdown: true,
+        },
+      }),
       door: site.looks.door ?? site.looks["cedar-door"] ?? look({ palette: "linen" }),
     },
     outboundNicIndex: site.outboundNicIndex ?? null,

@@ -52,6 +52,7 @@ export const LookSlotsSchema = z.strictObject({
   status: z.boolean(),
   message: z.boolean(),
   directory: z.boolean(),
+  countdown: z.boolean().default(true),
 });
 
 export const LookSchema = z.strictObject({
