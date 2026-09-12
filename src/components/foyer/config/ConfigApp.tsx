@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSetup, saveSetup, unlockSite, updateFromGithub } from "@/lib/foyer/setup";
+import { enableWelcomeOutput, getSetup, saveSetup, unlockSite, updateFromGithub } from "@/lib/foyer/setup";
 import { timezoneOptions } from "@/lib/foyer/site";
 import type { Site } from "@/lib/foyer/types";
 
@@ -29,6 +29,7 @@ export function ConfigApp() {
   const [gitClone, setGitClone] = useState(false);
   const [gitDirty, setGitDirty] = useState(false);
   const [updateNote, setUpdateNote] = useState("");
+  const [kioskNote, setKioskNote] = useState("");
   const [icsHost, setIcsHost] = useState("");
   const [ingestNote, setIngestNote] = useState("");
   const [ingestNic, setIngestNic] = useState("");
@@ -148,6 +149,25 @@ export function ConfigApp() {
     }
   }
 
+  async function runKiosk() {
+    setKioskNote("");
+    setError("");
+    try {
+      const result = await enableWelcomeOutput({ data: { session } });
+      if (!result.ok) {
+        setKioskNote(
+          result.reason === "auth"
+            ? "Session expired."
+            : "Could not start the HDMI kiosk. Install the foyer-kiosk unit and allow passwordless systemctl restart (INSTALL.md).",
+        );
+        return;
+      }
+      setKioskNote("Local output starting. The welcome wall should come up on the HDMI picked above.");
+    } catch {
+      setKioskNote("Could not reach Foyer.");
+    }
+  }
+
   useEffect(() => {
     if (!saved) return;
     const t = window.setTimeout(() => setSaved(false), 1800);
@@ -199,14 +219,16 @@ export function ConfigApp() {
           <h1 className="text-4xl font-semibold tracking-tight">This room</h1>
           {mustChange ? <p>Change the site PIN before you leave this page.</p> : null}
         </div>
-        <a
-          href="/"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex h-11 items-center justify-center rounded-lg bg-fg px-4 text-sm font-medium text-bg"
-        >
-          Open welcome
-        </a>
+        <div className="flex flex-col items-stretch gap-2 sm:items-end">
+          <button
+            type="button"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-fg px-4 text-sm font-medium text-bg"
+            onClick={() => void runKiosk()}
+          >
+            Enable local output
+          </button>
+          {kioskNote ? <p className="max-w-xs text-right text-sm text-muted">{kioskNote}</p> : null}
+        </div>
       </header>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">

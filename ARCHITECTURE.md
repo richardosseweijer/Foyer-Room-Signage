@@ -30,6 +30,7 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs | compose, calendar, listen |
 | **listen** | `src/lib/foyer/listen.ts` | Welcome host/port, panel port, path allowlist | compose, calendar, secrets |
 | **update** | `src/lib/foyer/update.ts` | Git identity, spawn updater | compose, calendar, secrets, PINs |
+| **kiosk** | `src/lib/foyer/kiosk.ts` | Restart `foyer-kiosk.service` | compose, calendar, secrets |
 
 UI:
 

@@ -1,0 +1,3 @@
+# Copy to /etc/sudoers.d/foyer-kiosk (visudo -c -f first).
+# Replace USER with the Foyer service account.
+USER ALL=(root) NOPASSWD: /usr/bin/systemctl start foyer-kiosk.service, /usr/bin/systemctl restart foyer-kiosk.service, /usr/bin/systemctl stop foyer-kiosk.service

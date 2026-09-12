@@ -18,6 +18,7 @@ export const FOYER_MODULES = [
   { id: "video", path: "src/lib/foyer/video.ts" },
   { id: "listen", path: "src/lib/foyer/listen.ts" },
   { id: "update", path: "src/lib/foyer/update.ts" },
+  { id: "kiosk", path: "src/lib/foyer/kiosk.ts" },
 ] as const;
 
 export const TEMPLATES = ["door", "welcome", "wayfinding", "split", "message"] as const;

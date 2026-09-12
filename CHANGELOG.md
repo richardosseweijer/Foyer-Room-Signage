@@ -13,7 +13,7 @@
 - Update from GitHub finds the git checkout from cwd (not the bundled chunk path)
 - Kiosk uses the named HDMI via `wlr-randr` (`data/foyer-kiosk.env`)
 - Calendar fetch sends a User-Agent; Setup shows host + last pull
-- ICS URL stays secret but Setup keeps a hostname hint after refresh
+- Setup **Enable local output** restarts the HDMI kiosk unit
 
 ## 0.1.0
 

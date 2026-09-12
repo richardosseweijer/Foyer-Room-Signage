@@ -31,6 +31,7 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 | Logos | jpeg/png/webp, size cap. No SVG. |
 | Logs | No PIN, no ICS, no token in log lines. `data/foyer-update.log` is git SHAs and npm only. |
 | Update | Setup session required. Dirty source refuses. `data/` is not in the worktree swap. |
+| Kiosk | Setup session. Restarts a **fixed** unit name (`foyer-kiosk.service`) only. |
 | Defaults | Deny. Open glass is an explicit switch, off in production. |
 
 ## PINs

@@ -343,6 +343,17 @@ sudo systemctl status foyer-kiosk --no-pager
 
 After Setup → Save (video output), run `sudo systemctl restart foyer-kiosk` so cage moves to that HDMI.
 
+Setup → **Enable local output** does that restart from the config laptop. The Foyer user needs passwordless systemctl:
+
+```bash
+USER_NAME="$(whoami)"
+sudo tee /etc/sudoers.d/foyer-kiosk >/dev/null <<EOF
+${USER_NAME} ALL=(root) NOPASSWD: /usr/bin/systemctl start foyer-kiosk.service, /usr/bin/systemctl restart foyer-kiosk.service, /usr/bin/systemctl stop foyer-kiosk.service
+EOF
+sudo chmod 440 /etc/sudoers.d/foyer-kiosk
+sudo visudo -c
+```
+
 Cursor: cage `-s` is already “no server decorations”.
 
 If the kiosk stays black: the HDMI is on the other connector, GPU drivers are missing, seatd is down, or the user is not in `video`/`render`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome from the config laptop at `http://FOYER-IP:8080/`.

@@ -178,3 +178,14 @@ export const updateFromGithub = createServerFn({ method: "POST" })
     const { startGithubUpdate } = await import("./update.ts");
     return startGithubUpdate();
   });
+
+export const enableWelcomeOutput = createServerFn({ method: "POST" })
+  .validator(z.object({ session: z.string() }))
+  .handler(async ({ data }) => {
+    const { readSession } = await import("./sessions.server.ts");
+    if (!readSession(data.session, "site")) return { ok: false as const, reason: "auth" as const };
+    const { persistNow } = await import("./store.server.ts");
+    await persistNow();
+    const { enableLocalOutput } = await import("./kiosk.ts");
+    return enableLocalOutput();
+  });
