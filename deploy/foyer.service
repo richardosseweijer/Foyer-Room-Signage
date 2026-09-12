@@ -1,0 +1,22 @@
+# Copy to /etc/systemd/system/foyer.service after replacing USER and HOME.
+# See INSTALL.md §6a for a one-paste that fills those in.
+[Unit]
+Description=Foyer welcome (local video)
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+User=USER
+WorkingDirectory=/home/USER/Foyer-Room-Signage
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+Foyer room signage
+Copyright (c) 2026 Foyer contributors
+
+Companion to Relay: https://github.com/richardosseweijer/Relay-AV-Room-Control-
+
+Third-party software used by this build (not exhaustive; see package-lock.json):
+
+  React, React DOM                          MIT
+  TanStack Router / Start                   MIT
+  Radix UI primitives                       MIT
+  Tailwind CSS                              MIT
+  Zod                                       MIT
+  PGLite / Electric SQL                     Apache-2.0
+  Kysely                                    MIT
+  better-auth                               MIT
+  jose                                      MIT
+  undici                                    MIT
+
+This software is meant to stay on a private room PC. Configuration,
+tokens and calendar URLs are stored on the host that runs it.
+Wayfinding is a separate product and is not this repository.

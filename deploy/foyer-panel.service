@@ -1,0 +1,18 @@
+[Unit]
+Description=Foyer room panel
+After=foyer.service
+Requires=foyer.service
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+User=USER
+WorkingDirectory=/home/USER/Foyer-Room-Signage
+Environment=PATH=/usr/bin:/usr/local/bin
+ExecStart=/usr/bin/npm run start:panel
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

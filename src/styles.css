@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #f4efe6;
+  --color-surface: #ebe4d6;
+  --color-fg: #1c1b19;
+  --color-muted: #5c5850;
+  --color-border: color-mix(in oklab, var(--color-fg) 12%, transparent);
+  --color-accent: #5f7a63;
+  --font-sans: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --radius-xl: 1rem;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Player palettes — names are Look; hex lives here, never on a Frame. */
+.sign-root {
+  --sign-bg: #f4efe6;
+  --sign-fg: #1c1b19;
+  --sign-muted: #5c5850;
+  --sign-line: color-mix(in oklab, var(--sign-fg) 14%, transparent);
+  --sign-accent: #5f7a63;
+  --sign-available: #5f7a63;
+  --sign-session: #1c1b19;
+  --sign-soon: #9a7040;
+  --sign-closed: #8a6d5d;
+  --sign-busy: #6e655c;
+  background: var(--sign-bg);
+  color: var(--sign-fg);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  letter-spacing: -0.011em;
+}
+
+.sign-root[data-palette="linen"] {
+  --sign-bg: #f4efe6;
+  --sign-fg: #1c1b19;
+  --sign-muted: #5c5850;
+  --sign-accent: #5f7a63;
+  --sign-available: #5f7a63;
+  --sign-session: #1c1b19;
+  --sign-soon: #9a7040;
+  --sign-closed: #8a6d5d;
+}
+
+.sign-root[data-palette="orchard"] {
+  --sign-bg: #f3ead6;
+  --sign-fg: #2a241c;
+  --sign-muted: #6a5e4e;
+  --sign-accent: #3f5c45;
+  --sign-available: #3f5c45;
+  --sign-session: #2a241c;
+  --sign-soon: #8d6230;
+  --sign-closed: #7a5a4a;
+}
+
+.sign-root[data-palette="ink"] {
+  --sign-bg: #141311;
+  --sign-fg: #ece8df;
+  --sign-muted: #a39b8e;
+  --sign-accent: #8fa394;
+  --sign-available: #8fa394;
+  --sign-session: #ece8df;
+  --sign-soon: #c4a06a;
+  --sign-closed: #b08978;
+}
+
+.sign-root[data-palette="contrast"] {
+  --sign-bg: #ffffff;
+  --sign-fg: #111111;
+  --sign-muted: #333333;
+  --sign-accent: #111111;
+  --sign-available: #0b5c32;
+  --sign-session: #111111;
+  --sign-soon: #7a4d00;
+  --sign-closed: #5c1f1f;
+}
+
+.sign-root[data-scale="large"] {
+  --sign-name: clamp(2.8rem, 8.5vw, 5.8rem);
+  --sign-meta: clamp(1.05rem, 2.3vw, 1.4rem);
+}
+
+.sign-root[data-scale="comfort"] {
+  --sign-name: clamp(2.3rem, 6.8vw, 4.6rem);
+  --sign-meta: clamp(1rem, 2vw, 1.25rem);
+}
+
+.sign-root:fullscreen,
+.sign-root:-webkit-full-screen,
+.plate-root:fullscreen,
+.plate-root:-webkit-full-screen {
+  min-height: 100%;
+  height: 100%;
+  width: 100%;
+  background: var(--sign-bg, #f4efe6);
+}

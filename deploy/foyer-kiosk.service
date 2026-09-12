@@ -1,0 +1,21 @@
+# HDMI must be connected before this unit starts.
+# Chromium path: which chromium || which chromium-browser
+[Unit]
+Description=Foyer welcome kiosk (local video)
+After=foyer.service
+Requires=foyer.service
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+User=USER
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+Environment=WLR_LIBINPUT_NO_DEVICES=1
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --check-for-update-interval=31536000 http://127.0.0.1:8080/
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

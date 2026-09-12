@@ -1,0 +1,292 @@
+import { sanitizeMeeting, sanitizeTitle, sanitizeDescription } from "./sanitize.ts";
+import { findRoomByName } from "./site.ts";
+import type { CalendarSnapshot, Meeting, Room, Site } from "./types.ts";
+
+const ICS_MAX_BYTES = 512_000;
+const ICS_TIMEOUT_MS = 8_000;
+
+export type ParsedEvent = {
+  title: string;
+  host: string;
+  description: string;
+  startIso: string;
+  endIso: string;
+  busy: boolean;
+  tokens: string[];
+};
+
+export function emptyCalendarSnapshot(now = new Date()): CalendarSnapshot {
+  return { atIso: now.toISOString(), rooms: {} };
+}
+
+function unfoldIcs(raw: string) {
+  return raw.replace(/\r\n/g, "\n").replace(/\n[ \t]/g, "");
+}
+
+function unescapeIcs(value: string) {
+  return value
+    .replace(/\\n/gi, "\n")
+    .replace(/\\,/g, ",")
+    .replace(/\\;/g, ";")
+    .replace(/\\\\/g, "\\");
+}
+
+function icsDateToIso(value: string, tz?: string) {
+  const compact = value.trim();
+  if (/^\d{8}$/.test(compact)) {
+    return `${compact.slice(0, 4)}-${compact.slice(4, 6)}-${compact.slice(6, 8)}T00:00:00Z`;
+  }
+  const match = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?$/.exec(compact);
+  if (!match) return "";
+  const stamp = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`;
+  if (match[7] === "Z" || !tz) return `${stamp}Z`;
+  try {
+    const asUtc = new Date(`${stamp}Z`);
+    const shown = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }).formatToParts(asUtc);
+    const grab = (type: string) => Number(shown.find((part) => part.type === type)?.value);
+    const fake = Date.UTC(grab("year"), grab("month") - 1, grab("day"), grab("hour"), grab("minute"), grab("second"));
+    const offset = fake - asUtc.getTime();
+    return new Date(asUtc.getTime() - offset).toISOString();
+  } catch {
+    return `${stamp}Z`;
+  }
+}
+
+function extractTokens(text: string) {
+  const tokens: string[] = [];
+  const re = /\{([^}]+)\}/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text))) {
+    const name = match[1].trim();
+    if (name) tokens.push(name);
+  }
+  return tokens;
+}
+
+function stripTokens(text: string) {
+  return text.replace(/\{[^}]+\}/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export function parseIcsEvents(ics: string): ParsedEvent[] {
+  const body = unfoldIcs(ics);
+  const blocks = body.split(/BEGIN:VEVENT/i).slice(1);
+  const events: ParsedEvent[] = [];
+  for (const block of blocks) {
+    const inner = block.split(/END:VEVENT/i)[0] ?? "";
+    const fields: Record<string, string> = {};
+    const params: Record<string, string> = {};
+    for (const line of inner.split("\n")) {
+      const cut = line.indexOf(":");
+      if (cut < 1) continue;
+      const left = line.slice(0, cut);
+      const value = unescapeIcs(line.slice(cut + 1).trim());
+      const name = left.split(";")[0].toUpperCase();
+      fields[name] = value;
+      const tzid = /TZID=([^;:]+)/i.exec(left);
+      if (tzid) params[`${name}_TZ`] = tzid[1];
+    }
+    const startIso = icsDateToIso(fields.DTSTART ?? "", params.DTSTART_TZ);
+    let endIso = icsDateToIso(fields.DTEND ?? "", params.DTEND_TZ);
+    if (startIso && !endIso) {
+      const start = Date.parse(startIso);
+      endIso = Number.isFinite(start) ? new Date(start + 60 * 60 * 1000).toISOString() : startIso;
+    }
+    if (!startIso || !endIso) continue;
+    const title = fields.SUMMARY ?? "";
+    const description = fields.DESCRIPTION ?? "";
+    const host = /CN=([^:;]+)/i.exec(fields.ORGANIZER ?? "")?.[1] ?? "";
+    const klass = (fields.CLASS ?? "").toUpperCase();
+    const busy = klass === "PRIVATE" || klass === "CONFIDENTIAL";
+    const tokens = [...extractTokens(title), ...extractTokens(description)];
+    events.push({ title, host, description, startIso, endIso, busy, tokens });
+  }
+  return events;
+}
+
+function toMeeting(event: ParsedEvent, busy: boolean): Meeting {
+  const title = stripTokens(event.title);
+  return {
+    title: sanitizeTitle(title, { busy, fallback: "Meeting" }),
+    host: event.host,
+    description: sanitizeDescription(stripTokens(event.description), { busy }),
+    startIso: event.startIso,
+    endIso: event.endIso,
+  };
+}
+
+function roomIdsForEvent(event: ParsedEvent, site: Site, feedId: string) {
+  const ids = new Set<string>();
+  for (const token of event.tokens) {
+    const room = findRoomByName(site, token);
+    if (room) ids.add(room.id);
+  }
+  if (ids.size) return ids;
+  if (site.rooms.length === 1 && site.rooms[0]) {
+    ids.add(site.rooms[0].id);
+    return ids;
+  }
+  if (site.sharedCalendarId === feedId) return ids;
+  for (const room of site.rooms) {
+    if (room.calendarId === feedId) ids.add(room.id);
+  }
+  return ids;
+}
+
+export function snapshotFromEvents(opts: {
+  site: Site;
+  eventsByFeed: Record<string, ParsedEvent[]>;
+  now: Date;
+}): CalendarSnapshot {
+  const buckets: Record<string, ParsedEvent[]> = {};
+  for (const room of opts.site.rooms) buckets[room.id] = [];
+  for (const [feedId, events] of Object.entries(opts.eventsByFeed)) {
+    for (const event of events) {
+      for (const roomId of roomIdsForEvent(event, opts.site, feedId)) {
+        (buckets[roomId] ??= []).push(event);
+      }
+    }
+  }
+  const rooms: CalendarSnapshot["rooms"] = {};
+  const nowMs = opts.now.getTime();
+  for (const [roomId, events] of Object.entries(buckets)) {
+    const sorted = events
+      .slice()
+      .sort((a, b) => Date.parse(a.startIso) - Date.parse(b.startIso));
+    const covering = sorted.filter((event) => {
+      const start = Date.parse(event.startIso);
+      const end = Date.parse(event.endIso);
+      return start <= nowMs && nowMs < end;
+    });
+    const current = covering[covering.length - 1];
+    const upcoming = sorted.find((event) => Date.parse(event.startIso) > nowMs);
+    rooms[roomId] = {
+      now: current ? toMeeting(current, current.busy) : null,
+      next: upcoming ? toMeeting(upcoming, upcoming.busy) : null,
+      busy: Boolean(current?.busy),
+    };
+  }
+  return { atIso: opts.now.toISOString(), rooms };
+}
+
+export function fixtureEvents(now: Date): ParsedEvent[] {
+  const startNow = new Date(now.getTime() - 20 * 60_000);
+  const endNow = new Date(now.getTime() + 40 * 60_000);
+  const nextStart = new Date(now.getTime() + 2 * 60 * 60_000);
+  const nextEnd = new Date(now.getTime() + 3 * 60 * 60_000);
+  const mapleStart = new Date(now.getTime() + 15 * 60_000);
+  const mapleEnd = new Date(now.getTime() + 75 * 60_000);
+  return [
+    {
+      title: "{Cedar} Design review",
+      host: "Ada",
+      description: "{Cedar} Walk through the north wall finishes and AV plate.",
+      startIso: startNow.toISOString(),
+      endIso: endNow.toISOString(),
+      busy: false,
+      tokens: ["Cedar"],
+    },
+    {
+      title: "{Cedar} Board lunch",
+      host: "",
+      description: "Private dining. Allergens on the sideboard.",
+      startIso: nextStart.toISOString(),
+      endIso: nextEnd.toISOString(),
+      busy: false,
+      tokens: ["Cedar"],
+    },
+    {
+      title: "{Maple} Client workshop",
+      host: "Jo",
+      description: "{Maple} Whiteboard is live. Tea at the back.",
+      startIso: mapleStart.toISOString(),
+      endIso: mapleEnd.toISOString(),
+      busy: false,
+      tokens: ["Maple"],
+    },
+  ];
+}
+
+export async function fetchIcs(url: string, localAddress?: string | null): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ICS_TIMEOUT_MS);
+  try {
+    const res = await boundFetch(url, controller.signal, localAddress);
+    if (!res.ok) throw new Error(`ics ${res.status}`);
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > ICS_MAX_BYTES) throw new Error("ics too large");
+    return new TextDecoder("utf8").decode(buf);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function boundFetch(url: string, signal: AbortSignal, localAddress?: string | null) {
+  if (!localAddress) return fetch(url, { signal, redirect: "follow" });
+  const { Agent, fetch: undiciFetch } = await import("undici");
+  return undiciFetch(url, {
+    signal,
+    redirect: "follow",
+    dispatcher: new Agent({ connect: { localAddress } }),
+  });
+}
+
+export async function buildCalendarSnapshot(opts: {
+  site: Site;
+  icsUrls: Record<string, string>;
+  now?: Date;
+  lastGood?: CalendarSnapshot | null;
+  localAddress?: string | null;
+  requireBind?: boolean;
+}): Promise<CalendarSnapshot> {
+  const now = opts.now ?? new Date();
+  if (opts.requireBind && !opts.localAddress) {
+    return opts.lastGood ?? emptyCalendarSnapshot(now);
+  }
+  const eventsByFeed: Record<string, ParsedEvent[]> = {};
+  let usedNetwork = false;
+  let failed = false;
+  for (const feed of opts.site.calendars) {
+    const url = opts.icsUrls[feed.id]?.trim();
+    if (!url) continue;
+    usedNetwork = true;
+    try {
+      const ics = await fetchIcs(url, opts.localAddress);
+      eventsByFeed[feed.id] = parseIcsEvents(ics);
+    } catch {
+      failed = true;
+    }
+  }
+  if (!usedNetwork) {
+    const shared = opts.site.sharedCalendarId ?? "shared";
+    eventsByFeed[shared] = fixtureEvents(now);
+  } else if (failed && opts.lastGood) {
+    return opts.lastGood;
+  } else if (failed && !Object.keys(eventsByFeed).length && opts.lastGood) {
+    return opts.lastGood;
+  }
+  return snapshotFromEvents({ site: opts.site, eventsByFeed, now });
+}
+
+export function sanitizeSnapshot(snapshot: CalendarSnapshot): CalendarSnapshot {
+  const rooms: CalendarSnapshot["rooms"] = {};
+  for (const [id, row] of Object.entries(snapshot.rooms)) {
+    const busy = Boolean(row.busy);
+    rooms[id] = {
+      now: sanitizeMeeting(row.now, { busy, emptyTitleFallback: "Meeting" }),
+      next: sanitizeMeeting(row.next, { busy, emptyTitleFallback: "Meeting" }),
+      busy,
+    };
+  }
+  return { atIso: snapshot.atIso, rooms };
+}
+
+export type { Room };
