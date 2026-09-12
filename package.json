@@ -1,7 +1,7 @@
 {
   "name": "foyer",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "sideEffects": false,
   "type": "module",
   "overrides": {
@@ -11,6 +11,7 @@
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
     "start": "node scripts/with-app-env.mjs vite preview --host 127.0.0.1 --port 8080",
     "start:panel": "node --experimental-strip-types scripts/foyer-panel.mjs",
+    "update": "node scripts/update-foyer.mjs",
     "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
     "db:migrate": "node scripts/migrate.mjs",
     "build:dev": "node scripts/with-app-env.mjs vite build --mode development",
@@ -19,7 +20,7 @@
     "preview:stop": "node scripts/preview.mjs stop",
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/foyer/sanitize.test.ts src/lib/foyer/frame-schema.test.ts src/lib/foyer/compose.test.ts src/lib/foyer/boundary.test.ts src/lib/foyer/pins.test.ts src/lib/foyer/persist.test.ts src/lib/foyer/look.test.ts src/lib/foyer/pair.test.ts src/lib/foyer/calendar.test.ts src/lib/foyer/relay.test.ts src/lib/foyer/listen.test.ts src/lib/foyer/net.test.ts src/lib/foyer/video.test.ts src/lib/foyer/site.test.ts",
+    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/foyer/sanitize.test.ts src/lib/foyer/frame-schema.test.ts src/lib/foyer/compose.test.ts src/lib/foyer/boundary.test.ts src/lib/foyer/pins.test.ts src/lib/foyer/persist.test.ts src/lib/foyer/look.test.ts src/lib/foyer/pair.test.ts src/lib/foyer/calendar.test.ts src/lib/foyer/relay.test.ts src/lib/foyer/listen.test.ts src/lib/foyer/net.test.ts src/lib/foyer/video.test.ts src/lib/foyer/site.test.ts src/lib/foyer/update.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

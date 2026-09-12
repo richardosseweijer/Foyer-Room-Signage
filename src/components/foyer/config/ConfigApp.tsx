@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSetup, saveSetup, unlockSite } from "@/lib/foyer/setup";
+import { getSetup, saveSetup, unlockSite, updateFromGithub } from "@/lib/foyer/setup";
 import { timezoneOptions } from "@/lib/foyer/site";
 import type { Site } from "@/lib/foyer/types";
 
@@ -24,6 +24,11 @@ export function ConfigApp() {
   const [saved, setSaved] = useState(false);
   const [nics, setNics] = useState<NicRow[]>([]);
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
+  const [version, setVersion] = useState("");
+  const [gitSha, setGitSha] = useState("");
+  const [gitClone, setGitClone] = useState(false);
+  const [gitDirty, setGitDirty] = useState(false);
+  const [updateNote, setUpdateNote] = useState("");
 
   async function load(nextSession: string) {
     const result = await getSetup({ data: { session: nextSession } });
@@ -38,6 +43,10 @@ export function ConfigApp() {
     setMustChange(result.mustChange);
     setNics(result.nics);
     setOutputs(result.outputs);
+    setVersion(result.version);
+    setGitSha(result.git.sha);
+    setGitClone(result.git.clone);
+    setGitDirty(result.git.dirty);
   }
 
   async function unlock() {
@@ -102,6 +111,30 @@ export function ConfigApp() {
       await load(session);
     } catch {
       setError("Could not reach Foyer.");
+    }
+  }
+
+  async function runUpdate() {
+    setUpdateNote("");
+    setError("");
+    if (!window.confirm("Update Foyer from GitHub?\n\nSave first. The room will go dark for about a minute. Site data stays on disk.")) {
+      return;
+    }
+    try {
+      const result = await updateFromGithub({ data: { session } });
+      if (!result.ok) {
+        setUpdateNote(
+          result.reason === "not-git"
+            ? "This copy is not a git clone. Install from GitHub."
+            : result.reason === "dirty"
+              ? "Uncommitted source edits. Commit or discard them first."
+              : "Could not start the updater.",
+        );
+        return;
+      }
+      setUpdateNote("Updating from GitHub. The page will drop; wait, then unlock Setup again.");
+    } catch {
+      setUpdateNote("Could not reach Foyer.");
     }
   }
 
@@ -313,6 +346,27 @@ export function ConfigApp() {
         <h2 className="text-xl font-semibold tracking-tight">PINs</h2>
         <input className={inputClass} value={sitePin} onChange={(e) => setSitePin(e.target.value)} placeholder="New site PIN" />
         <input className={inputClass} value={techPin} onChange={(e) => setTechPin(e.target.value)} placeholder="Technician PIN" />
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
+        <h2 className="text-xl font-semibold tracking-tight">Update</h2>
+        <p className="font-mono text-sm">
+          {version || "—"}
+          {gitSha ? ` (${gitSha})` : ""}
+        </p>
+        <p className="text-sm text-muted">
+          Fetches <code className="text-fg">origin/main</code>, builds in a side tree, then switches.{" "}
+          <code className="text-fg">data/</code> is left alone.
+          {!gitClone ? " This copy is not a git clone." : gitDirty ? " Source has uncommitted edits." : ""}
+        </p>
+        <button
+          type="button"
+          className="h-11 rounded-lg border border-border font-medium"
+          onClick={() => void runUpdate()}
+        >
+          Update from GitHub
+        </button>
+        {updateNote ? <p className="text-sm text-muted">{updateNote}</p> : null}
       </section>
 
       {error ? <p>{error}</p> : null}

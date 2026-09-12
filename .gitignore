@@ -16,6 +16,7 @@ data/*.transaction.bad
 data/*.bad
 data/*.tmp
 data/logos/
+data/foyer-update.log
 screenshots/*.png
 screenshots/*.json
 .project_id

@@ -25,7 +25,7 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
         className="font-semibold"
         style={{ fontSize: "clamp(2rem, 5.6vw, 3.6rem)", lineHeight: 0.95, letterSpacing: "-0.045em" }}
       >
-        Welcome
+        {frame.identity.roomName || frame.identity.siteName}
       </h1>
       {headline || nextUp ? (
         <div className="mt-4 flex w-full flex-col gap-2">
@@ -87,19 +87,7 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
             </div>
           ) : null}
         </div>
-      ) : (
-        <p
-          className="mt-4 font-medium"
-          style={{
-            width: "65%",
-            color: "var(--sign-muted)",
-            fontSize: "clamp(1.2rem, 2.6vw, 1.8rem)",
-            paddingInlineStart: sessionPad,
-          }}
-        >
-          {frame.identity.roomName}
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }

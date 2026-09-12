@@ -29,6 +29,7 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, outbound bind | compose, PINs, calendar parse |
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs | compose, calendar, listen |
 | **listen** | `src/lib/foyer/listen.ts` | Welcome port, panel port, path allowlist | compose, calendar, secrets |
+| **update** | `src/lib/foyer/update.ts` | Git identity, spawn updater | compose, calendar, secrets, PINs |
 
 UI:
 
@@ -63,6 +64,8 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 | Outbound NIC | no Foyer socket | Calendar fetch source address, selected in Setup as an **indexed** dropdown |
 
 Welcome is always bound. The room panel pairs. Setup is `/config` on the welcome listener.
+
+Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktree, then switches the live checkout. `data/` is never copied. Log: `data/foyer-update.log`. A zip-only copy cannot use the button.
 
 ## 5. Persistence
 

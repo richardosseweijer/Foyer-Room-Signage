@@ -29,7 +29,8 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 | Relay | HMAC GET `/api/peer` from `src/lib/foyer/relay.ts`. Secret stays in `foyer-secrets.json`. Occupancy snapshot only on the frame. |
 | Secrets | `data/foyer-secrets.json`: hashed PINs, ICS URLs, tokens. Export strips them. Not in git. |
 | Logos | jpeg/png/webp, size cap. No SVG. |
-| Logs | No PIN, no ICS, no token in log lines. |
+| Logs | No PIN, no ICS, no token in log lines. `data/foyer-update.log` is git SHAs and npm only. |
+| Update | Setup session required. Dirty source refuses. `data/` is not in the worktree swap. |
 | Defaults | Deny. Open glass is an explicit switch, off in production. |
 
 ## PINs

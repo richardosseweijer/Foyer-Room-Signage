@@ -349,6 +349,10 @@ A netplan sketch is in `deploy/netplan.example.yaml`. Do not copy it blindly —
 
 ## 10. Update from GitHub
 
+Setup → **Update from GitHub** (after Save). Same as Relay: fetch `origin/main`, build in a side tree, switch if the build works. Site files in `data/` stay. Log: `data/foyer-update.log`. A zip cannot use the button.
+
+Manual equivalent if the button failed:
+
 ```bash
 cd ~/Foyer-Room-Signage
 sudo systemctl stop foyer-kiosk foyer-panel foyer
@@ -361,7 +365,7 @@ sudo systemctl start foyer foyer-panel foyer-kiosk
 bash scripts/foyer-status.sh
 ```
 
-Uncommitted source edits are discarded. `data/foyer-*.json` is not in git and is left alone.
+Uncommitted source edits block the button. `data/foyer-*.json` is not in git and is left alone.
 
 ---
 

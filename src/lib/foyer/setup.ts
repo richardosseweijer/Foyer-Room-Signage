@@ -25,9 +25,11 @@ export const getSetup = createServerFn({ method: "POST" })
     const { ensureLoaded, memory } = await import("./store.server.ts");
     const { listNics } = await import("./net.ts");
     const { listVideoOutputs } = await import("./video.ts");
+    const { gitIdentity } = await import("./update.ts");
     if (!readSession(data.session, "site")) return { ok: false as const, reason: "auth" as const };
     await ensureLoaded();
     const mem = memory();
+    const git = gitIdentity();
     return {
       ok: true as const,
       site: mem.site,
@@ -37,6 +39,8 @@ export const getSetup = createServerFn({ method: "POST" })
       mustChange: mem.secrets.sitePinMustChange,
       nics: listNics(),
       outputs: listVideoOutputs(),
+      version: git.version,
+      git,
     };
   });
 
@@ -150,4 +154,13 @@ export const claimDisplay = createServerFn({ method: "POST" })
     memory().secrets.displayTokens[claimed.displayId] = claimed.tokenHash;
     await persistNow();
     return { ok: true as const, displayId: claimed.displayId };
+  });
+
+export const updateFromGithub = createServerFn({ method: "POST" })
+  .validator(z.object({ session: z.string() }))
+  .handler(async ({ data }) => {
+    const { readSession } = await import("./sessions.server.ts");
+    if (!readSession(data.session, "site")) return { ok: false as const, reason: "auth" as const };
+    const { startGithubUpdate } = await import("./update.ts");
+    return startGithubUpdate();
   });

@@ -1,6 +1,6 @@
 # Foyer
 
-Foyer **0.1.0** (beta). Room signage that lives **on the Relay PC**.
+Foyer **0.1.1** (beta). Room signage that lives **on the Relay PC**.
 
 - **Welcome** — this PC’s local video output (HDMI kiosk)
 - **Room plate** — tablet on the in-rack AP (own HTTP listener)
@@ -30,7 +30,7 @@ npm ci --include=dev
 
 Do not start with raw `npx vite`. Scripts run `scripts/with-app-env.mjs`.
 
-First site PIN is `1234`. You must set a stronger one. Welcome on the local output does not pair. The room plate pairs with a code (or **Open glass** on a trusted rack AP). Calendar ICS URLs never leave the server. See [Security](SECURITY.md).
+First site PIN is `1234`. You must set a stronger one. Welcome on the local output does not pair. The room plate pairs with a code (or **Open glass** on a trusted rack AP). Calendar ICS URLs never leave the server. Setup → **Update from GitHub** fetches `main`. See [Security](SECURITY.md).
 
 Foolproof Ubuntu install: **[INSTALL.md](INSTALL.md)**
 

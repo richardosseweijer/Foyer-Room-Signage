@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Welcome hero is the room name
+- Setup timezone is a dropdown
+- Setup **Update from GitHub** (worktree build, `data/` left alone)
+- Bind-panel field removed from Setup
+
 ## 0.1.0
 
 First public tree: room appliance on the Relay PC.
