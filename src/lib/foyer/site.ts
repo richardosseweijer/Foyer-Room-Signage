@@ -3,6 +3,55 @@ import { BOARD_TEMPLATES, parseSite, type Arrow, type Display, type Room, type R
 
 export const DEFAULT_TIMEZONE = "Europe/Amsterdam";
 
+/** Venue clocks. Dropdown in Setup — not a free-text IANA field. */
+export const TIMEZONES = [
+  "UTC",
+  "Europe/Amsterdam",
+  "Europe/Berlin",
+  "Europe/Brussels",
+  "Europe/Copenhagen",
+  "Europe/Dublin",
+  "Europe/Helsinki",
+  "Europe/Lisbon",
+  "Europe/London",
+  "Europe/Madrid",
+  "Europe/Oslo",
+  "Europe/Paris",
+  "Europe/Prague",
+  "Europe/Rome",
+  "Europe/Stockholm",
+  "Europe/Vienna",
+  "Europe/Warsaw",
+  "Europe/Zurich",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Phoenix",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Mexico_City",
+  "America/Sao_Paulo",
+  "Australia/Sydney",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Pacific/Auckland",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Singapore",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Africa/Johannesburg",
+] as const;
+
+export function timezoneOptions(current?: string | null) {
+  const listed = new Set<string>(TIMEZONES);
+  const extra = current?.trim() && !listed.has(current.trim()) ? [current.trim()] : [];
+  return [...extra, ...TIMEZONES];
+}
+
 export const BOARD_LABELS: Record<(typeof BOARD_TEMPLATES)[number], string> = {
   welcome: "Welcome",
   door: "Room plate",

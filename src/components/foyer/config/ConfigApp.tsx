@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { claimDisplay, getSetup, saveSetup, unlockSite } from "@/lib/foyer/setup";
+import { getSetup, saveSetup, unlockSite } from "@/lib/foyer/setup";
+import { timezoneOptions } from "@/lib/foyer/site";
 import type { Site } from "@/lib/foyer/types";
 
 const inputClass =
@@ -20,8 +21,6 @@ export function ConfigApp() {
   const [hasRelaySecret, setHasRelaySecret] = useState(false);
   const [sitePin, setSitePin] = useState("");
   const [techPin, setTechPin] = useState("");
-  const [pairCode, setPairCode] = useState("");
-  const [pairNote, setPairNote] = useState("");
   const [saved, setSaved] = useState(false);
   const [nics, setNics] = useState<NicRow[]>([]);
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
@@ -106,27 +105,6 @@ export function ConfigApp() {
     }
   }
 
-  async function bindPair() {
-    setPairNote("");
-    setError("");
-    const code = pairCode.trim();
-    if (!code) {
-      setPairNote("Enter the code from the unpaired plate.");
-      return;
-    }
-    try {
-      const result = await claimDisplay({ data: { session, code } });
-      if (!result.ok) {
-        setPairNote(result.reason === "expired" ? "That code expired. Open the plate again." : "Code not accepted.");
-        return;
-      }
-      setPairCode("");
-      setPairNote("Bound. The plate will pick it up in a moment.");
-    } catch {
-      setPairNote("Could not reach Foyer.");
-    }
-  }
-
   useEffect(() => {
     if (!saved) return;
     const t = window.setTimeout(() => setSaved(false), 1800);
@@ -186,12 +164,17 @@ export function ConfigApp() {
         </label>
         <label className="flex flex-col gap-2 text-sm">
           Timezone
-          <input
+          <select
             className={inputClass}
             value={site.timezone}
             onChange={(e) => setSite({ ...site, timezone: e.target.value })}
-            placeholder="Europe/Amsterdam"
-          />
+          >
+            {timezoneOptions(site.timezone).map((zone) => (
+              <option key={zone} value={zone}>
+                {zone.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="flex items-center gap-3 text-sm">
           <input
@@ -324,32 +307,6 @@ export function ConfigApp() {
           onChange={(e) => setRelaySecret(e.target.value)}
           placeholder={hasRelaySecret ? "Peer secret stored — paste to replace" : "Relay peer secret"}
         />
-      </section>
-
-      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
-        <h2 className="text-xl font-semibold tracking-tight">Bind room panel</h2>
-        <p className="text-sm text-muted">
-          Welcome is this PC’s display and does not pair. The room panel on the rack AP shows a code if open glass is off.
-        </p>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            className={inputClass}
-            value={pairCode}
-            onChange={(e) => setPairCode(e.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void bindPair();
-              }
-            }}
-            inputMode="numeric"
-            placeholder="Pairing code"
-          />
-          <button type="button" className="h-11 shrink-0 rounded-lg bg-fg px-4 font-medium text-bg" onClick={() => void bindPair()}>
-            Bind
-          </button>
-        </div>
-        {pairNote ? <p className="text-sm text-muted">{pairNote}</p> : null}
       </section>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
