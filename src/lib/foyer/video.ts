@@ -10,11 +10,16 @@ export type VideoRow = {
 
 const DRM = "/sys/class/drm";
 
-/** Indexed local video outputs (DRM connectors). Fallback is a single local output. */
+function isPhysicalConnector(entry: string) {
+  return !/writeback|virtual|tv-/i.test(entry);
+}
+
+/** Indexed local video outputs (DRM connectors). Connected HDMI/DP first. Fallback is a single local output. */
 export function listVideoOutputs(): VideoRow[] {
-  const rows: VideoRow[] = [];
+  const found: { name: string; connected: boolean }[] = [];
   if (existsSync(DRM)) {
-    for (const entry of readdirSync(DRM).sort()) {
+    for (const entry of readdirSync(DRM)) {
+      if (!isPhysicalConnector(entry)) continue;
       const statusPath = join(DRM, entry, "status");
       if (!existsSync(statusPath)) continue;
       let status = "unknown";
@@ -23,16 +28,19 @@ export function listVideoOutputs(): VideoRow[] {
       } catch {
         /* keep unknown */
       }
-      const index = rows.length;
-      const name = entry.replace(/^card\d+-/, "");
-      rows.push({
-        index,
-        name,
+      found.push({
+        name: entry.replace(/^card\d+-/, ""),
         connected: status === "connected",
-        label: `${index} — ${name} (${status})`,
       });
     }
   }
+  found.sort((a, b) => Number(b.connected) - Number(a.connected) || a.name.localeCompare(b.name));
+  const rows: VideoRow[] = found.map((row, index) => ({
+    index,
+    name: row.name,
+    connected: row.connected,
+    label: `${index} — ${row.name}${row.connected ? "" : " (unplugged)"}`,
+  }));
   if (!rows.length) {
     rows.push({
       index: 0,
@@ -57,5 +65,11 @@ export function resolveVideoOutput(site: {
     const byIndex = outputs.find((row) => row.index === site.videoOutputIndex);
     if (byIndex) return byIndex;
   }
-  return outputs[0] ?? null;
+  return outputs.find((row) => row.connected) ?? outputs[0] ?? null;
+}
+
+export function kioskEnvBody(site: { videoOutputName: string | null; videoOutputIndex: number | null }) {
+  const row = resolveVideoOutput(site);
+  const name = row && row.name !== "local" ? row.name : "";
+  return `FOYER_VIDEO_OUTPUT=${name}\n`;
 }

@@ -1,3 +1,5 @@
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { defaultDataPaths, firstBootSecrets, loadPair, persistPair, secretsAfterLoad } from "./persist.ts";
 import { buildCalendarSnapshot, emptyCalendarSnapshot } from "./calendar.ts";
 import { normalizeLook } from "./look.ts";
@@ -6,6 +8,7 @@ import { fetchRelayOccupancy } from "./relay.ts";
 import { demoSite, migrateToRoomAppliance, needsRoomAppliance } from "./seed.ts";
 import { emptySecrets } from "./secrets.ts";
 import { bindDoorOrWelcome, bindWayfinding } from "./site.ts";
+import { kioskEnvBody } from "./video.ts";
 import type { Arrow, CalendarSnapshot, Look, OccupancySnapshot, Secrets, Site } from "./types.ts";
 
 type Memory = {
@@ -13,6 +16,7 @@ type Memory = {
   secrets: Secrets;
   calendar: CalendarSnapshot;
   occupancy: OccupancySnapshot | null;
+  ingestNote: string;
   seq: Record<string, number>;
   loaded: boolean;
 };
@@ -22,6 +26,7 @@ const mem: Memory = {
   secrets: emptySecrets(),
   calendar: emptyCalendarSnapshot(),
   occupancy: null,
+  ingestNote: "",
   seq: {},
   loaded: false,
 };
@@ -88,20 +93,31 @@ export async function ensureLoaded() {
 export async function persistNow() {
   const paths = defaultDataPaths();
   persistPair(paths.secretPath, paths.sitePath, JSON.stringify(mem.secrets, null, 2), JSON.stringify(mem.site, null, 2));
+  try {
+    writeFileSync(join(paths.dir, "foyer-kiosk.env"), kioskEnvBody(mem.site));
+  } catch {
+    /* kiosk env is best-effort */
+  }
 }
 
 export async function refreshIngest() {
   const lastCal = mem.calendar;
   const lastOcc = mem.occupancy;
   const nic = resolveOutbound(mem.site);
-  const requireBind = mem.site.outboundNicName != null || mem.site.outboundNicIndex != null;
+  const wantBind = mem.site.outboundNicName != null || mem.site.outboundNicIndex != null;
+  let localAddress = nic?.ipv4 ?? null;
+  let note = "";
+  if (wantBind && !localAddress) {
+    note = "Outbound NIC has no IPv4 — pulling without a bind.";
+  }
   mem.calendar = await buildCalendarSnapshot({
     site: mem.site,
     icsUrls: mem.secrets.icsUrls,
     lastGood: lastCal,
-    localAddress: nic?.ipv4 ?? null,
-    requireBind,
+    localAddress,
+    requireBind: wantBind && Boolean(localAddress),
   });
+  mem.ingestNote = note;
   mem.occupancy = await fetchRelayOccupancy({
     site: mem.site,
     secret: mem.secrets.relaySecret,

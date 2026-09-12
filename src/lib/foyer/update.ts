@@ -5,12 +5,46 @@ import { fileURLToPath } from "node:url";
 
 /** Git identity and updater spawn. No compose, calendar, secrets, or PINs. */
 
-export function packageRoot(from = process.cwd()) {
-  return from;
+function git(root: string, args: string[]) {
+  const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+  return {
+    ok: result.status === 0,
+    text: (result.stdout || "").trim(),
+  };
 }
 
+function looksLikeCheckout(dir: string) {
+  return existsSync(join(dir, "package.json")) && existsSync(join(dir, "scripts/update-foyer.mjs"));
+}
+
+function walkForCheckout(start: string) {
+  let dir = start;
+  for (let i = 0; i < 12; i++) {
+    if (looksLikeCheckout(dir)) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return "";
+}
+
+/** systemd WorkingDirectory, then walk (bundled server fns are not at src/lib/foyer). */
 export function foyerRoot() {
-  return join(dirname(fileURLToPath(import.meta.url)), "../../..");
+  const top = git(process.cwd(), ["rev-parse", "--show-toplevel"]);
+  if (top.ok && top.text && looksLikeCheckout(top.text)) return top.text;
+  const here = walkForCheckout(process.cwd());
+  if (here) return here;
+  try {
+    const fromModule = walkForCheckout(dirname(fileURLToPath(import.meta.url)));
+    if (fromModule) return fromModule;
+  } catch {
+    /* import.meta.url unavailable */
+  }
+  return process.cwd();
+}
+
+export function packageRoot(from = process.cwd()) {
+  return from;
 }
 
 export function packageVersion(root = foyerRoot()) {
@@ -22,16 +56,9 @@ export function packageVersion(root = foyerRoot()) {
   }
 }
 
-function git(root: string, args: string[]) {
-  const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
-  return {
-    ok: result.status === 0,
-    text: (result.stdout || "").trim(),
-  };
-}
-
 export function gitIdentity(root = foyerRoot()) {
-  const clone = existsSync(join(root, ".git"));
+  const inside = git(root, ["rev-parse", "--is-inside-work-tree"]);
+  const clone = inside.ok && inside.text === "true";
   if (!clone) {
     return { clone: false, sha: "", dirty: false, version: packageVersion(root) };
   }

@@ -1,5 +1,5 @@
 # HDMI must be connected before this unit starts.
-# Chromium path: which chromium || which chromium-browser
+# After Setup Save, restart this unit so FOYER_VIDEO_OUTPUT applies.
 [Unit]
 Description=Foyer welcome kiosk (local video)
 After=foyer.service seatd.service
@@ -14,8 +14,9 @@ User=USER
 SupplementaryGroups=video render
 Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=WLR_LIBINPUT_NO_DEVICES=1
+EnvironmentFile=-/home/USER/Foyer-Room-Signage/data/foyer-kiosk.env
 ExecStartPre=/bin/sleep 2
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --check-for-update-interval=31536000 http://127.0.0.1:8080/
+ExecStart=/usr/bin/cage -s -- /home/USER/Foyer-Room-Signage/scripts/foyer-kiosk.sh
 Restart=always
 RestartSec=5
 

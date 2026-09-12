@@ -3,7 +3,8 @@ import { findRoomByName } from "./site.ts";
 import type { CalendarSnapshot, Meeting, Room, Site } from "./types.ts";
 
 const ICS_MAX_BYTES = 512_000;
-const ICS_TIMEOUT_MS = 8_000;
+const ICS_TIMEOUT_MS = 15_000;
+const ICS_UA = "Foyer/0.1 (room signage; +https://github.com/richardosseweijer/Foyer-Room-Signage)";
 
 export type ParsedEvent = {
   title: string;
@@ -17,6 +18,16 @@ export type ParsedEvent = {
 
 export function emptyCalendarSnapshot(now = new Date()): CalendarSnapshot {
   return { atIso: now.toISOString(), rooms: {} };
+}
+
+export function icsHostHint(url: string | undefined | null) {
+  const raw = url?.trim() ?? "";
+  if (!raw) return "";
+  try {
+    return new URL(raw).hostname || "stored";
+  } catch {
+    return "stored";
+  }
 }
 
 function unfoldIcs(raw: string) {
@@ -230,11 +241,13 @@ export async function fetchIcs(url: string, localAddress?: string | null): Promi
 }
 
 async function boundFetch(url: string, signal: AbortSignal, localAddress?: string | null) {
-  if (!localAddress) return fetch(url, { signal, redirect: "follow" });
+  const headers = { "user-agent": ICS_UA, accept: "text/calendar, text/plain, */*" };
+  if (!localAddress) return fetch(url, { signal, redirect: "follow", headers });
   const { Agent, fetch: undiciFetch } = await import("undici");
   return undiciFetch(url, {
     signal,
     redirect: "follow",
+    headers,
     dispatcher: new Agent({ connect: { localAddress } }),
   });
 }

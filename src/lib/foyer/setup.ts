@@ -26,14 +26,21 @@ export const getSetup = createServerFn({ method: "POST" })
     const { listNics } = await import("./net.ts");
     const { listVideoOutputs } = await import("./video.ts");
     const { gitIdentity } = await import("./update.ts");
+    const { icsHostHint } = await import("./calendar.ts");
+    const { resolveOutbound } = await import("./net.ts");
     if (!readSession(data.session, "site")) return { ok: false as const, reason: "auth" as const };
     await ensureLoaded();
     const mem = memory();
     const git = gitIdentity();
+    const shared = mem.site.sharedCalendarId ?? "shared";
+    const room = mem.site.rooms[0];
+    const cal = room ? mem.calendar.rooms[room.id] : undefined;
+    const nic = resolveOutbound(mem.site);
     return {
       ok: true as const,
       site: mem.site,
       icsConfigured: Object.fromEntries(mem.site.calendars.map((feed) => [feed.id, Boolean(mem.secrets.icsUrls[feed.id])])),
+      icsHost: icsHostHint(mem.secrets.icsUrls[shared]),
       hasRelaySecret: Boolean(mem.secrets.relaySecret),
       hasTechPin: Boolean(mem.secrets.techPinHash),
       mustChange: mem.secrets.sitePinMustChange,
@@ -41,6 +48,13 @@ export const getSetup = createServerFn({ method: "POST" })
       outputs: listVideoOutputs(),
       version: git.version,
       git,
+      ingest: {
+        atIso: mem.calendar.atIso,
+        note: mem.ingestNote,
+        nic: nic ? nic.label : "Any (not bound)",
+        nowTitle: cal?.now?.title ?? "",
+        nextTitle: cal?.next?.title ?? "",
+      },
     };
   });
 

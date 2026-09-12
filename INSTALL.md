@@ -24,7 +24,7 @@ OS packages this guide installs (npm packages come from `npm ci --include=dev` i
 | `nodejs` 22 | Runtime (`--experimental-strip-types` for the panel) |
 | `iproute2` | `ip` / `ss` |
 | `ufw` | Incoming deny; 8082 only on the rack AP |
-| `seatd` `cage` | Welcome compositor (no full desktop) |
+| `seatd` `cage` `wlr-randr` | Welcome compositor + HDMI pick |
 | `chromium` or `chromium-browser` | Welcome kiosk |
 | `fonts-liberation` `fonts-noto-core` | Type if Google Fonts is unreachable |
 | `mesa-vulkan-drivers` `libgl1-mesa-dri` | GPU for cage |
@@ -285,7 +285,7 @@ Typical causes: the test server from §4 is still running, `WorkingDirectory` is
 Skip this until §4 and §6 answer `200` on welcome. Ubuntu Server has no desktop until you add a seat.
 
 ```bash
-sudo apt-get install -y seatd cage fonts-liberation fonts-noto-core mesa-vulkan-drivers libgl1-mesa-dri
+sudo apt-get install -y seatd cage wlr-randr fonts-liberation fonts-noto-core mesa-vulkan-drivers libgl1-mesa-dri
 sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser
 sudo systemctl enable --now seatd
 sudo usermod -aG video,render "$USER"
@@ -311,8 +311,7 @@ Cage needs a real HDMI connected **before** start. Plug the welcome display into
 ```bash
 USER_NAME="$(whoami)"
 HOME_DIR="$HOME"
-CHROME="$(command -v chromium || command -v chromium-browser || echo /usr/bin/chromium)"
-echo "kiosk browser: $CHROME"
+chmod +x "${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk.sh"
 sudo tee /etc/systemd/system/foyer-kiosk.service >/dev/null <<EOF
 [Unit]
 Description=Foyer welcome kiosk (local video)
@@ -328,8 +327,9 @@ User=${USER_NAME}
 SupplementaryGroups=video render
 Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=WLR_LIBINPUT_NO_DEVICES=1
+EnvironmentFile=-${HOME_DIR}/Foyer-Room-Signage/data/foyer-kiosk.env
 ExecStartPre=/bin/sleep 2
-ExecStart=/usr/bin/cage -s -- ${CHROME} --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --check-for-update-interval=31536000 http://127.0.0.1:8080/
+ExecStart=/usr/bin/cage -s -- ${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk.sh
 Restart=always
 RestartSec=5
 
@@ -340,6 +340,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now foyer-kiosk
 sudo systemctl status foyer-kiosk --no-pager
 ```
+
+After Setup → Save (video output), run `sudo systemctl restart foyer-kiosk` so cage moves to that HDMI.
 
 Cursor: cage `-s` is already “no server decorations”.
 

@@ -29,6 +29,11 @@ export function ConfigApp() {
   const [gitClone, setGitClone] = useState(false);
   const [gitDirty, setGitDirty] = useState(false);
   const [updateNote, setUpdateNote] = useState("");
+  const [icsHost, setIcsHost] = useState("");
+  const [ingestNote, setIngestNote] = useState("");
+  const [ingestNic, setIngestNic] = useState("");
+  const [ingestNow, setIngestNow] = useState("");
+  const [ingestNext, setIngestNext] = useState("");
 
   async function load(nextSession: string) {
     const result = await getSetup({ data: { session: nextSession } });
@@ -47,6 +52,11 @@ export function ConfigApp() {
     setGitSha(result.git.sha);
     setGitClone(result.git.clone);
     setGitDirty(result.git.dirty);
+    setIcsHost(result.icsHost ?? "");
+    setIngestNote(result.ingest?.note ?? "");
+    setIngestNic(result.ingest?.nic ?? "");
+    setIngestNow(result.ingest?.nowTitle ?? "");
+    setIngestNext(result.ingest?.nextTitle ?? "");
   }
 
   async function unlock() {
@@ -222,7 +232,8 @@ export function ConfigApp() {
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold tracking-tight">This PC</h2>
         <p className="text-sm text-muted">
-          Welcome always uses a local video output on this machine. Calendar pulls only go out the selected NIC.
+          Welcome always uses a local video output on this machine. After Save, restart the kiosk unit so cage
+          moves to that HDMI. Calendar pulls go out the selected NIC (or any NIC if unset / no IPv4).
         </p>
         <label className="flex flex-col gap-2 text-sm">
           Welcome video output
@@ -308,14 +319,23 @@ export function ConfigApp() {
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold tracking-tight">Google Calendar</h2>
         <p className="text-sm text-muted">
-          Secret iCal URL. The room panel never sees it. {icsOn ? "A feed is stored." : "Using the on-device demo meetings until you paste a URL."}
+          Secret iCal URL. The room panel never sees it.
+          {icsOn || icsHost
+            ? ` Feed stored${icsHost ? ` (${icsHost})` : ""}. Paste a new URL to replace it.`
+            : " Using the on-device demo meetings until you paste a URL."}
         </p>
         <input
           className={inputClass}
           value={icsUrl}
           onChange={(e) => setIcsUrl(e.target.value)}
-          placeholder="https://calendar.google.com/calendar/ical/…"
+          placeholder={icsHost ? `stored — ${icsHost}` : "https://calendar.google.com/calendar/ical/…"}
         />
+        <p className="text-sm text-muted">
+          Last pull via {ingestNic || "any NIC"}.
+          {ingestNow ? ` Now: ${ingestNow}.` : ""}
+          {ingestNext ? ` Next: ${ingestNext}.` : !ingestNow ? " No current or next session." : ""}
+          {ingestNote ? ` ${ingestNote}` : ""}
+        </p>
       </section>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseIcsEvents, snapshotFromEvents, buildCalendarSnapshot, emptyCalendarSnapshot } from "./calendar.ts";
+import { parseIcsEvents, snapshotFromEvents, buildCalendarSnapshot, emptyCalendarSnapshot, icsHostHint } from "./calendar.ts";
 import { demoSite } from "./seed.ts";
 
 const ICS = `BEGIN:VCALENDAR
@@ -116,5 +116,13 @@ test("calendar bind required without an address keeps last-good", async () => {
     requireBind: true,
   });
   assert.equal(snap.rooms.cedar?.now?.title, "Kept");
+});
+
+test("ics host hint never includes the path or query", () => {
+  assert.equal(
+    icsHostHint("https://calendar.google.com/calendar/ical/secret/private-xxx/basic.ics"),
+    "calendar.google.com",
+  );
+  assert.equal(icsHostHint(""), "");
 });
 

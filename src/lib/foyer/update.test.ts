@@ -3,11 +3,17 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { gitIdentity, packageVersion, startGithubUpdate } from "./update.ts";
+import { foyerRoot, gitIdentity, packageVersion, startGithubUpdate } from "./update.ts";
 
 test("packageVersion reads this tree", () => {
   const version = packageVersion();
   assert.match(version, /^\d+\.\d+/);
+});
+
+test("foyerRoot finds the git checkout from cwd", () => {
+  const id = gitIdentity(foyerRoot());
+  assert.equal(id.clone, true);
+  assert.ok(id.sha);
 });
 
 test("a folder without .git is not a clone", () => {

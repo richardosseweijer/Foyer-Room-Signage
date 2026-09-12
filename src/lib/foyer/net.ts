@@ -14,7 +14,9 @@ function isIpv4(addr: { family: string | number; internal: boolean }) {
 /** Indexed NICs for Setup. Loopback is omitted. */
 export function listNics(): NicRow[] {
   const rows: NicRow[] = [];
-  for (const [name, addrs] of Object.entries(networkInterfaces())) {
+  const names = Object.keys(networkInterfaces()).sort();
+  for (const name of names) {
+    const addrs = networkInterfaces()[name];
     if (!addrs?.length) continue;
     if (addrs.every((addr) => addr.internal)) continue;
     const v4 = addrs.find(isIpv4);
@@ -23,7 +25,7 @@ export function listNics(): NicRow[] {
       index,
       name,
       ipv4: v4?.address ?? null,
-      label: v4 ? `${index} — ${name} (${v4.address})` : `${index} — ${name}`,
+      label: v4 ? `${index} — ${name} (${v4.address})` : `${index} — ${name} (no IPv4)`,
     });
   }
   return rows;

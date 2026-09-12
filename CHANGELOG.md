@@ -10,6 +10,10 @@
 - `undici` declared (calendar source-bind)
 - Welcome/Setup bind `0.0.0.0:8080` for the config laptop
 - Room panel proxy keeps the tablet Host so glass RPCs work on LAN
+- Update from GitHub finds the git checkout from cwd (not the bundled chunk path)
+- Kiosk uses the named HDMI via `wlr-randr` (`data/foyer-kiosk.env`)
+- Calendar fetch sends a User-Agent; Setup shows host + last pull
+- ICS URL stays secret but Setup keeps a hostname hint after refresh
 
 ## 0.1.0
 

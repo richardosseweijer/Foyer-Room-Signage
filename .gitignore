@@ -17,6 +17,7 @@ data/*.bad
 data/*.tmp
 data/logos/
 data/foyer-update.log
+data/foyer-kiosk.env
 screenshots/*.png
 screenshots/*.json
 .project_id
