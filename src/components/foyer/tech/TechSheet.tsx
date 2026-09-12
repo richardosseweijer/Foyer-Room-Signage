@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ARROW_LABELS, PALETTE_LABELS } from "@/lib/foyer/palettes";
+import { PANEL_PORT } from "@/lib/foyer/listen";
 import {
   ARROWS,
   PALETTES,
@@ -131,6 +133,16 @@ export function TechSheet({
             Close
           </button>
         </div>
+        {typeof window !== "undefined" && window.location.port === String(PANEL_PORT) ? (
+          <p className="text-sm text-muted">Setup is on this PC, not this plate.</p>
+        ) : (
+          <Link
+            to="/config"
+            className="flex h-11 items-center justify-center rounded-lg border border-border text-sm font-medium"
+          >
+            Open Setup
+          </Link>
+        )}
         {!unlocked ? (
           <Field label="Technician PIN">
             <input
