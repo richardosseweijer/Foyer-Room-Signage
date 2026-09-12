@@ -193,10 +193,20 @@ export function ConfigApp() {
           void save();
         }}
       >
-      <header className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-muted">Foyer</p>
-        <h1 className="text-4xl font-semibold tracking-tight">This room</h1>
-        {mustChange ? <p>Change the site PIN before you leave this page.</p> : null}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-medium text-muted">Foyer</p>
+          <h1 className="text-4xl font-semibold tracking-tight">This room</h1>
+          {mustChange ? <p>Change the site PIN before you leave this page.</p> : null}
+        </div>
+        <a
+          href="/"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-11 items-center justify-center rounded-lg bg-fg px-4 text-sm font-medium text-bg"
+        >
+          Open welcome
+        </a>
       </header>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
