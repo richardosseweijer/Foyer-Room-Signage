@@ -28,7 +28,7 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, outbound bind | compose, PINs, calendar parse |
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs | compose, calendar, listen |
-| **listen** | `src/lib/foyer/listen.ts` | Welcome port, panel port, path allowlist | compose, calendar, secrets |
+| **listen** | `src/lib/foyer/listen.ts` | Welcome host/port, panel port, path allowlist | compose, calendar, secrets |
 | **update** | `src/lib/foyer/update.ts` | Git identity, spawn updater | compose, calendar, secrets, PINs |
 
 UI:
@@ -59,7 +59,7 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 
 | Listener | Bind | Serves |
 |---|---|---|
-| Welcome kiosk | loopback `:8080` | `/` and `/play/welcome` — local video output |
+| Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop |
 | Room panel | `:8082` (AP address on Ubuntu) | `/play/door` only. `/config` and welcome are 404. `/` redirects to the door. |
 | Outbound NIC | no Foyer socket | Calendar fetch source address, selected in Setup as an **indexed** dropdown |
 

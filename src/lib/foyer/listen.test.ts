@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { PANEL_PORT, WELCOME_PORT, panelDecision } from "./listen.ts";
+import { PANEL_PORT, WELCOME_HOST, WELCOME_PORT, panelDecision } from "./listen.ts";
 
 test("welcome and panel ports are distinct", () => {
   assert.equal(WELCOME_PORT, 8080);
   assert.equal(PANEL_PORT, 8082);
+  assert.equal(WELCOME_HOST, "0.0.0.0");
 });
 
 test("panel listener denies setup and the welcome kiosk", () => {

@@ -1,5 +1,6 @@
 /** Panel HTTP front. Bind and allowlist only — no compose, calendar, or secrets. */
 
+export const WELCOME_HOST = "0.0.0.0";
 export const WELCOME_PORT = 8080;
 export const PANEL_PORT = 8082;
 

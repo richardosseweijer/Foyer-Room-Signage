@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
-    "start": "node scripts/with-app-env.mjs vite preview --host 127.0.0.1 --port 8080",
+    "start": "node scripts/with-app-env.mjs vite preview --host 0.0.0.0 --port 8080",
     "start:panel": "node --experimental-strip-types scripts/foyer-panel.mjs",
     "update": "node scripts/update-foyer.mjs",
     "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",

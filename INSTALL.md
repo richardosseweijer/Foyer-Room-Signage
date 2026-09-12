@@ -104,7 +104,7 @@ The clone has no site file and no secrets file. Those appear under `data/` after
 | Script | Command | Bind | Use |
 | --- | --- | --- | --- |
 | Dev | `npm run dev` | welcome `:8080` | First check |
-| Production | `npm run build` then `npm start` | welcome `127.0.0.1:8080` | 24/7 |
+| Production | `npm run build` then `npm start` | welcome `0.0.0.0:8080` | 24/7 |
 | Panel | `npm run start:panel` | `0.0.0.0:8082` | Door tablet |
 
 Relay (if installed) stays on **8081**. Do not run Relay `npm run dev` (8080) at the same time as Foyer.
@@ -142,13 +142,15 @@ You want:
 | Panel `/play/door` | `200` |
 | Panel `/config` | `404` (Setup is not on the room plate) |
 
-On this PC, Setup is **loopback only**. From a laptop:
+On this PC, Setup listens on **all interfaces**. From the config laptop open `http://FOYER-IP:8080/config` — PIN `1234`. (`ip -br addr` for the address on the outbound NIC.)
+
+If that NIC is firewalled, SSH still works:
 
 ```bash
 ssh -L 18080:127.0.0.1:8080 USER@FOYER-PC
 ```
 
-Then open [http://127.0.0.1:18080/config](http://127.0.0.1:18080/config) — PIN `1234`.
+Then [http://127.0.0.1:18080/config](http://127.0.0.1:18080/config).
 
 In **This PC**:
 
@@ -168,23 +170,24 @@ ss -lptn | grep -E '8080|8081|8082'
 
 ## 5. Firewall
 
-Welcome must stay on **loopback**. The room plate is only for the rack AP subnet. Calendar is outbound.
+Welcome/Setup is on **8080** for the config laptop (outbound NIC). The room plate is **8082** on the rack AP only. Do not open 8080 on the AP or to the internet.
 
 ```bash
 sudo apt-get install -y ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow OpenSSH
-# Rack AP clients only (change to your AP subnet):
+# Config laptop / outbound LAN:
+sudo ufw allow in on <OUT-IFACE> to any port 8080 proto tcp
+# Rack AP clients only:
 sudo ufw allow in on <AP-IFACE> to any port 8082 proto tcp
-# Do not allow 8080 from any NIC. Welcome is 127.0.0.1.
 sudo ufw enable
 sudo ufw status
 ```
 
-Replace `<AP-IFACE>` with the NIC or bridge that faces the rack AP (`ip -br addr`).
+Replace `<OUT-IFACE>` and `<AP-IFACE>` (`ip -br addr`).
 
-Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080 or 8082. Do **not** let AP clients reach Relay (`8081`) or the outbound NIC.
+Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080 or 8082. Do **not** let AP clients reach Relay (`8081`) or Setup (`8080`).
 
 A copy-paste sketch lives in `deploy/ufw.example.sh`.
 
@@ -340,7 +343,7 @@ sudo systemctl status foyer-kiosk --no-pager
 
 Cursor: cage `-s` is already “no server decorations”.
 
-If the kiosk stays black: the HDMI is on the other connector, GPU drivers are missing, seatd is down, or the user is not in `video`/`render`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome over SSH: `ssh -L 18080:127.0.0.1:8080 USER@FOYER-PC` then [http://127.0.0.1:18080/](http://127.0.0.1:18080/).
+If the kiosk stays black: the HDMI is on the other connector, GPU drivers are missing, seatd is down, or the user is not in `video`/`render`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome from the config laptop at `http://FOYER-IP:8080/`.
 
 ---
 
@@ -371,7 +374,7 @@ curl -s  -o /dev/null -w "%{http_code}\n" http://10.64.0.1:8082/play/door
 | Interface | Role | Default route? | Foyer socket |
 | --- | --- | --- | --- |
 | `av` | Relay / DSP | no | no |
-| `out` | Calendar, apt, GitHub | yes | no |
+| `out` | Calendar, apt, GitHub, **Setup** | yes | **8080** |
 | AP | Room plate | no | **8082 only** |
 
 Setup → **Outbound NIC** must be `out`. If that NIC is selected but has no IPv4, Foyer keeps the last calendar snapshot (fail closed).
@@ -430,7 +433,7 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 ## Notes
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
-- Relay production is **8081**. Foyer welcome is **8080** loopback. Room plate is **8082**.
+- Relay production is **8081**. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082**.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.
 - Tests: `npm test` (Foyer cases live under `src/lib/foyer/*.test.ts`).
-- Setup is loopback. Use `ssh -L 18080:127.0.0.1:8080` from a laptop; do not open 8080 on a NIC.
+- Setup: `http://FOYER-IP:8080/config` from the config laptop. Firewall 8080 on the outbound NIC only.

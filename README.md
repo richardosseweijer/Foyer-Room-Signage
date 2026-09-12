@@ -18,14 +18,14 @@ npm ci --include=dev
 
 | Script | Command | Bind | Use |
 | --- | --- | --- | --- |
-| Dev / kiosk | `npm run dev` | welcome `127.0.0.1:8080` | Local edit |
+| Dev / kiosk | `npm run dev` | welcome `0.0.0.0:8080` | Local edit |
 | Room panel | `npm run start:panel` | `0.0.0.0:8082` | Door tablet on the rack AP |
-| Production | `npm run build` then `npm start` | welcome `127.0.0.1:8080` | 24/7 next to Relay (`:8081`) |
+| Production | `npm run build` then `npm start` | welcome `0.0.0.0:8080` | 24/7 next to Relay (`:8081`) |
 
 | Surface | Where |
 | --- | --- |
-| Welcome (HDMI) | `http://127.0.0.1:8080/` |
-| Setup | `http://127.0.0.1:8080/config` |
+| Welcome (HDMI) | `http://127.0.0.1:8080/` (kiosk) or `http://FOYER-IP:8080/` |
+| Setup | `http://FOYER-IP:8080/config` |
 | Room plate | `http://FOYER-ON-AP:8082/play/door` |
 
 Do not start with raw `npx vite`. Scripts run `scripts/with-app-env.mjs`.
