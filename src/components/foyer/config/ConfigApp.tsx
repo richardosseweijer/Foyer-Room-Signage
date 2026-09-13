@@ -76,29 +76,31 @@ export function ConfigApp() {
     }
   }
 
-  async function save() {
-    if (!site) return;
+  async function save(patch?: Partial<Site>, opts?: { startKiosk?: boolean }) {
+    if (!site) return false;
+    const current = { ...site, ...patch };
+    if (patch) setSite(current);
     setError("");
     if (mustChange && !sitePin.trim()) {
       setError("Set a stronger site PIN before saving. 1234 cannot stay.");
-      return;
+      return false;
     }
     try {
       const result = await saveSetup({
         data: {
           session,
-          name: site.name,
-          timezone: site.timezone,
-          rooms: site.rooms.map((room) => ({ id: room.id, name: room.name, occupancy: room.occupancy })),
+          name: current.name,
+          timezone: current.timezone,
+          rooms: current.rooms.map((room) => ({ id: room.id, name: room.name, occupancy: room.occupancy })),
           icsUrl: icsUrl.trim() || undefined,
-          relayUrl: site.relayUrl ?? "",
+          relayUrl: current.relayUrl ?? "",
           relaySecret: relaySecret || undefined,
-          relayEnabled: site.relayEnabled,
-          openGlass: site.openGlass,
+          relayEnabled: current.relayEnabled,
+          openGlass: current.openGlass,
           sitePin: sitePin.trim() || undefined,
           techPin: techPin.trim() || undefined,
-          outboundNicIndex: site.outboundNicIndex,
-          videoOutputIndex: site.videoOutputIndex,
+          outboundNicIndex: current.outboundNicIndex,
+          videoOutputIndex: current.videoOutputIndex,
         },
       });
       if (!result.ok) {
@@ -112,7 +114,7 @@ export function ConfigApp() {
                 ? "Site and technician PINs must be different."
                 : "Could not save.",
         );
-        return;
+        return false;
       }
       setSaved(true);
       setSitePin("");
@@ -120,8 +122,13 @@ export function ConfigApp() {
       setRelaySecret("");
       setIcsUrl("");
       await load(session);
+      if (opts?.startKiosk && current.videoOutputIndex !== null && current.videoOutputIndex !== undefined) {
+        await runKiosk();
+      }
+      return true;
     } catch {
       setError("Could not reach Foyer.");
+      return false;
     }
   }
 
@@ -264,20 +271,18 @@ export function ConfigApp() {
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold tracking-tight">This PC</h2>
         <p className="text-sm text-muted">
-          Welcome always uses a local video output on this machine. After Save, restart the kiosk unit so cage
-          moves to that HDMI. Calendar pulls go out the selected NIC (or any NIC if unset / no IPv4).
+          Welcome uses a local HDMI on this machine. Pick one — Chromium starts on that output.
+          Calendar pulls go out the selected NIC (or any NIC if unset / no IPv4).
         </p>
         <label className="flex flex-col gap-2 text-sm">
           Welcome video output
           <select
             className={inputClass}
             value={site.videoOutputIndex ?? ""}
-            onChange={(e) =>
-              setSite({
-                ...site,
-                videoOutputIndex: e.target.value === "" ? null : Number(e.target.value),
-              })
-            }
+            onChange={(e) => {
+              const videoOutputIndex = e.target.value === "" ? null : Number(e.target.value);
+              void save({ videoOutputIndex }, { startKiosk: videoOutputIndex !== null });
+            }}
           >
             <option value="">Not set</option>
             {outputs.map((row) => (

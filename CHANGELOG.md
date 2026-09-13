@@ -13,7 +13,7 @@
 - Update from GitHub finds the git checkout from cwd (not the bundled chunk path)
 - Kiosk uses the named HDMI via `wlr-randr` (`data/foyer-kiosk.env`)
 - Calendar fetch sends a User-Agent; Setup shows host + last pull
-- Setup **Enable local output** restarts the HDMI kiosk unit
+- Selecting a welcome HDMI in Setup starts Chromium on that output
 
 ## 0.1.0
 

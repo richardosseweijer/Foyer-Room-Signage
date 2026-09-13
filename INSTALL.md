@@ -341,9 +341,9 @@ sudo systemctl enable --now foyer-kiosk
 sudo systemctl status foyer-kiosk --no-pager
 ```
 
-After Setup → Save (video output), run `sudo systemctl restart foyer-kiosk` so cage moves to that HDMI.
+Picking a **Welcome video output** in Setup saves it and restarts this unit so Chromium opens on that HDMI.
 
-Setup → **Enable local output** does that restart from the config laptop. The Foyer user needs passwordless systemctl:
+Setup → **Enable local output** is a retry of that restart. The Foyer user needs passwordless systemctl:
 
 ```bash
 USER_NAME="$(whoami)"
