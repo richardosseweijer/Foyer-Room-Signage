@@ -135,15 +135,13 @@ function paneFor(
   if (!room) return null;
   const cal = calendar.rooms[roomId];
   const status = statusForRoom(room, cal, now, site.timezone, occupancy?.rooms[roomId]);
-  const hide = room.occupancy === "closed";
-  const busy = status === "busy" || Boolean(cal?.busy);
   return {
     slot,
     roomId: room.id,
     roomName: room.name,
     status,
-    now: hide ? null : cleanMeeting(cal?.now ?? null, { busy, template }),
-    next: hide ? null : cleanMeeting(cal?.next ?? null, { busy: false, template }),
+    now: cleanMeeting(cal?.now ?? null, { busy: false, template }),
+    next: cleanMeeting(cal?.next ?? null, { busy: false, template }),
   };
 }
 

@@ -74,7 +74,7 @@ test("compose.ts does not import fs, fetch, websocket, or secrets", () => {
   assert.equal(/from ["']react["']/.test(src), false);
 });
 
-test("closed override hides meetings", () => {
+test("closed override keeps the session and marks closed", () => {
   const now = new Date("2026-09-11T12:00:00Z");
   const calendar: CalendarSnapshot = {
     atIso: now.toISOString(),
@@ -87,8 +87,7 @@ test("closed override hides meetings", () => {
   };
   const out = frame({ site: siteWith("closed"), calendar, now });
   assert.equal(out.status, "closed");
-  assert.equal(out.now, null);
-  assert.equal(out.next, null);
+  assert.equal(out.now?.title, "Budget");
 });
 
 test("manual available still shows the meeting on the door", () => {
