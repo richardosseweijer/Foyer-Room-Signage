@@ -21,3 +21,4 @@ data/foyer-kiosk.env
 screenshots/*.png
 screenshots/*.json
 .project_id
+attachments/
