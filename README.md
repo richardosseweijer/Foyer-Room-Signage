@@ -6,7 +6,7 @@ Foyer **0.2.1** (beta). Room signage that lives **on the Relay PC**.
 - **Room plate** — tablet on **AV-LAN** (`:8082` bound to that NIC)
 - **Not this app** — lobby wayfinding (separate product)
 
-Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box. Each has its own NIC pickers; they do not share config. Relay sets occupancy; Foyer offers the current (or next) calendar session back on loopback `GET /api/peer`.
+Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box. Each has its own NIC pickers; they do not share config. How they talk: **[FOYER-RELAY.md](FOYER-RELAY.md)**.
 
 Clone is unused until you start it. First boot writes `data/foyer-site.json` and `data/foyer-secrets.json` on the host. Those files are not in git.
 
@@ -34,6 +34,7 @@ First site PIN is `1234`. You must set a stronger one. Welcome on the local outp
 
 Foolproof Ubuntu install: **[INSTALL.md](INSTALL.md)**
 
+- [Foyer ↔ Relay contract](FOYER-RELAY.md)
 - [Architecture](ARCHITECTURE.md)
 - [Security](SECURITY.md)
 - [Privacy](PRIVACY.md)

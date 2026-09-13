@@ -186,7 +186,7 @@ sudo ufw status
 
 Replace `<AV-IFACE>` (`ip -br addr`). Nothing inbound on the internet NIC.
 
-Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080 or 8082. Foyer ↔ Relay stays on loopback; HMAC on Relay `:8081` stays required because the tablet is on the same AV-LAN as the DSP.
+Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080 or 8082. Foyer ↔ Relay stays on loopback ([`FOYER-RELAY.md`](FOYER-RELAY.md)). HMAC on Relay `:8081` from AV-LAN stays required because the tablet is on the same LAN as the DSP.
 
 A copy-paste sketch lives in `deploy/ufw.example.sh`.
 
@@ -398,7 +398,7 @@ curl -s  -o /dev/null -w "%{http_code}\n" http://AV-LAN-IP:8082/play/door
 | --- | --- | --- | --- |
 | AV-LAN | DSP, door tablet, config laptop | no | **8082** (and Setup **8080** via firewall) |
 | LAN (internet) | Calendar, apt, GitHub, Relay telemetry | yes | none inbound |
-| loopback | Foyer ↔ Relay HMAC | — | **8081** / **8080** |
+| loopback | Foyer ↔ Relay ([`FOYER-RELAY.md`](FOYER-RELAY.md)) | — | **8081** / **8080** |
 
 Setup → **LAN (internet)** must be the guest/WAN NIC. If that NIC is selected but has no IPv4, Foyer keeps the last calendar snapshot (fail closed). Setup → **AV-LAN** is the door bind. Foyer does not read Relay’s NIC picks — set the same interfaces in both apps.
 
@@ -458,7 +458,7 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 ## Notes
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
-- Relay production is **8081** on loopback for Foyer. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082** on AV-LAN.
+- Relay production is **8081** on loopback for Foyer. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Setup occupancy: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.
 - Tests: `npm test` (Foyer cases live under `src/lib/foyer/*.test.ts`).

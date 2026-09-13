@@ -65,7 +65,7 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 | Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop on AV-LAN |
 | Room panel | AV-LAN IPv4 `:8082` (all interfaces until that NIC is picked) | `/play/door` and `/config` (site PIN). Other `/play/*` ids are 404. `/` redirects to the door. |
 | LAN (internet) NIC | no Foyer socket | Calendar fetch source address. GitHub update uses the default route on this NIC. |
-| Foyer ↔ Relay | `127.0.0.1` | Occupancy HMAC GET to Relay `:8081/api/peer`. Calendar session HMAC GET on Foyer `:8080/api/peer`. Not either NIC. |
+| Foyer ↔ Relay | `127.0.0.1` | Occupancy GET to Relay `:8081/api/peer`. Calendar session GET on Foyer `:8080/api/peer`. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). Not either NIC. |
 
 Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
 
@@ -87,23 +87,7 @@ Write a `foyer-site.json.transaction` journal, then secrets, then site (temp + f
 - First site PIN `1234`, then a stronger one is required. Tech PIN unset until Setup sets it (must differ).
 - Palette **names** (`linen`, `orchard`, `ink`, `contrast`) are locked.
 - One room on this PC. Untagged calendar events go to that room. `{RoomName}` still routes when present.
-- Relay occupancy is ingest in `src/lib/foyer/relay.ts` (HMAC GET `/api/peer`), **loopback** (`127.0.0.1:8081`). Not AV-LAN, not guest wifi.
-
-Accepted `GET /api/peer` body (Relay `buildPeerGet`):
-
-```json
-{
-  "ok": true,
-  "v": 1,
-  "room": { "id": "relay-room", "name": "Cedar" },
-  "host": { "dim": false, "locked": false, "pageId": null },
-  "occupancy": "available",
-  "vars": { "v1": { "name": "occupancy", "value": "available" } },
-  "macros": {}
-}
-```
-
-`occupancy` is `available | in-session | busy | do-not-disturb | closed`. One Relay and one Foyer share this PC / this room. Foyer applies that field to its room — **names do not have to match**. `room` / `vars` are ignored for occupancy. `host.locked` is in-session only when occupancy is missing. When Setup occupancy is Auto and Relay occupancy is present, that value is the plate status (calendar still lists sessions). Setup occupancy other than Auto is local and is not written back.
+- Relay occupancy is ingest in `src/lib/foyer/relay.ts` (`GET /api/peer`), **loopback** (`127.0.0.1:8081`). Not AV-LAN, not guest wifi. Full request/response, occupancy enum, Auto vs override, and session body: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Room occupancy in Setup: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay. Sessions stay on the plate.
 - Wayfinding is **not** this app.
 

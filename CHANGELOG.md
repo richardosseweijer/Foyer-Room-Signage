@@ -1,13 +1,8 @@
 # Changelog
 
-## 0.2.1
-
-- `GET /api/peer` on loopback (`:8080`) returns the current calendar session, or the next one if the room is free (`kind`, `title`, `startIso`, `endIso`). HMAC optional on loopback GET; AV-LAN is denied. Door plate `:8082` does not serve this route.
-- Occupancy poll from Relay is 4 s (calendar stays 30 s). Loopback occupancy GET is unsigned so a mismatched peer secret cannot 401 the plate.
-- First boot and loopback migrate turn **Read occupancy from Relay** on. Occupancy must stay **Auto** for Relay to set the plate.
-
 ## Unreleased
 
+- [`FOYER-RELAY.md`](FOYER-RELAY.md) — communication contract with Relay 0.9.4 (same file in both repos).
 - Setup **AV-LAN** and **LAN (internet)** indexed NIC pickers (Foyer does not read Relay’s)
 - Door plate `:8082` binds the AV-LAN IPv4; LAN NIC has no IPv4 → calendar is not pulled
 - Relay occupancy is 1:1 on this PC (no room-name match). Setup override stays local
@@ -16,6 +11,12 @@
 - Door plate: session state in the lower-right corner (technician toggle)
 - Update-from-GitHub script parses again (`restore()` was broken)
 - Room occupancy **Do not disturb** (Setup override or Relay `dnd`)
+
+## 0.2.1
+
+- `GET /api/peer` on loopback (`:8080`) returns the current calendar session, or the next one if the room is free (`kind`, `title`, `startIso`, `endIso`). HMAC optional on loopback GET; AV-LAN is denied. Door plate `:8082` does not serve this route.
+- Occupancy poll from Relay is 4 s (calendar stays 30 s). Loopback occupancy GET is unsigned so a mismatched peer secret cannot 401 the plate.
+- First boot and loopback migrate turn **Read occupancy from Relay** on. Occupancy must stay **Auto** for Relay to set the plate.
 
 ## 0.2.0
 
