@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ARROW_LABELS, PALETTE_LABELS } from "@/lib/foyer/palettes";
-import { PANEL_PORT } from "@/lib/foyer/listen";
+import { PALETTE_LABELS, SCALE_LABELS } from "@/lib/foyer/palettes";
 import {
-  ARROWS,
   PALETTES,
   TYPE_SCALES,
-  type Arrow,
   type Frame,
   type PaletteName,
   type TypeScale,
@@ -15,15 +12,18 @@ import { saveGlassLook, unlockTech } from "@/lib/foyer/glass";
 
 function Field({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="flex flex-col gap-2 text-sm">
       <span className="font-medium text-muted">{label}</span>
       {children}
+      {hint ? <span className="font-normal text-muted">{hint}</span> : null}
     </label>
   );
 }
@@ -38,18 +38,6 @@ const PLATE_LABEL: Record<Frame["template"], string> = {
   split: "Split",
   message: "Message",
 };
-
-type RoomPick = { on: boolean; arrow: Arrow };
-
-function initialPicks(frame: Frame): Record<string, RoomPick> {
-  const selected = new Map(frame.directory.map((row) => [row.roomId, row.arrow]));
-  const picks: Record<string, RoomPick> = {};
-  for (const room of frame.catalog) {
-    const arrow = selected.get(room.id);
-    picks[room.id] = { on: arrow !== undefined, arrow: arrow ?? "off" };
-  }
-  return picks;
-}
 
 export function TechSheet({
   frame,
@@ -69,7 +57,6 @@ export function TechSheet({
   const [logoOn, setLogoOn] = useState(frame.look.logoOn);
   const [logoBand, setLogoBand] = useState(frame.look.logoBand);
   const [roomId, setRoomId] = useState(frame.roomId ?? "");
-  const [picks, setPicks] = useState<Record<string, RoomPick>>(() => initialPicks(frame));
   const [showNow, setShowNow] = useState(frame.look.slots.now);
   const [countdown, setCountdown] = useState(frame.look.slots.countdown !== false);
   const [showNext, setShowNext] = useState(frame.look.slots.next);
@@ -82,7 +69,7 @@ export function TechSheet({
     try {
       const result = await unlockTech({ data: { pin: pin.trim(), clientKey: "tech-sheet" } });
       if (!result.ok) {
-        setError(result.reason === "locked" ? "Try again in a few minutes." : "That PIN is not the technician PIN.");
+        setError(result.reason === "locked" ? "Too many tries. Wait a few minutes." : "Wrong technician PIN.");
         return;
       }
       setSession(result.session);
@@ -95,9 +82,6 @@ export function TechSheet({
   async function save() {
     setError("");
     try {
-      const directory = frame.catalog
-        .filter((room) => picks[room.id]?.on)
-        .map((room) => ({ roomId: room.id, arrow: picks[room.id]?.arrow ?? "off" }));
       const result = await saveGlassLook({
         data: {
           displayId: frame.displayId,
@@ -118,11 +102,10 @@ export function TechSheet({
             },
           },
           roomId: frame.template === "wayfinding" ? undefined : roomId || null,
-          directory: frame.template === "wayfinding" ? directory : undefined,
         },
       });
       if (!result.ok) {
-        setError("Unlock with the technician PIN, or turn on open glass in Setup.");
+        setError("Unlock with the technician PIN, or turn on skip-pairing in Setup.");
         return;
       }
       onSaved();
@@ -153,18 +136,15 @@ export function TechSheet({
             Close
           </button>
         </div>
-        {typeof window !== "undefined" && window.location.port === String(PANEL_PORT) ? (
-          <p className="text-sm text-muted">Setup is on this PC, not this plate.</p>
-        ) : (
-          <Link
-            to="/config"
-            className="flex h-11 items-center justify-center rounded-lg border border-border text-sm font-medium"
-          >
-            Open Setup
-          </Link>
-        )}
+        <Link
+          to="/config"
+          className="flex h-11 items-center justify-center rounded-lg border border-border text-sm font-medium"
+        >
+          Open Setup
+        </Link>
+        <p className="text-sm text-muted">Building, calendar, NICs, and Relay. Site PIN.</p>
         {!unlocked ? (
-          <Field label="Technician PIN">
+          <Field label="Technician PIN" hint="Set in Setup. Not the site PIN.">
             <input
               className={inputClass}
               value={pin}
@@ -175,53 +155,8 @@ export function TechSheet({
           </Field>
         ) : (
           <>
-            {frame.template === "wayfinding" ? (
-              <div className="flex flex-col gap-3">
-                <p className="text-sm font-medium text-muted">Rooms on this plate</p>
-                {frame.catalog.length === 0 ? (
-                  <p className="text-sm text-muted">Add rooms in Setup first.</p>
-                ) : (
-                  frame.catalog.map((room) => {
-                    const pick = picks[room.id] ?? { on: false, arrow: "off" as Arrow };
-                    return (
-                      <div key={room.id} className="flex items-center gap-3">
-                        <label className="flex min-w-0 flex-1 items-center gap-3 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={pick.on}
-                            onChange={(event) =>
-                              setPicks((prev) => ({
-                                ...prev,
-                                [room.id]: { ...pick, on: event.target.checked },
-                              }))
-                            }
-                          />
-                          <span className="truncate font-medium">{room.name}</span>
-                        </label>
-                        <select
-                          className={`${inputClass} w-28 shrink-0`}
-                          value={pick.arrow}
-                          disabled={!pick.on}
-                          onChange={(event) =>
-                            setPicks((prev) => ({
-                              ...prev,
-                              [room.id]: { ...pick, arrow: event.target.value as Arrow },
-                            }))
-                          }
-                        >
-                          {ARROWS.map((id) => (
-                            <option key={id} value={id}>
-                              {ARROW_LABELS[id]}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            ) : (
-              <Field label="Room">
+            {frame.template !== "wayfinding" ? (
+              <Field label="Room" hint="Which room this plate shows.">
                 <select className={inputClass} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
                   <option value="">Unassigned</option>
                   {frame.catalog.map((room) => (
@@ -231,8 +166,8 @@ export function TechSheet({
                   ))}
                 </select>
               </Field>
-            )}
-            <Field label="Palette">
+            ) : null}
+            <Field label="Palette" hint="Plate colors. Same four names on every Foyer.">
               <select className={inputClass} value={palette} onChange={(e) => setPalette(e.target.value as PaletteName)}>
                 {PALETTES.map((id) => (
                   <option key={id} value={id}>
@@ -241,18 +176,18 @@ export function TechSheet({
                 ))}
               </select>
             </Field>
-            <Field label="Type">
+            <Field label="Type size">
               <select className={inputClass} value={scale} onChange={(e) => setScale(e.target.value as TypeScale)}>
                 {TYPE_SCALES.map((id) => (
                   <option key={id} value={id}>
-                    {id}
+                    {SCALE_LABELS[id]}
                   </option>
                 ))}
               </select>
             </Field>
             {frame.template === "welcome" ? (
               <div className="flex flex-col gap-3">
-                <p className="text-sm font-medium text-muted">Welcome pane</p>
+                <p className="text-sm font-medium text-muted">Show on welcome</p>
                 <label className="flex items-center gap-3 text-sm">
                   <input type="checkbox" checked={showNow} onChange={(e) => setShowNow(e.target.checked)} />
                   Session name
@@ -277,28 +212,49 @@ export function TechSheet({
                   <input type="checkbox" checked={showStatus} onChange={(e) => setShowStatus(e.target.checked)} />
                   Open / closed
                 </label>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={showClock} onChange={(e) => setShowClock(e.target.checked)} />
+                  Clock
+                </label>
               </div>
             ) : null}
-            <label className="flex items-center gap-3 text-sm">
-              <input type="checkbox" checked={showClock} onChange={(e) => setShowClock(e.target.checked)} />
-              Clock
-            </label>
+            {frame.template === "door" ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-medium text-muted">Show on room plate</p>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={showStatus} onChange={(e) => setShowStatus(e.target.checked)} />
+                  Room status (lower right)
+                </label>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={showClock} onChange={(e) => setShowClock(e.target.checked)} />
+                  Clock (lower left)
+                </label>
+              </div>
+            ) : null}
+            {frame.template !== "welcome" && frame.template !== "door" ? (
+              <label className="flex items-center gap-3 text-sm">
+                <input type="checkbox" checked={showClock} onChange={(e) => setShowClock(e.target.checked)} />
+                Clock
+              </label>
+            ) : null}
             {frame.template !== "door" ? (
               <>
                 <label className="flex items-center gap-3 text-sm">
                   <input type="checkbox" checked={logoOn} onChange={(e) => setLogoOn(e.target.checked)} />
-                  Logo band
+                  Logo strip
                 </label>
-                <Field label="Band size">
-                  <input
-                    className={inputClass}
-                    type="number"
-                    min={8}
-                    max={20}
-                    value={logoBand}
-                    onChange={(e) => setLogoBand(Number(e.target.value))}
-                  />
-                </Field>
+                {logoOn ? (
+                  <Field label="Logo height" hint="Percent of the plate, 8–20.">
+                    <input
+                      className={inputClass}
+                      type="number"
+                      min={8}
+                      max={20}
+                      value={logoBand}
+                      onChange={(e) => setLogoBand(Number(e.target.value))}
+                    />
+                  </Field>
+                ) : null}
               </>
             ) : null}
           </>
