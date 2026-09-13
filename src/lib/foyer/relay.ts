@@ -36,22 +36,36 @@ export function isLoopbackUrl(raw: string) {
   }
 }
 
+/** TCP peer only. Host / X-Forwarded-* are not loopback. */
+export function isLoopbackIp(ip: string) {
+  const a = ip.trim().toLowerCase();
+  return a === "127.0.0.1" || a === "::1" || a === "::ffff:127.0.0.1";
+}
+
+type NodeReq = { socket?: { remoteAddress?: string }; connection?: { remoteAddress?: string } };
+
+export function tcpPeerAddress(request: Request): string | null {
+  const row = request as Request & {
+    socket?: { remoteAddress?: string };
+    runtime?: { node?: { req?: NodeReq } };
+  };
+  const raw =
+    row.runtime?.node?.req?.socket?.remoteAddress
+    || row.runtime?.node?.req?.connection?.remoteAddress
+    || row.socket?.remoteAddress
+    || "";
+  const ip = String(raw).trim();
+  return ip || null;
+}
+
+export function isTcpLoopback(request: Request) {
+  const ip = tcpPeerAddress(request);
+  if (!ip) return false;
+  return isLoopbackIp(ip);
+}
+
 export function isLoopbackRequest(request: Request) {
-  const hosts: string[] = [];
-  try {
-    hosts.push(new URL(request.url).hostname);
-  } catch {
-    /* ignore */
-  }
-  const header = request.headers.get("host");
-  if (header) hosts.push(header);
-  const fwd = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  if (fwd) hosts.push(fwd);
-  const fwdHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  if (fwdHost) hosts.push(fwdHost);
-  const named = hosts.map((h) => h.trim()).filter(Boolean);
-  if (!named.length) return false;
-  return named.every(isLoopbackHostname);
+  return isTcpLoopback(request);
 }
 
 export function verifyPeerRequest(opts: {
@@ -86,9 +100,9 @@ export function verifyPeerRequest(opts: {
   }
 }
 
-/** Loopback GET is allowed unsigned. HMAC, if sent, must match. Non-loopback is denied. */
+/** Unsigned GET only if the TCP peer is loopback. HMAC, if sent, must match. Non-loopback is denied even with HMAC. */
 export function authorizePeerGet(opts: { key: string; request: Request; path?: string }) {
-  if (!isLoopbackRequest(opts.request)) return false;
+  if (!isTcpLoopback(opts.request)) return false;
   const sig = opts.request.headers.get("x-relay-auth") || "";
   const ts = opts.request.headers.get("x-relay-ts") || "";
   if (!sig && !ts) return true;

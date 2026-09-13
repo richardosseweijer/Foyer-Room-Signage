@@ -26,7 +26,7 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 | Lockout | 5 fails / 5 min per gate. Process memory; a restart clears the counter. |
 | Pairing | Welcome (local video) is always bound. Room panel: display token after claim. Unpaired glass shows a code, not room data. |
 | Calendar | Server pulls Google ICS. Tablets never see the URL. Titles **and descriptions** sanitized. `{RoomName}` routes; one-room PC also accepts untagged events. Private → `Busy`. |
-| Relay | Loopback `GET /api/peer` only. Occupancy in, calendar session out. Unsigned GET on loopback; HMAC if sent must match. No occupancy POST. Door `:8082` denies `/api/peer`. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). Secret, if pasted, stays in `foyer-secrets.json`. Occupancy snapshot only on the frame. |
+| Relay | Loopback `GET /api/peer` only. Occupancy in, calendar session out. Unsigned GET only when the **TCP peer** is loopback (`127.0.0.1` / `::1`); `Host` / `X-Forwarded-*` are not loopback. HMAC if sent must match. Non-loopback GET denied even with HMAC. No occupancy POST. Door `:8082` denies `/api/peer`. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). Secret, if pasted, stays in `foyer-secrets.json`. Occupancy snapshot only on the frame. |
 | Secrets | `data/foyer-secrets.json`: hashed PINs, ICS URLs, tokens. Export strips them. Not in git. |
 | Logos | jpeg/png/webp, size cap. No SVG. |
 | Logs | No PIN, no ICS, no token in log lines. `data/foyer-update.log` is git SHAs and npm only. |

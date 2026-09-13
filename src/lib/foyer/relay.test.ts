@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { occupancyFromPeer, occupancyFromValue, peerEndpoint, signPeer, isLoopbackHostname, isLoopbackRequest, authorizePeerGet, buildFoyerPeerGet } from "./relay.ts";
+import { occupancyFromPeer, occupancyFromValue, peerEndpoint, signPeer, isLoopbackHostname, isLoopbackRequest, isTcpLoopback, tcpPeerAddress, authorizePeerGet, buildFoyerPeerGet } from "./relay.ts";
 import { demoSite } from "./seed.ts";
 
 test("Relay HMAC matches the documented peer formula", () => {
@@ -93,8 +93,13 @@ test("loopback hostnames are the only peer GET surface", () => {
 });
 
 test("unsigned loopback GET is allowed; AV-LAN is not", () => {
-  const loop = new Request("http://127.0.0.1:8080/api/peer", { method: "GET" });
-  const lan = new Request("http://10.0.25.10:8082/api/peer", { method: "GET" });
+  const loop = new Request("http://10.0.25.10:8080/api/peer", { method: "GET" });
+  const lan = new Request("http://127.0.0.1:8082/api/peer", {
+    method: "GET",
+    headers: { host: "127.0.0.1:8080", "x-forwarded-for": "127.0.0.1" },
+  });
+  Object.assign(loop, { runtime: { node: { req: { socket: { remoteAddress: "127.0.0.1" } } } } });
+  Object.assign(lan, { runtime: { node: { req: { socket: { remoteAddress: "10.0.25.10" } } } } });
   assert.equal(isLoopbackRequest(loop), true);
   assert.equal(isLoopbackRequest(lan), false);
   assert.equal(authorizePeerGet({ key: "", request: loop }), true);
@@ -104,7 +109,30 @@ test("unsigned loopback GET is allowed; AV-LAN is not", () => {
     method: "GET",
     headers: { "x-relay-auth": "ab", "x-relay-ts": String(Date.now()) },
   });
+  Object.assign(bad, { runtime: { node: { req: { socket: { remoteAddress: "127.0.0.1" } } } } });
   assert.equal(authorizePeerGet({ key: "secret", request: bad }), false);
+});
+
+test("Host/XFF and a missing TCP peer are not loopback", () => {
+  const spoof = new Request("http://127.0.0.1:8080/api/peer", {
+    method: "GET",
+    headers: { host: "127.0.0.1:8080", "x-forwarded-for": "127.0.0.1", "x-forwarded-host": "localhost" },
+  });
+  Object.assign(spoof, { runtime: { node: { req: { socket: { remoteAddress: "10.0.25.10" } } } } });
+  assert.equal(tcpPeerAddress(spoof), "10.0.25.10");
+  assert.equal(isTcpLoopback(spoof), false);
+  assert.equal(authorizePeerGet({ key: "secret", request: spoof }), false);
+  const none = new Request("http://127.0.0.1:8080/api/peer");
+  assert.equal(tcpPeerAddress(none), null);
+  assert.equal(isTcpLoopback(none), false);
+  assert.equal(authorizePeerGet({ key: "secret", request: none }), false);
+  const lanTs = String(Date.now());
+  const lanHmac = new Request("http://10.0.25.10:8080/api/peer", {
+    method: "GET",
+    headers: { "x-relay-ts": lanTs, "x-relay-auth": signPeer("secret", "GET", "/api/peer", lanTs, "") },
+  });
+  Object.assign(lanHmac, { runtime: { node: { req: { socket: { remoteAddress: "10.0.25.10" } } } } });
+  assert.equal(authorizePeerGet({ key: "secret", request: lanHmac }), false);
 });
 
 test("foyer peer GET body is session only", () => {
