@@ -24,7 +24,7 @@ export const FOYER_MODULES = [
 export const TEMPLATES = ["door", "welcome", "wayfinding", "split", "message"] as const;
 export const BOARD_TEMPLATES = ["welcome", "door"] as const;
 export const ARROWS = ["off", "left", "right", "up", "down"] as const;
-export const TYPE_SCALES = ["comfort", "large"] as const;
+export const TYPE_SCALES = ["comfort", "large", "extra-large", "giant"] as const;
 export const PALETTES = ["linen", "orchard", "ink", "contrast"] as const;
 export const STATUSES = ["available", "in-session", "starting-soon", "closed", "busy"] as const;
 export const YOU_ARE_HERE = [0, 90, 180, 270] as const;
@@ -60,7 +60,7 @@ export const LookSlotsSchema = z.strictObject({
 export const LookSchema = z.strictObject({
   palette: z.enum(PALETTES),
   arrow: z.enum(ARROWS).default("off"),
-  typeScale: z.enum(TYPE_SCALES),
+  typeScale: z.enum(TYPE_SCALES).catch("comfort"),
   logoOn: z.boolean(),
   logoBand: z.number(),
   slots: LookSlotsSchema,
