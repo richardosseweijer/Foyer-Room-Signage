@@ -64,12 +64,11 @@ export function DoorSign({ frame }: { frame: Frame }) {
   const current = frame.now ?? queueAll[0] ?? null;
   const queue = frame.now ? queueAll : queueAll.slice(1);
   const when = current ? formatSpan(current.startIso, current.endIso, frame.clock.timezone) : "";
+  const showClock = frame.look.slots.clock;
+  const showStatus = frame.look.slots.status !== false;
 
   return (
-    <div className={`door-wall${frame.look.slots.status !== false ? " has-corner" : ""}`}>
-      {frame.look.slots.clock ? (
-        <p className="door-clock">{formatClock(frame.clock.iso, frame.clock.timezone)}</p>
-      ) : null}
+    <div className="door-wall">
       <h1 className="door-name">{frame.identity.roomName}</h1>
       <div className="door-indent">
         {current ? (
@@ -83,10 +82,21 @@ export function DoorSign({ frame }: { frame: Frame }) {
         )}
         <FitQueue meetings={queue} timezone={frame.clock.timezone} />
       </div>
-      {frame.look.slots.status !== false ? (
-        <p className="door-status door-corner mt-auto self-end" data-status={frame.status}>
-          {statusLine(frame.status)}
-        </p>
+      {showClock || showStatus ? (
+        <div className="door-foot">
+          {showClock ? (
+            <p className="door-clock door-mark">{formatClock(frame.clock.iso, frame.clock.timezone)}</p>
+          ) : (
+            <span />
+          )}
+          {showStatus ? (
+            <p className="door-status door-mark" data-status={frame.status}>
+              {statusLine(frame.status)}
+            </p>
+          ) : (
+            <span />
+          )}
+        </div>
       ) : null}
     </div>
   );
