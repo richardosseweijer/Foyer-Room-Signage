@@ -25,8 +25,8 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
         <h1 className="welcome-title">{headline ? headline.title : room}</h1>
         {cue || description ? (
           <div className="welcome-rail">
-            {cue ? <p className="welcome-cue">{cue}</p> : null}
-            {description ? <p className="welcome-copy">{description}</p> : null}
+            {description ? <p className="welcome-cue">{description}</p> : null}
+            {cue ? <p className="welcome-copy">{cue}</p> : null}
           </div>
         ) : null}
       </div>
