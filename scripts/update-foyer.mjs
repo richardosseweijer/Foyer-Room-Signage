@@ -61,7 +61,11 @@ function cleanup() {
 
 function restartUnits() {
   if (process.platform === "win32") return;
-  run("systemctl", ["try-restart", "foyer-panel", "foyer-kiosk"]);
+  const units = ["foyer.service", "foyer-panel.service", "foyer-kiosk.service"];
+  if (run("systemctl", ["try-restart", ...units])) return;
+  const systemctl = fs.existsSync("/usr/bin/systemctl") ? "/usr/bin/systemctl" : "systemctl";
+  const sudo = fs.existsSync("/usr/bin/sudo") ? "/usr/bin/sudo" : "sudo";
+  run(sudo, ["-n", systemctl, "try-restart", ...units]);
 }
 
 if (!fs.existsSync(path.join(root, ".git"))) {

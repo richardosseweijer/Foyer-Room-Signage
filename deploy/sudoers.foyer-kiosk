@@ -1,3 +1,7 @@
 # Copy to /etc/sudoers.d/foyer-kiosk (visudo -c -f first).
 # Replace USER with the Foyer service account.
-USER ALL=(root) NOPASSWD: /usr/bin/systemctl start foyer-kiosk.service, /usr/bin/systemctl restart foyer-kiosk.service, /usr/bin/systemctl stop foyer-kiosk.service
+# Update-from-GitHub and Enable local output restart these units only.
+USER ALL=(root) NOPASSWD: \
+  /usr/bin/systemctl start foyer.service, /usr/bin/systemctl restart foyer.service, /usr/bin/systemctl try-restart foyer.service, /usr/bin/systemctl stop foyer.service, \
+  /usr/bin/systemctl start foyer-panel.service, /usr/bin/systemctl restart foyer-panel.service, /usr/bin/systemctl try-restart foyer-panel.service, /usr/bin/systemctl stop foyer-panel.service, \
+  /usr/bin/systemctl start foyer-kiosk.service, /usr/bin/systemctl restart foyer-kiosk.service, /usr/bin/systemctl try-restart foyer-kiosk.service, /usr/bin/systemctl stop foyer-kiosk.service

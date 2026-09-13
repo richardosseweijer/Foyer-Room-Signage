@@ -361,7 +361,7 @@ Setup → **Enable local output** is a retry of that restart. The Foyer user nee
 ```bash
 USER_NAME="$(whoami)"
 sudo tee /etc/sudoers.d/foyer-kiosk >/dev/null <<EOF
-${USER_NAME} ALL=(root) NOPASSWD: /usr/bin/systemctl start foyer-kiosk.service, /usr/bin/systemctl restart foyer-kiosk.service, /usr/bin/systemctl stop foyer-kiosk.service
+${USER_NAME} ALL=(root) NOPASSWD: /usr/bin/systemctl start foyer.service, /usr/bin/systemctl restart foyer.service, /usr/bin/systemctl try-restart foyer.service, /usr/bin/systemctl stop foyer.service, /usr/bin/systemctl start foyer-panel.service, /usr/bin/systemctl restart foyer-panel.service, /usr/bin/systemctl try-restart foyer-panel.service, /usr/bin/systemctl stop foyer-panel.service, /usr/bin/systemctl start foyer-kiosk.service, /usr/bin/systemctl restart foyer-kiosk.service, /usr/bin/systemctl try-restart foyer-kiosk.service, /usr/bin/systemctl stop foyer-kiosk.service
 EOF
 sudo chmod 440 /etc/sudoers.d/foyer-kiosk
 sudo visudo -c
@@ -428,6 +428,8 @@ bash scripts/foyer-status.sh
 ```
 
 Uncommitted source edits block the button. `data/foyer-*.json` is not in git and is left alone.
+
+The updater then `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the sudoers snippet in §7.
 
 ---
 
