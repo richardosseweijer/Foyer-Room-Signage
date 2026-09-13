@@ -1,10 +1,17 @@
-import type { Arrow, PaletteName, Status } from "./types.ts";
+import type { Arrow, PaletteName, Status, TypeScale } from "./types.ts";
 
 export const PALETTE_LABELS: Record<PaletteName, string> = {
   linen: "Linen",
   orchard: "Orchard",
   ink: "Ink",
   contrast: "Contrast",
+};
+
+export const SCALE_LABELS: Record<TypeScale, string> = {
+  comfort: "Comfort",
+  large: "Large",
+  "extra-large": "Extra large",
+  giant: "Giant",
 };
 
 export const STATUS_LABELS: Record<Status, string> = {
