@@ -1,30 +1,36 @@
+import { STATUS_LABELS } from "@/lib/foyer/palettes";
 import type { Frame } from "@/lib/foyer/types";
-import { MeetingBlock } from "./MeetingBlock";
-import { StatusPill } from "./StatusPill";
+import { formatWhen } from "./format";
+
+function statusLine(status: Frame["status"]) {
+  if (status === "closed") return "Closed";
+  if (status === "available") return "Open";
+  return STATUS_LABELS[status];
+}
 
 export function DoorSign({ frame }: { frame: Frame }) {
+  const now = frame.now;
+  const next = frame.next && frame.next.startIso !== now?.startIso ? frame.next : null;
   return (
-    <div className="flex h-full flex-col justify-between gap-10">
-      <div className="flex flex-col gap-4">
-        {frame.look.slots.status ? <StatusPill status={frame.status} /> : null}
-        <h1
-          className="font-semibold text-balance"
-          style={{ fontSize: "var(--sign-name)", lineHeight: 0.95, letterSpacing: "-0.04em" }}
-        >
-          {frame.identity.roomName}
-        </h1>
-        {frame.identity.floorLabel ? (
-          <p className="font-medium" style={{ color: "var(--sign-muted)", fontSize: "var(--sign-meta)" }}>
-            {frame.identity.floorLabel}
-          </p>
-        ) : null}
+    <div className="door-wall">
+      <div className="door-ident">
+        <p className="door-status">{statusLine(frame.status)}</p>
+        <h1 className="door-name">{frame.identity.roomName}</h1>
+        {frame.identity.floorLabel ? <p className="door-floor">{frame.identity.floorLabel}</p> : null}
       </div>
-      <div className="flex flex-col gap-7">
-        {frame.look.slots.now ? (
-          <MeetingBlock label="Now" meeting={frame.now} timezone={frame.clock.timezone} />
+      <div className="door-sessions">
+        {now ? (
+          <div className="door-session">
+            <p className="door-label">Now · {formatWhen(now.startIso, frame.clock.timezone)}</p>
+            <p className="door-session-title">{now.title}</p>
+            {now.description ? <p className="door-copy">{now.description}</p> : null}
+          </div>
         ) : null}
-        {frame.look.slots.next ? (
-          <MeetingBlock label="Next" meeting={frame.next} timezone={frame.clock.timezone} size="next" />
+        {next ? (
+          <div className="door-session is-next">
+            <p className="door-label">Next · {formatWhen(next.startIso, frame.clock.timezone)}</p>
+            <p className="door-next-title">{next.title}</p>
+          </div>
         ) : null}
       </div>
     </div>

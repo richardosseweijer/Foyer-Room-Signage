@@ -75,7 +75,7 @@ export function Player({ displayId }: { displayId: string }) {
   }
 
   return (
-    <div ref={root} className={`plate-root relative h-dvh min-h-dvh overflow-hidden${tech ? " is-tech" : ""}`}>
+    <div ref={root} className={`plate-root relative h-dvh min-h-dvh${frame.template === "welcome" ? " overflow-hidden" : ""}${tech ? " is-tech" : ""}`}>
       {!frame.pairing.bound ? (
         <PairingScreen frame={frame} />
       ) : (

@@ -234,3 +234,87 @@
   line-height: 1.15;
   text-wrap: pretty;
 }
+
+.door-wall {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(1.25rem, 4vh, 2.5rem);
+}
+
+.door-ident {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.door-status {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sign-muted);
+}
+
+.door-name {
+  margin: 0;
+  font-size: clamp(2.4rem, 9vw, 4.4rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+}
+
+.door-floor {
+  margin: 0;
+  font-size: var(--sign-meta);
+  font-weight: 500;
+  color: var(--sign-muted);
+}
+
+.door-sessions {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: clamp(1.1rem, 3vh, 1.8rem);
+}
+
+.door-session-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 5.5vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-wrap: pretty;
+}
+
+.door-next-title {
+  margin: 0;
+  font-size: clamp(1.15rem, 3.2vw, 1.7rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: pretty;
+}
+
+.door-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sign-muted);
+}
+
+.door-copy {
+  margin: 0.4rem 0 0;
+  max-width: 36rem;
+  font-size: var(--sign-meta);
+  font-weight: 500;
+  line-height: 1.35;
+  text-wrap: pretty;
+  color: var(--sign-muted);
+}
