@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { enableWelcomeOutput, getSetup, saveSetup, unlockSite, updateFromGithub } from "@/lib/foyer/setup";
+import { enableWelcomeOutput, claimDisplay, getSetup, saveSetup, unlockSite, updateFromGithub } from "@/lib/foyer/setup";
 import { timezoneOptions } from "@/lib/foyer/site";
 import type { Site } from "@/lib/foyer/types";
 
@@ -40,6 +40,8 @@ export function ConfigApp() {
   const [gitDirty, setGitDirty] = useState(false);
   const [updateNote, setUpdateNote] = useState("");
   const [kioskNote, setKioskNote] = useState("");
+  const [pairCode, setPairCode] = useState("");
+  const [pairNote, setPairNote] = useState("");
   const [icsHost, setIcsHost] = useState("");
   const [ingestNote, setIngestNote] = useState("");
   const [ingestNic, setIngestNic] = useState("");
@@ -186,6 +188,33 @@ export function ConfigApp() {
     }
   }
 
+  async function bindPlate() {
+    setPairNote("");
+    setError("");
+    const code = pairCode.trim();
+    if (!code) {
+      setPairNote("Type the four-digit code from the door tablet.");
+      return;
+    }
+    try {
+      const result = await claimDisplay({ data: { session, code } });
+      if (!result.ok) {
+        setPairNote(
+          result.reason === "expired"
+            ? "Code expired. Refresh the tablet and try the new one."
+            : result.reason === "auth"
+              ? "Session expired. Unlock Setup again."
+              : "That code is not showing on a tablet.",
+        );
+        return;
+      }
+      setPairCode("");
+      setPairNote("Tablet bound. It should paint the room within a few seconds.");
+    } catch {
+      setPairNote("Could not reach Foyer.");
+    }
+  }
+
   useEffect(() => {
     if (!saved) return;
     const t = window.setTimeout(() => setSaved(false), 1800);
@@ -278,6 +307,31 @@ export function ConfigApp() {
               ))}
             </select>
           </Field>
+        </section>
+
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
+          <h2 className="text-xl font-semibold tracking-tight">Door tablet</h2>
+          <p className="text-sm text-muted">
+            The plate shows a four-digit code until it is bound. Type that code here. The token goes to the tablet, not this browser.
+          </p>
+          <Field label="Pairing code">
+            <input
+              className={inputClass}
+              value={pairCode}
+              onChange={(e) => setPairCode(e.target.value)}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={4}
+            />
+          </Field>
+          <button
+            type="button"
+            className="h-11 rounded-lg border border-border font-medium"
+            onClick={() => void bindPlate()}
+          >
+            Bind tablet
+          </button>
+          {pairNote ? <p className="text-sm text-muted">{pairNote}</p> : null}
           <label className="flex items-center gap-3 text-sm">
             <input
               type="checkbox"
@@ -285,7 +339,7 @@ export function ConfigApp() {
               onChange={(e) => setSite({ ...site, openGlass: e.target.checked })}
             />
             <span>
-              Skip pairing on the door tablet
+              Skip pairing
               <span className="mt-1 block font-normal text-muted">Trusted AV-LAN only. Off in a paying venue.</span>
             </span>
           </label>
