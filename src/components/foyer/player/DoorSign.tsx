@@ -66,15 +66,12 @@ export function DoorSign({ frame }: { frame: Frame }) {
   const when = current ? formatSpan(current.startIso, current.endIso, frame.clock.timezone) : "";
 
   return (
-    <div className="door-wall">
+    <div className={`door-wall${frame.look.slots.status !== false ? " has-corner" : ""}`}>
       {frame.look.slots.clock ? (
         <p className="door-clock">{formatClock(frame.clock.iso, frame.clock.timezone)}</p>
       ) : null}
       <h1 className="door-name">{frame.identity.roomName}</h1>
       <div className="door-indent">
-        <p className="door-status" data-status={frame.status}>
-          {statusLine(frame.status)}
-        </p>
         {current ? (
           <div className="door-now">
             <p className="door-now-title">{current.title}</p>
@@ -86,6 +83,11 @@ export function DoorSign({ frame }: { frame: Frame }) {
         )}
         <FitQueue meetings={queue} timezone={frame.clock.timezone} />
       </div>
+      {frame.look.slots.status !== false ? (
+        <p className="door-corner" data-status={frame.status}>
+          {statusLine(frame.status)}
+        </p>
+      ) : null}
     </div>
   );
 }
