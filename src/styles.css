@@ -45,6 +45,22 @@
   font-family: var(--font-sans);
   min-height: 100dvh;
   letter-spacing: -0.011em;
+  cursor: none;
+}
+
+.plate-root {
+  cursor: none;
+}
+
+.plate-root.is-tech,
+.plate-root.is-tech .sign-root,
+.plate-root.is-tech * {
+  cursor: auto;
+}
+
+.plate-root.is-tech button:not(:disabled),
+.plate-root.is-tech [role="button"]:not(:disabled) {
+  cursor: pointer;
 }
 
 .sign-root[data-palette="linen"] {

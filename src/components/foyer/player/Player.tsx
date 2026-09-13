@@ -75,7 +75,7 @@ export function Player({ displayId }: { displayId: string }) {
   }
 
   return (
-    <div ref={root} className="plate-root relative min-h-dvh">
+    <div ref={root} className={`plate-root relative min-h-dvh${tech ? " is-tech" : ""}`}>
       {!frame.pairing.bound ? (
         <PairingScreen frame={frame} />
       ) : (
