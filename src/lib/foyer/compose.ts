@@ -205,7 +205,7 @@ export function composeFrame(input: ComposeInput): Frame {
     now: primary?.now ?? null,
     next: primary?.next ?? null,
     following: (calendar.rooms[primary?.roomId ?? ""]?.later ?? [])
-      .slice(0, 4)
+      .slice(0, 12)
       .map((item) => cleanMeeting(item, { busy: false, template: display.template }))
       .filter((item): item is NonNullable<typeof item> => Boolean(item)),
     panes,
