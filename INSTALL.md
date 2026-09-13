@@ -13,7 +13,7 @@ Foyer is a **room appliance**:
 
 Wayfinding is **not** installed by this guide.
 
-Default site PIN after first start: `1234`. Open Setup once and set a stronger PIN.
+Default site PIN after first start: `1234`. Open Setup once and set a stronger PIN. Open glass starts **off**.
 
 OS packages this guide installs (npm packages come from `npm ci --include=dev` in §3):
 
@@ -389,6 +389,7 @@ Confirm from a laptop on the AP:
 ```bash
 curl -sI http://10.64.0.1:8082/config          # 404
 curl -sI http://10.64.0.1:8082/play/welcome    # 404
+curl -sI http://10.64.0.1:8082/play/dc         # 404
 curl -s  -o /dev/null -w "%{http_code}\n" http://10.64.0.1:8082/play/door
 # Google from the tablet must fail. Relay :8081 from the tablet must fail.
 ```

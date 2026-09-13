@@ -1,6 +1,6 @@
 # Foyer
 
-Foyer **0.1.1** (beta). Room signage that lives **on the Relay PC**.
+Foyer **0.2.0** (beta). Room signage that lives **on the Relay PC**.
 
 - **Welcome** — this PC’s local video output (HDMI kiosk)
 - **Room plate** — tablet on the in-rack AP (own HTTP listener)

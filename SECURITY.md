@@ -20,7 +20,7 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 | Control | Rule |
 |---|---|
 | Listen | Welcome on `0.0.0.0:8080` so Setup is reachable from a config laptop (`src/lib/foyer/listen.ts`). Firewall: 8080 on the config LAN only — never the rack AP or WAN. Room panel on `:8082`. Setup is not on the panel listener. |
-| Calendar bind | ICS fetch uses the Setup-selected outbound NIC (`src/lib/foyer/net.ts` + `src/lib/foyer/calendar.ts`). If a NIC is selected but has no IPv4, keep last-good. |
+| Calendar bind | ICS fetch uses the Setup-selected outbound NIC (`src/lib/foyer/net.ts` + `src/lib/foyer/calendar.ts`). If a NIC is selected but has no IPv4, Setup shows a warning and ingest pulls **unbound** rather than showing a blank wall. |
 | Two PINs | **Site** PIN unlocks `/config`. **Tech** PIN unlocks the endpoint sheet. Cross-gate: site PIN is rejected on tech, tech PIN is rejected on config. |
 | First PIN | `1234` then force a stronger one. Weak list in `src/lib/foyer/pins.ts`. |
 | Lockout | 5 fails / 5 min per gate. Process memory; a restart clears the counter. |

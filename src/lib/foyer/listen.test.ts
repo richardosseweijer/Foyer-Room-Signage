@@ -8,10 +8,12 @@ test("welcome and panel ports are distinct", () => {
   assert.equal(WELCOME_HOST, "0.0.0.0");
 });
 
-test("panel listener denies setup and the welcome kiosk", () => {
+test("panel listener denies setup, welcome, and other plates", () => {
   assert.equal(panelDecision("/config"), "deny");
   assert.equal(panelDecision("/config/"), "deny");
   assert.equal(panelDecision("/play/welcome"), "deny");
+  assert.equal(panelDecision("/play/dc"), "deny");
+  assert.equal(panelDecision("/play/wayfinding"), "deny");
 });
 
 test("panel listener sends the root to the room plate", () => {

@@ -1,7 +1,7 @@
 {
   "name": "foyer",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "sideEffects": false,
   "type": "module",
   "overrides": {
@@ -20,7 +20,7 @@
     "preview:stop": "node scripts/preview.mjs stop",
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/foyer/sanitize.test.ts src/lib/foyer/frame-schema.test.ts src/lib/foyer/compose.test.ts src/lib/foyer/boundary.test.ts src/lib/foyer/pins.test.ts src/lib/foyer/persist.test.ts src/lib/foyer/look.test.ts src/lib/foyer/pair.test.ts src/lib/foyer/calendar.test.ts src/lib/foyer/relay.test.ts src/lib/foyer/listen.test.ts src/lib/foyer/net.test.ts src/lib/foyer/video.test.ts src/lib/foyer/site.test.ts src/lib/foyer/update.test.ts src/lib/foyer/kiosk.test.ts",
+    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/foyer/sanitize.test.ts src/lib/foyer/frame-schema.test.ts src/lib/foyer/compose.test.ts src/lib/foyer/boundary.test.ts src/lib/foyer/pins.test.ts src/lib/foyer/persist.test.ts src/lib/foyer/look.test.ts src/lib/foyer/pair.test.ts src/lib/foyer/calendar.test.ts src/lib/foyer/relay.test.ts src/lib/foyer/listen.test.ts src/lib/foyer/net.test.ts src/lib/foyer/video.test.ts src/lib/foyer/site.test.ts src/lib/foyer/update.test.ts src/lib/foyer/kiosk.test.ts src/lib/foyer/seed.test.ts src/components/foyer/player/format.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

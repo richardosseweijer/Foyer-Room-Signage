@@ -283,20 +283,24 @@ export function TechSheet({
               <input type="checkbox" checked={showClock} onChange={(e) => setShowClock(e.target.checked)} />
               Clock
             </label>
-            <label className="flex items-center gap-3 text-sm">
-              <input type="checkbox" checked={logoOn} onChange={(e) => setLogoOn(e.target.checked)} />
-              Logo band
-            </label>
-            <Field label="Band size">
-              <input
-                className={inputClass}
-                type="number"
-                min={8}
-                max={20}
-                value={logoBand}
-                onChange={(e) => setLogoBand(Number(e.target.value))}
-              />
-            </Field>
+            {frame.template !== "door" ? (
+              <>
+                <label className="flex items-center gap-3 text-sm">
+                  <input type="checkbox" checked={logoOn} onChange={(e) => setLogoOn(e.target.checked)} />
+                  Logo band
+                </label>
+                <Field label="Band size">
+                  <input
+                    className={inputClass}
+                    type="number"
+                    min={8}
+                    max={20}
+                    value={logoBand}
+                    onChange={(e) => setLogoBand(Number(e.target.value))}
+                  />
+                </Field>
+              </>
+            ) : null}
           </>
         )}
         {error ? <p className="text-sm text-muted">{error}</p> : null}

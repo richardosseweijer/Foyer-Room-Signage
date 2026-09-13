@@ -94,7 +94,7 @@ export function demoSite(): Site {
   const site = emptySite();
   site.name = "Foyer House";
   site.timezone = DEFAULT_TIMEZONE;
-  site.openGlass = true;
+  site.openGlass = false;
   site.demoRev = ROOM_APPLIANCE_REV;
   site.floors = [{ id: "f1", label: "Ground" }];
   site.calendars = [{ id: "shared", label: "Room calendar" }];
@@ -105,7 +105,7 @@ export function demoSite(): Site {
       id: "cedar",
       name: "Cedar",
       floorId: "f1",
-      hours: { start: "07:00", end: "23:00", days: WEEKDAYS },
+      hours: { start: "00:00", end: "00:00", days: WEEKDAYS },
       occupancy: "auto",
       calendarId: "shared",
     },

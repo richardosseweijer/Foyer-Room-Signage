@@ -31,7 +31,7 @@ test("there is no foyer barrel index", () => {
   assert.equal(existsSync(join(root, "src/lib/foyer/index.ts")), false);
 });
 
-test("player UI does not exist yet, and if it does it must not import secrets", () => {
+test("player UI must not import secrets, persist, calendar, net, or relay", () => {
   const playerDir = join(root, "src/components/foyer/player");
   if (!existsSync(playerDir)) return;
   for (const name of readdirSync(playerDir)) {
@@ -40,5 +40,14 @@ test("player UI does not exist yet, and if it does it must not import secrets", 
     assert.equal(/from ["']@\/lib\/foyer\/secrets/.test(src), false, name);
     assert.equal(/from ["']@\/lib\/foyer\/persist/.test(src), false, name);
     assert.equal(/from ["']@\/lib\/foyer\/calendar/.test(src), false, name);
+    assert.equal(/from ["']@\/lib\/foyer\/net/.test(src), false, name);
+    assert.equal(/from ["']@\/lib\/foyer\/relay/.test(src), false, name);
   }
+});
+
+test("tech sheet must not import calendar or secrets", () => {
+  const src = readFileSync(join(root, "src/components/foyer/tech/TechSheet.tsx"), "utf8");
+  assert.equal(/from ["']@\/lib\/foyer\/calendar/.test(src), false);
+  assert.equal(/from ["']@\/lib\/foyer\/secrets/.test(src), false);
+  assert.equal(/from ["']@\/lib\/foyer\/persist/.test(src), false);
 });

@@ -10,8 +10,9 @@ export function panelDecision(path: string): PanelDecision {
   const raw = path.split("?")[0] ?? "/";
   const clean = raw.length > 1 ? raw.replace(/\/+$/, "") : raw;
   if (clean === "/") return "door";
-  if (clean === "/config") return "deny";
-  if (clean === "/play/welcome") return "deny";
+  if (clean === "/play/door") return "allow";
+  if (clean === "/config" || clean.startsWith("/config/")) return "deny";
+  if (clean.startsWith("/play/")) return "deny";
   return "allow";
 }
 

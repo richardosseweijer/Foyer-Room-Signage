@@ -186,11 +186,6 @@ export function composeFrame(input: ComposeInput): Frame {
         })
       : [];
 
-  const afterHoursMessage =
-    !unassigned && status === "closed" && display.template !== "message"
-      ? { title: sanitizeTitle(room?.name || site.name), body: sanitizeMessage("This space is closed.") }
-      : null;
-
   const roomNames = panes.map((pane) => pane.roomName);
   return {
     v: 1,
@@ -219,7 +214,7 @@ export function composeFrame(input: ComposeInput): Frame {
     message:
       display.template === "message"
         ? { title: sanitizeTitle(site.name), body: sanitizeMessage("") }
-        : afterHoursMessage,
+        : null,
     pairing: input.pairing,
     openGlass: Boolean(site.openGlass),
   };

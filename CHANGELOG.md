@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.0
+
+Audit against the room-appliance contract, then small verified fixes.
+
+**Fixed**
+
+- Room panel `:8082` denies every `/play/*` except `/play/door` (welcome, typos, leftover templates)
+- First boot: open glass **off**; room hours all-day (`00:00–00:00`)
+- Dead wayfinding/split/meeting-block UI removed from the player
+- Door plate never blanks the calendar; status carries occupancy
+- Next session is promoted to the large block when the room is free
+- Door layout: name at the top, indented rail, following three sessions
+- Clock is a technician toggle on the door plate
+- GitHub update copies `dist/` and restarts foyer, panel, and kiosk
+- Panel HTML is `Cache-Control: no-store`
+- Boundary tests cover player + tech sheet imports
+
+**Docs**
+
+- Frame may include `following`, `panes`, `catalog`, `openGlass`
+- Calendar unbound fallback when the selected NIC has no IPv4
+- Known issues: no `RRULE` expansion; pre-0.2 hours may still be 07:00–23:00
+
 ## 0.1.1
 
 - Welcome hero is the room name

@@ -47,10 +47,13 @@ There is **no** `src/lib/foyer/index.ts` barrel. Import the module you mean.
 A plate may hold only:
 
 - `v`, `seq`, `displayId`, `roomId`, `template`
-- `look` (palette **name**, arrow, typeScale, logo flags, slots including countdown)
+- `look` (palette **name**, arrow, typeScale, logo flags, slots including countdown and clock)
 - `identity` (siteName, roomName, floorLabel, logoUrl or null)
-- `status`, `clock`, `now`, `next`, `directory` (empty on this appliance), `message`
-- `pairing` (bound, or unbound + code)
+- `status`, `clock`, `now`, `next`, `following` (up to four upcoming meetings for the door plate)
+- `panes`, `directory` (empty on this appliance), `catalog` (id+name for the tech sheet), `message`
+- `pairing` (bound, or unbound + code), `openGlass`
+
+**Never on a frame:** `icsUrl`, `pin`, `sitePin`, `techPin`, display token, peer secret, NIC names, video output ids, attendee emails, raw HTML.
 
 **Never on a frame:** `icsUrl`, `pin`, `sitePin`, `techPin`, display token, peer secret, NIC names, video output ids, attendee emails, raw HTML.
 
@@ -61,7 +64,7 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 | Listener | Bind | Serves |
 |---|---|---|
 | Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop |
-| Room panel | `:8082` (AP address on Ubuntu) | `/play/door` only. `/config` and welcome are 404. `/` redirects to the door. |
+| Room panel | `:8082` (AP address on Ubuntu) | `/play/door` only. `/config`, `/play/welcome`, and other `/play/*` ids are 404. `/` redirects to the door. |
 | Outbound NIC | no Foyer socket | Calendar fetch source address, selected in Setup as an **indexed** dropdown |
 
 Welcome is always bound. The room panel pairs. Setup is `/config` on the welcome listener.

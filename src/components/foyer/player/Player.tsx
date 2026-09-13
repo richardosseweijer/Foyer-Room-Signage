@@ -12,7 +12,12 @@ const TOKEN_KEY = (id: string) => `foyer.token.${id}`;
 
 function paint(frame: Frame) {
   if (frame.template === "welcome") return <WelcomeSign frame={frame} />;
-  return <DoorSign frame={frame} />;
+  if (frame.template === "door") return <DoorSign frame={frame} />;
+  return (
+    <div className="sign-root flex min-h-dvh items-center justify-center" data-palette="linen">
+      <p className="text-muted">This plate is not on the board.</p>
+    </div>
+  );
 }
 
 export function Player({ displayId }: { displayId: string }) {
