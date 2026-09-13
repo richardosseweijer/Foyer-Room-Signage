@@ -135,7 +135,7 @@ function paneFor(
   if (!room) return null;
   const cal = calendar.rooms[roomId];
   const status = statusForRoom(room, cal, now, site.timezone, occupancy?.rooms[roomId]);
-  const hide = status === "closed" || room.occupancy === "available";
+  const hide = template !== "welcome" && (room.occupancy === "closed" || room.occupancy === "available");
   const busy = status === "busy" || Boolean(cal?.busy);
   return {
     slot,
@@ -149,7 +149,11 @@ function paneFor(
 
 export function composeFrame(input: ComposeInput): Frame {
   const { site, display, calendar, now } = input;
-  const bindings = displayBindings(display);
+  const bindings = displayBindings(display).length
+    ? displayBindings(display)
+    : site.rooms[0] && display.template === "welcome"
+      ? [{ roomId: site.rooms[0].id, slot: "single", arrow: "off" as const }]
+      : [];
   const rawLook = normalizeLook(input.look ?? lookForDisplay(site, display.id));
   const look: Look = {
     ...rawLook,

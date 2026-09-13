@@ -132,6 +132,90 @@ test("after hours is closed when occupancy is auto", () => {
   assert.equal(frame({ now }).status, "closed");
 });
 
+test("after hours still keeps the next session on the door", () => {
+  const now = new Date("2026-09-11T20:00:00Z");
+  const calendar: CalendarSnapshot = {
+    atIso: now.toISOString(),
+    rooms: {
+      cedar: {
+        now: null,
+        next: {
+          title: "Late session",
+          host: "",
+          description: "",
+          startIso: "2026-09-11T21:00:00Z",
+          endIso: "2026-09-11T22:00:00Z",
+        },
+      },
+    },
+  };
+  const out = frame({ calendar, now });
+  assert.equal(out.status, "closed");
+  assert.equal(out.next?.title, "Late session");
+});
+
+test("welcome still paints the session after hours", () => {
+  const site = siteWith();
+  site.displays.push({
+    id: "welcome",
+    label: "Welcome",
+    roomId: "cedar",
+    bindings: [{ roomId: "cedar", slot: "single", arrow: "off" }],
+    zoneId: null,
+    template: "welcome",
+  });
+  const now = new Date("2026-09-11T20:00:00Z");
+  const calendar: CalendarSnapshot = {
+    atIso: now.toISOString(),
+    rooms: {
+      cedar: {
+        now: null,
+        next: {
+          title: "Late session",
+          host: "",
+          description: "On the wall",
+          startIso: "2026-09-11T21:00:00Z",
+          endIso: "2026-09-11T22:00:00Z",
+        },
+      },
+    },
+  };
+  const out = frame({ site, display: site.displays[2], calendar, now });
+  assert.equal(out.status, "closed");
+  assert.equal(out.next?.title, "Late session");
+});
+
+test("welcome keeps the session when occupancy is forced available", () => {
+  const site = siteWith("available");
+  const welcome: Display = {
+    id: "welcome",
+    label: "Welcome",
+    roomId: "cedar",
+    bindings: [{ roomId: "cedar", slot: "single", arrow: "off" }],
+    zoneId: null,
+    template: "welcome",
+  };
+  const now = new Date("2026-09-11T12:00:00Z");
+  const calendar: CalendarSnapshot = {
+    atIso: now.toISOString(),
+    rooms: {
+      cedar: {
+        now: {
+          title: "Budget",
+          host: "Ada",
+          description: "",
+          startIso: "2026-09-11T11:00:00Z",
+          endIso: "2026-09-11T13:00:00Z",
+        },
+        next: null,
+      },
+    },
+  };
+  const out = frame({ site, display: welcome, calendar, now });
+  assert.equal(out.status, "available");
+  assert.equal(out.now?.title, "Budget");
+});
+
 test("calendar throw path is the caller's job; empty snapshot stays identity + clock", () => {
   const out = frame({ calendar: emptyCalendarSnapshot() });
   assert.equal(out.identity.roomName, "Cedar");
