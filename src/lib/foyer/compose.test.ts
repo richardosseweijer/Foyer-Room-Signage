@@ -91,7 +91,7 @@ test("closed override hides meetings", () => {
   assert.equal(out.next, null);
 });
 
-test("manual available hides the meeting so status and copy agree", () => {
+test("manual available still shows the meeting on the door", () => {
   const now = new Date("2026-09-11T12:00:00Z");
   const calendar: CalendarSnapshot = {
     atIso: now.toISOString(),
@@ -110,7 +110,7 @@ test("manual available hides the meeting so status and copy agree", () => {
   };
   const out = frame({ site: siteWith("available"), calendar, now });
   assert.equal(out.status, "available");
-  assert.equal(out.now, null);
+  assert.equal(out.now?.title, "Budget");
 });
 
 test("starting-soon window is ten minutes", () => {
@@ -377,6 +377,14 @@ test("wayfinding directory uses the current session, not the next one", () => {
 
 test("unassigned door plate is not closed", () => {
   const site = siteWith();
+  site.rooms.push({
+    id: "maple",
+    name: "Maple",
+    floorId: "f1",
+    hours: { start: "09:00", end: "17:00", days: [1, 2, 3, 4, 5] },
+    occupancy: "auto",
+    calendarId: null,
+  });
   const display: Display = {
     id: "door",
     label: "Room plate",
@@ -390,7 +398,38 @@ test("unassigned door plate is not closed", () => {
   assert.equal(out.now, null);
   assert.equal(out.message, null);
   assert.equal(out.identity.roomName, "Untitled site");
-  assert.equal(out.catalog.length, 1);
+  assert.equal(out.catalog.length, 2);
+});
+
+test("one-room door plate uses that room when unbound", () => {
+  const site = siteWith();
+  const display: Display = {
+    id: "door",
+    label: "Room plate",
+    roomId: null,
+    bindings: [],
+    zoneId: null,
+    template: "door",
+  };
+  const now = new Date("2026-09-11T12:00:00Z");
+  const calendar: CalendarSnapshot = {
+    atIso: now.toISOString(),
+    rooms: {
+      cedar: {
+        now: {
+          title: "Budget",
+          host: "",
+          description: "",
+          startIso: "2026-09-11T11:00:00Z",
+          endIso: "2026-09-11T13:00:00Z",
+        },
+        next: null,
+      },
+    },
+  };
+  const out = frame({ site, display, calendar, now });
+  assert.equal(out.identity.roomName, "Cedar");
+  assert.equal(out.now?.title, "Budget");
 });
 
 test("wayfinding with no bindings shows an empty directory", () => {
