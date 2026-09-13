@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { welcomeStartLine } from "./format.ts";
+import { formatSpan, welcomeStartLine } from "./format.ts";
 
 test("welcome shows the start time when the session is more than 15 minutes out", () => {
   assert.equal(
@@ -33,4 +33,10 @@ test("welcome says starting soon once the session should have begun", () => {
     welcomeStartLine("2026-09-12T11:55:00Z", "2026-09-12T12:00:00Z", "UTC"),
     "Starting soon",
   );
+});
+
+test("formatSpan includes the until time", () => {
+  assert.equal(formatSpan("2026-09-13T01:45:00Z", "2026-09-13T02:30:00Z", "UTC"), "01:45 – 02:30");
+  assert.equal(formatSpan("2026-09-13T01:45:00Z", "2026-09-13T01:45:00Z", "UTC"), "01:45");
+  assert.equal(formatSpan("2026-09-13T01:45:00Z", "", "UTC"), "01:45");
 });

@@ -29,6 +29,13 @@ export function formatWhen(iso: string, timeZone: string) {
   }
 }
 
+export function formatSpan(startIso: string, endIso: string, timeZone: string) {
+  const start = formatWhen(startIso, timeZone);
+  const end = endIso ? formatWhen(endIso, timeZone) : "";
+  if (start && end && start !== end) return `${start} – ${end}`;
+  return start;
+}
+
 const WELCOME_SOON_MS = 15 * 60_000;
 
 export function welcomeStartLine(startIso: string, nowIso: string, timeZone: string) {
