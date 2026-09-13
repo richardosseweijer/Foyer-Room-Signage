@@ -149,6 +149,7 @@ export type Secrets = z.infer<typeof SecretsSchema>;
 export const CalendarRoomSchema = z.strictObject({
   now: MeetingSchema.nullable(),
   next: MeetingSchema.nullable(),
+  later: z.array(MeetingSchema).default([]),
   busy: z.boolean().optional(),
 });
 
@@ -210,6 +211,7 @@ export const FrameSchema = z.strictObject({
   }),
   now: MeetingSchema.nullable(),
   next: MeetingSchema.nullable(),
+  following: z.array(MeetingSchema).default([]),
   panes: z.array(PaneSchema).default([]),
   directory: z.array(DirectoryRowSchema),
   catalog: z.array(z.strictObject({ id: z.string(), name: z.string() })).default([]),

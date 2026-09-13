@@ -34,6 +34,7 @@ export async function frameForDisplay(opts: { displayId: string; token?: string 
     });
     frame.now = null;
     frame.next = null;
+    frame.following = [];
     frame.panes = [];
     frame.directory = [];
     frame.catalog = [];

@@ -100,6 +100,27 @@ test("overlapping meetings prefer the later start as now", () => {
   assert.equal(snap.rooms.cedar?.next, null);
 });
 
+test("later holds up to three upcoming sessions", () => {
+  const site = demoSite();
+  const events = [1, 2, 3, 4].map((hour) => ({
+    title: `{Cedar} Slot ${hour}`,
+    host: "",
+    description: "",
+    startIso: `2026-09-11T${String(10 + hour).padStart(2, "0")}:00:00Z`,
+    endIso: `2026-09-11T${String(10 + hour).padStart(2, "0")}:30:00Z`,
+    busy: false,
+    tokens: ["Cedar"],
+  }));
+  const snap = snapshotFromEvents({
+    site,
+    eventsByFeed: { shared: events },
+    now: new Date("2026-09-11T10:00:00Z"),
+  });
+  assert.equal(snap.rooms.cedar?.now, null);
+  assert.equal(snap.rooms.cedar?.next?.title, "Slot 1");
+  assert.equal(snap.rooms.cedar?.later?.map((row) => row.title).join(","), "Slot 1,Slot 2,Slot 3");
+});
+
 test("calendar bind required without an address keeps last-good", async () => {
   const last = emptyCalendarSnapshot(new Date("2026-01-01T00:00:00Z"));
   last.rooms = {

@@ -1,5 +1,5 @@
 import { STATUS_LABELS } from "@/lib/foyer/palettes";
-import type { Frame } from "@/lib/foyer/types";
+import type { Frame, Meeting } from "@/lib/foyer/types";
 import { formatWhen } from "./format";
 
 function statusLine(status: Frame["status"]) {
@@ -8,33 +8,54 @@ function statusLine(status: Frame["status"]) {
   return STATUS_LABELS[status];
 }
 
+function SessionRow({
+  meeting,
+  timezone,
+  size,
+}: {
+  meeting: Meeting;
+  timezone: string;
+  size: "now" | "queue";
+}) {
+  const when = formatWhen(meeting.startIso, timezone);
+  if (size === "now") {
+    return (
+      <div className="door-now">
+        <p className="door-now-title">{meeting.title}</p>
+        {when ? <p className="door-now-when">{when}</p> : null}
+        {meeting.description ? <p className="door-copy">{meeting.description}</p> : null}
+      </div>
+    );
+  }
+  return (
+    <div className="door-queue-item">
+      <p className="door-label">{when}</p>
+      <p className="door-queue-title">{meeting.title}</p>
+      {meeting.description ? <p className="door-copy">{meeting.description}</p> : null}
+    </div>
+  );
+}
+
 export function DoorSign({ frame }: { frame: Frame }) {
-  const now = frame.now;
-  const next = frame.next && frame.next.startIso !== now?.startIso ? frame.next : null;
+  const queue = (frame.following ?? []).slice(0, 3);
   return (
     <div className="door-wall">
       <div className="door-ident">
-        <p className="door-status">{statusLine(frame.status)}</p>
         <h1 className="door-name">{frame.identity.roomName}</h1>
-        {frame.identity.floorLabel ? <p className="door-floor">{frame.identity.floorLabel}</p> : null}
+        <p className="door-status" data-status={frame.status}>
+          {statusLine(frame.status)}
+        </p>
       </div>
-      <div className="door-sessions">
-        {now ? (
-          <div className="door-session">
-            <p className="door-label">Now · {formatWhen(now.startIso, frame.clock.timezone)}</p>
-            <p className="door-session-title">{now.title}</p>
-            {now.description ? <p className="door-copy">{now.description}</p> : null}
-          </div>
-        ) : (
-          <p className="door-empty">Nothing scheduled</p>
-        )}
-        {next ? (
-          <div className="door-session is-next">
-            <p className="door-label">Next · {formatWhen(next.startIso, frame.clock.timezone)}</p>
-            <p className="door-next-title">{next.title}</p>
-          </div>
-        ) : null}
-      </div>
+      {frame.now ? <SessionRow meeting={frame.now} timezone={frame.clock.timezone} size="now" /> : null}
+      {queue.length ? (
+        <div className="door-queue">
+          {queue.map((meeting) => (
+            <SessionRow key={`${meeting.startIso}-${meeting.title}`} meeting={meeting} timezone={frame.clock.timezone} size="queue" />
+          ))}
+        </div>
+      ) : !frame.now ? (
+        <p className="door-empty">Nothing scheduled</p>
+      ) : null}
     </div>
   );
 }

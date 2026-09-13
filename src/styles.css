@@ -241,67 +241,95 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  justify-content: space-between;
-  gap: clamp(1.25rem, 4vh, 2.5rem);
+  gap: clamp(1.1rem, 3.2vh, 1.8rem);
 }
 
 .door-ident {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-}
-
-.door-status {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sign-muted);
+  gap: 0.45rem;
 }
 
 .door-name {
   margin: 0;
-  font-size: clamp(2.4rem, 9vw, 4.4rem);
+  font-size: clamp(2.2rem, 8vw, 3.8rem);
   font-weight: 600;
   letter-spacing: -0.045em;
   line-height: 0.92;
 }
 
-.door-floor {
+.door-status {
   margin: 0;
-  font-size: var(--sign-meta);
-  font-weight: 500;
-  color: var(--sign-muted);
+  font-size: clamp(1.05rem, 3.4vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-.door-sessions {
+.door-status[data-status="available"] {
+  color: var(--sign-available);
+}
+.door-status[data-status="in-session"] {
+  color: var(--sign-session);
+}
+.door-status[data-status="starting-soon"] {
+  color: var(--sign-soon);
+}
+.door-status[data-status="closed"] {
+  color: var(--sign-closed);
+}
+.door-status[data-status="busy"] {
+  color: var(--sign-busy);
+}
+
+.door-now {
   display: flex;
   min-height: 0;
   flex-direction: column;
-  gap: clamp(1.1rem, 3vh, 1.8rem);
+  gap: 0.35rem;
 }
 
-.door-session-title {
+.door-now-title {
   margin: 0;
-  font-size: clamp(1.6rem, 5.5vw, 2.8rem);
+  font-size: clamp(2rem, 7vw, 3.4rem);
   font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.05;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
   text-wrap: pretty;
 }
 
-.door-next-title {
+.door-now-when {
   margin: 0;
-  font-size: clamp(1.15rem, 3.2vw, 1.7rem);
+  font-size: clamp(1rem, 2.6vw, 1.25rem);
+  font-weight: 600;
+  color: var(--sign-muted);
+}
+
+.door-queue {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: clamp(0.85rem, 2.4vh, 1.35rem);
+}
+
+.door-queue-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.door-queue-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 4.2vw, 1.85rem);
   font-weight: 600;
   letter-spacing: -0.03em;
-  line-height: 1.15;
+  line-height: 1.12;
   text-wrap: pretty;
 }
 
 .door-label {
-  margin: 0 0 0.35rem;
+  margin: 0;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -310,7 +338,7 @@
 }
 
 .door-copy {
-  margin: 0.4rem 0 0;
+  margin: 0;
   max-width: 36rem;
   font-size: var(--sign-meta);
   font-weight: 500;

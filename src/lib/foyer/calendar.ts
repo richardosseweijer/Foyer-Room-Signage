@@ -178,10 +178,11 @@ export function snapshotFromEvents(opts: {
       return start <= nowMs && nowMs < end;
     });
     const current = covering[covering.length - 1];
-    const upcoming = sorted.find((event) => Date.parse(event.startIso) > nowMs);
+    const upcoming = sorted.filter((event) => Date.parse(event.startIso) > nowMs);
     rooms[roomId] = {
       now: current ? toMeeting(current, current.busy) : null,
-      next: upcoming ? toMeeting(upcoming, upcoming.busy) : null,
+      next: upcoming[0] ? toMeeting(upcoming[0], upcoming[0].busy) : null,
+      later: upcoming.slice(0, 3).map((event) => toMeeting(event, event.busy)),
       busy: Boolean(current?.busy),
     };
   }
@@ -296,6 +297,7 @@ export function sanitizeSnapshot(snapshot: CalendarSnapshot): CalendarSnapshot {
     rooms[id] = {
       now: sanitizeMeeting(row.now, { busy, emptyTitleFallback: "Meeting" }),
       next: sanitizeMeeting(row.next, { busy, emptyTitleFallback: "Meeting" }),
+      later: (row.later ?? []).slice(0, 3).map((item) => sanitizeMeeting(item, { busy: false, emptyTitleFallback: "Meeting" })).filter((item): item is Meeting => Boolean(item)),
       busy,
     };
   }
