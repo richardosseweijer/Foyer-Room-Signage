@@ -1,5 +1,5 @@
 #!/bin/sh
-# Cage client: pin Chromium to the HDMI named in FOYER_VIDEO_OUTPUT, then kiosk.
+# Cage client on tty1: pin HDMI, wait for welcome, then Chromium on Wayland.
 set -eu
 CHROME="$(command -v chromium || command -v chromium-browser || echo /usr/bin/chromium)"
 URL="http://127.0.0.1:8080/"
@@ -25,5 +25,29 @@ apply_output() {
   done
 }
 
+wait_welcome() {
+  i=0
+  while [ "$i" -lt 40 ]; do
+    if command -v curl >/dev/null 2>&1 && curl -sf -o /dev/null --max-time 1 "$URL"; then
+      return 0
+    fi
+    i=$((i + 1))
+    sleep 0.5
+  done
+}
+
 apply_output &
-exec "$CHROME" --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --check-for-update-interval=31536000 "$URL"
+wait_welcome || true
+exec "$CHROME" \
+  --ozone-platform=wayland \
+  --enable-features=UseOzonePlatform \
+  --kiosk \
+  --no-first-run \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --disable-translate \
+  --autoplay-policy=no-user-gesture-required \
+  --check-for-update-interval=31536000 \
+  --disable-dev-shm-usage \
+  "$URL"

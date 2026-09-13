@@ -288,7 +288,7 @@ Skip this until §4 and §6 answer `200` on welcome. Ubuntu Server has no deskto
 sudo apt-get install -y seatd cage wlr-randr fonts-liberation fonts-noto-core mesa-vulkan-drivers libgl1-mesa-dri
 sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser
 sudo systemctl enable --now seatd
-sudo usermod -aG video,render "$USER"
+sudo usermod -aG video,render,input,tty "$USER"
 sudo loginctl enable-linger "$USER"
 ```
 
@@ -306,7 +306,7 @@ sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.ta
 
 ### 7a. Kiosk unit
 
-Cage needs a real HDMI connected **before** start. Plug the welcome display into the connector you chose in Setup.
+Cage needs a real HDMI connected **before** start. This unit **takes tty1** from the Ubuntu login prompt so Chromium covers that console. SSH is unchanged.
 
 ```bash
 USER_NAME="$(whoami)"
@@ -315,21 +315,32 @@ chmod +x "${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk.sh"
 sudo tee /etc/systemd/system/foyer-kiosk.service >/dev/null <<EOF
 [Unit]
 Description=Foyer welcome kiosk (local video)
-After=foyer.service seatd.service
+After=foyer.service systemd-user-sessions.service plymouth-quit-wait.service
 Requires=foyer.service
-Wants=seatd.service
+Conflicts=getty@tty1.service
 StartLimitBurst=5
 StartLimitIntervalSec=60
 
 [Service]
 Type=simple
 User=${USER_NAME}
-SupplementaryGroups=video render
+SupplementaryGroups=video render input tty
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+UtmpIdentifier=tty1
+UnsetEnvironment=TERM
+Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=WLR_LIBINPUT_NO_DEVICES=1
 EnvironmentFile=-${HOME_DIR}/Foyer-Room-Signage/data/foyer-kiosk.env
-ExecStartPre=/bin/sleep 2
-ExecStart=/usr/bin/cage -s -- ${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk.sh
+ExecStartPre=+/bin/chvt 1
+ExecStart=/usr/bin/cage -d -- ${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk.sh
 Restart=always
 RestartSec=5
 
@@ -341,7 +352,9 @@ sudo systemctl enable --now foyer-kiosk
 sudo systemctl status foyer-kiosk --no-pager
 ```
 
-Picking a **Welcome video output** in Setup saves it and restarts this unit so Chromium opens on that HDMI.
+This unit **stops the tty1 login prompt** and paints Chromium over that console. SSH is unchanged.
+
+Picking a **Welcome video output** in Setup saves it and restarts this unit so Chromium covers the HDMI.
 
 Setup → **Enable local output** is a retry of that restart. The Foyer user needs passwordless systemctl:
 
@@ -354,9 +367,9 @@ sudo chmod 440 /etc/sudoers.d/foyer-kiosk
 sudo visudo -c
 ```
 
-Cursor: cage `-s` is already “no server decorations”.
+cage `-d` skips client decorations. It does **not** use `-s` (that flag allows switching back to the text console).
 
-If the kiosk stays black: the HDMI is on the other connector, GPU drivers are missing, seatd is down, or the user is not in `video`/`render`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome from the config laptop at `http://FOYER-IP:8080/`.
+If the kiosk stays on the Ubuntu login TTY: the unit is the old one (no `Conflicts=getty@tty1`). Re-run this section, then `sudo systemctl daemon-reload && sudo systemctl restart foyer-kiosk`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome from the config laptop at `http://FOYER-IP:8080/`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Beta. Not audited.
 
-- Welcome kiosk (cage + Chromium) is host-dependent. A missing GPU driver, seatd, or the wrong HDMI leaves a black seat; Foyer itself can still be healthy on loopback. Ubuntu Server default target is `multi-user`; the kiosk unit must be wanted by that, not only `graphical.target`.
+- Welcome kiosk replaces the tty1 login console (`Conflicts=getty@tty1`). SSH is unchanged. A missing GPU driver or the wrong HDMI leaves a black seat; Foyer itself can still be healthy on loopback.
 - Snap Chromium under cage may need `--no-sandbox` on this dedicated PC.
 - Outfit is loaded from Google Fonts. Offline kiosk falls back to system fonts (`fonts-liberation` / `fonts-noto-core`).
 - Welcome/Setup bind `0.0.0.0:8080`. Firewall 8080 on the config LAN only — never the rack AP or WAN. The kiosk still loads `http://127.0.0.1:8080/`.

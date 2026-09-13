@@ -13,7 +13,7 @@
 - Update from GitHub finds the git checkout from cwd (not the bundled chunk path)
 - Kiosk uses the named HDMI via `wlr-randr` (`data/foyer-kiosk.env`)
 - Calendar fetch sends a User-Agent; Setup shows host + last pull
-- Selecting a welcome HDMI in Setup starts Chromium on that output
+- Kiosk takes tty1 from getty so Chromium covers the Ubuntu Server console
 
 ## 0.1.0
 
