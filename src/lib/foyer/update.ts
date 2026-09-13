@@ -75,6 +75,8 @@ export function startGithubUpdate(root = foyerRoot()) {
   if (identity.dirty) return { ok: false as const, reason: "dirty" as const };
   const script = join(root, "scripts/update-foyer.mjs");
   if (!existsSync(script)) return { ok: false as const, reason: "missing" as const };
+  const check = spawnSync(process.execPath, ["--check", script], { encoding: "utf8" });
+  if (check.status !== 0) return { ok: false as const, reason: "script" as const };
   const child = spawn(process.execPath, [script], {
     cwd: root,
     detached: true,
