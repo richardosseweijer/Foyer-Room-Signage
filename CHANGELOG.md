@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.2
 
+- Tag `v0.2.2`.
 - Peer GET: loopback is TCP `remoteAddress` (`127.0.0.1` / `::1` / `::ffff:127.0.0.1`), not `Host` / `X-Forwarded-*`. Missing peer is denied. HMAC on non-loopback GET still denied.
-- [`FOYER-RELAY.md`](FOYER-RELAY.md) — communication contract with Relay (same file in both repos).
+- [`FOYER-RELAY.md`](FOYER-RELAY.md) matches Relay 0.9.6.
+
+## Unreleased
 - Setup **AV-LAN** and **LAN (internet)** indexed NIC pickers (Foyer does not read Relay’s)
 - Door plate `:8082` binds the AV-LAN IPv4; LAN NIC has no IPv4 → calendar is not pulled
 - Relay occupancy is 1:1 on this PC (no room-name match). Setup override stays local

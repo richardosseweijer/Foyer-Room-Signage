@@ -1,6 +1,6 @@
 # Foyer
 
-Foyer **0.2.1** (beta). Room signage that lives **on the Relay PC**.
+Foyer **0.2.2** (beta). Room signage that lives **on the Relay PC**.
 
 - **Welcome** — this PC’s local video output (HDMI kiosk)
 - **Room plate** — tablet on **AV-LAN** (`:8082` bound to that NIC)
