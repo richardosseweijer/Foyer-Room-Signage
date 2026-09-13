@@ -28,7 +28,7 @@ export function SignShell({
           event.currentTarget.addEventListener("pointerleave", clear, { once: true });
         }}
       />
-      {frame.look.logoOn || frame.look.slots.clock ? (
+      {frame.template !== "door" && (frame.look.logoOn || frame.look.slots.clock) ? (
         <div
           className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 sm:px-10"
           style={{ minHeight: frame.look.logoOn ? (frame.template === "welcome" ? `min(${band}, 10vh)` : band) : "3.25rem" }}
@@ -61,7 +61,7 @@ export function SignShell({
         className={
           frame.template === "welcome"
             ? "flex min-h-0 flex-1 flex-col px-[clamp(1.75rem,5.5vw,5.25rem)] pb-[clamp(1.35rem,3.8vh,2.8rem)]"
-            : "flex min-h-0 flex-1 flex-col px-[clamp(1.25rem,5vw,2.5rem)] pb-[clamp(1.25rem,4vh,2.25rem)]"
+            : "flex min-h-0 flex-1 flex-col px-[clamp(1.25rem,5vw,2.5rem)] pt-[clamp(0.85rem,2.4vh,1.35rem)] pb-[clamp(1.25rem,4vh,2.25rem)]"
         }
       >
         {children}

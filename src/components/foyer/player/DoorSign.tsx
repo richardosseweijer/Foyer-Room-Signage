@@ -1,6 +1,6 @@
 import { STATUS_LABELS } from "@/lib/foyer/palettes";
 import type { Frame, Meeting } from "@/lib/foyer/types";
-import { formatWhen } from "./format";
+import { formatClock, formatWhen } from "./format";
 
 function statusLine(status: Frame["status"]) {
   if (status === "closed") return "Closed";
@@ -28,6 +28,9 @@ export function DoorSign({ frame }: { frame: Frame }) {
 
   return (
     <div className="door-wall">
+      {frame.look.slots.clock ? (
+        <p className="door-clock">{formatClock(frame.clock.iso, frame.clock.timezone)}</p>
+      ) : null}
       <h1 className="door-name">{frame.identity.roomName}</h1>
       <div className="door-indent">
         <p className="door-status" data-status={frame.status}>

@@ -241,15 +241,20 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  gap: clamp(1rem, 2.8vh, 1.75rem);
+  gap: clamp(1.15rem, 3.2vh, 2rem);
+}
+
+.door-clock {
+  margin: 0 0 0.15rem;
+  align-self: flex-end;
+  font-size: 0.92rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--sign-muted);
 }
 
 .door-name {
   margin: 0;
-  flex: 1 1 auto;
-  display: flex;
-  align-items: flex-end;
-  min-height: 28vh;
   max-width: 100%;
   font-size: clamp(3.4rem, 18vw, 7rem);
   font-weight: 600;
@@ -261,11 +266,32 @@
 .door-indent {
   display: flex;
   min-height: 0;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: clamp(0.85rem, 2vh, 1.25rem);
+  gap: clamp(1.2rem, 3.2vh, 1.9rem);
   padding-inline-start: clamp(1.15rem, 5.5vw, 2.4rem);
   border-inline-start: 2px solid color-mix(in oklab, var(--sign-accent) 42%, transparent);
+}
+
+.door-now {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.door-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 0.2rem;
+  padding-inline-start: clamp(0.7rem, 3vw, 1.15rem);
+}
+
+.door-queue-item {
+  display: grid;
+  grid-template-columns: 4.4rem minmax(0, 1fr);
+  gap: 0.25rem 1rem;
+  align-items: start;
 }
 
 .door-status {
@@ -291,12 +317,6 @@
   color: var(--sign-busy);
 }
 
-.door-now {
-  display: flex;
-  flex-direction: column;
-  gap: 0.28rem;
-}
-
 .door-now-title {
   margin: 0;
   font-size: clamp(1.45rem, 5.4vw, 2.05rem);
@@ -311,21 +331,6 @@
   font-size: clamp(0.95rem, 2.8vw, 1.15rem);
   font-weight: 600;
   color: var(--sign-muted);
-}
-
-.door-queue {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin-top: 0.15rem;
-  padding-inline-start: clamp(0.7rem, 3vw, 1.15rem);
-}
-
-.door-queue-item {
-  display: grid;
-  grid-template-columns: 4.4rem minmax(0, 1fr);
-  gap: 0.15rem 0.85rem;
-  align-items: start;
 }
 
 .door-queue-time {

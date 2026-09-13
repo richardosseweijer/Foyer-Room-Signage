@@ -75,6 +75,7 @@ export function TechSheet({
   const [showNext, setShowNext] = useState(frame.look.slots.next);
   const [showDescription, setShowDescription] = useState(frame.look.slots.message);
   const [showStatus, setShowStatus] = useState(frame.look.slots.status);
+  const [showClock, setShowClock] = useState(frame.look.slots.clock);
 
   async function unlock() {
     setError("");
@@ -108,6 +109,7 @@ export function TechSheet({
             logoBand,
             slots: {
               ...frame.look.slots,
+              clock: showClock,
               now: showNow,
               countdown,
               next: showNext,
@@ -277,6 +279,10 @@ export function TechSheet({
                 </label>
               </div>
             ) : null}
+            <label className="flex items-center gap-3 text-sm">
+              <input type="checkbox" checked={showClock} onChange={(e) => setShowClock(e.target.checked)} />
+              Clock
+            </label>
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" checked={logoOn} onChange={(e) => setLogoOn(e.target.checked)} />
               Logo band
