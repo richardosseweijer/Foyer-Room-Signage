@@ -85,7 +85,7 @@ export function DoorSign({ frame }: { frame: Frame }) {
       {showClock || showStatus ? (
         <div className="door-foot">
           {showClock ? (
-            <p className="door-clock door-mark">{formatClock(frame.clock.iso, frame.clock.timezone)}</p>
+            <p className="door-clock">{formatClock(frame.clock.iso, frame.clock.timezone)}</p>
           ) : (
             <span />
           )}
