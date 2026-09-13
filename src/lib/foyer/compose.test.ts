@@ -305,6 +305,29 @@ test("Setup available beats Relay closed", () => {
   assert.equal(frame({ site: siteWith("available"), occupancy, now }).status, "available");
 });
 
+test("Auto uses Relay available even when a session is on", () => {
+  const now = new Date("2026-09-11T12:00:00Z");
+  const calendar: CalendarSnapshot = {
+    atIso: now.toISOString(),
+    rooms: {
+      cedar: {
+        now: {
+          title: "Budget",
+          host: "Ada",
+          description: "",
+          startIso: "2026-09-11T11:00:00Z",
+          endIso: "2026-09-11T13:00:00Z",
+        },
+        next: null,
+      },
+    },
+  };
+  const occupancy: OccupancySnapshot = { atIso: now.toISOString(), rooms: { cedar: "available" } };
+  const out = frame({ calendar, occupancy, now });
+  assert.equal(out.status, "available");
+  assert.equal(out.now?.title, "Budget");
+});
+
 test("split display paints two panes with description", () => {
   const site = siteWith();
   site.rooms.push({

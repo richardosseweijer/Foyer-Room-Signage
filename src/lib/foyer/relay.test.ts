@@ -9,115 +9,74 @@ test("Relay HMAC matches the documented peer formula", () => {
   assert.match(sig, /^[0-9a-f]+$/);
 });
 
-test("first-class occupancy binds by room.name", () => {
+test("first-class occupancy applies to this PC's room without a name match", () => {
   const site = demoSite();
-  const name = site.rooms[0]!.name;
   const id = site.rooms[0]!.id;
   const snap = occupancyFromPeer({
     site,
-    payload: { occupancy: "closed", room: { id: "relay-1", name } },
+    payload: { occupancy: "closed", room: { id: "other", name: "Not Cedar" } },
     now: new Date("2026-09-11T12:00:00Z"),
   });
   assert.equal(snap.rooms[id], "closed");
 });
 
-test("first-class do-not-disturb maps", () => {
+test("occupancy still applies when room is a string or missing", () => {
   const site = demoSite();
-  const name = site.rooms[0]!.name;
   const id = site.rooms[0]!.id;
-  const snap = occupancyFromPeer({
+  const asString = occupancyFromPeer({
     site,
-    payload: { occupancy: "do-not-disturb", room: { name } },
+    payload: { occupancy: "busy", room: "whatever" },
     now: new Date("2026-09-11T12:00:00Z"),
   });
-  assert.equal(snap.rooms[id], "do-not-disturb");
-  assert.equal(occupancyFromValue("dnd"), "do-not-disturb");
+  assert.equal(asString.rooms[id], "busy");
+  const missing = occupancyFromPeer({
+    site,
+    payload: { occupancy: "do-not-disturb" },
+    now: new Date("2026-09-11T12:00:00Z"),
+  });
+  assert.equal(missing.rooms[id], "do-not-disturb");
 });
 
-test("var label matching still works when occupancy is absent", () => {
-  const site = demoSite();
-  const snap = occupancyFromPeer({
-    site,
-    payload: {
-      vars: { v1: { name: site.rooms[0]!.name, value: "busy" } },
-    },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(snap.rooms[site.rooms[0]!.id], "busy");
+test("dnd aliases map", () => {
+  assert.equal(occupancyFromValue("dnd"), "do-not-disturb");
+  assert.equal(occupancyFromValue("do not disturb"), "do-not-disturb");
 });
 
 test("host.locked fills in-session only when occupancy is missing", () => {
   const site = demoSite();
-  const name = site.rooms[0]!.name;
   const id = site.rooms[0]!.id;
   const locked = occupancyFromPeer({
     site,
-    payload: { room: { name }, host: { locked: true } },
+    payload: { host: { locked: true } },
     now: new Date("2026-09-11T12:00:00Z"),
   });
   assert.equal(locked.rooms[id], "in-session");
   const preferred = occupancyFromPeer({
     site,
-    payload: { occupancy: "available", room: { name }, host: { locked: true } },
+    payload: { occupancy: "available", host: { locked: true } },
     now: new Date("2026-09-11T12:00:00Z"),
   });
   assert.equal(preferred.rooms[id], "available");
 });
 
-test("room as a string does not bind first-class occupancy", () => {
+test("unknown occupancy string is ignored", () => {
   const site = demoSite();
   const snap = occupancyFromPeer({
     site,
-    payload: { occupancy: "closed", room: site.rooms[0]!.name },
+    payload: { occupancy: "maybe", room: { name: "Cedar" } },
     now: new Date("2026-09-11T12:00:00Z"),
   });
   assert.equal(snap.rooms[site.rooms[0]!.id], undefined);
 });
 
-test("unknown occupancy string is ignored, then vars apply", () => {
-  const site = demoSite();
-  const name = site.rooms[0]!.name;
-  const snap = occupancyFromPeer({
-    site,
-    payload: {
-      occupancy: "maybe",
-      room: { name },
-      vars: { v1: { name, value: "occupied" } },
-    },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(snap.rooms[site.rooms[0]!.id], "in-session");
-});
-
-test("Relay vars named like rooms become occupancy", () => {
+test("vars are not used to bind occupancy", () => {
   const site = demoSite();
   const snap = occupancyFromPeer({
     site,
-    payload: {
-      room: { name: "Cedar" },
-      host: { locked: true },
-      vars: {
-        v1: { name: "Maple", value: "occupied" },
-      },
-    },
+    payload: { vars: { v1: { name: "Cedar", value: "busy" } } },
     now: new Date("2026-09-11T12:00:00Z"),
   });
-  assert.equal(snap.rooms.cedar, "in-session");
-  assert.equal(snap.rooms.maple, undefined);
-});
-
-test("Relay 'busy' stays busy, not in-session", () => {
-  const site = demoSite();
-  const snap = occupancyFromPeer({
-    site,
-    payload: {
-      vars: {
-        v1: { name: "Cedar", value: "busy" },
-      },
-    },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(snap.rooms.cedar, "busy");
+  assert.equal(snap.rooms[site.rooms[0]!.id], undefined);
 });
 
 test("peerEndpoint does not throw on a hostname without a scheme", () => {

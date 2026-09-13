@@ -19,18 +19,6 @@ export function occupancyFromValue(value: unknown): OccupancySnapshot["rooms"][s
   return null;
 }
 
-function roomNameOf(room: unknown): string | undefined {
-  if (!room || typeof room !== "object") return undefined;
-  const name = (room as { name?: unknown }).name;
-  return typeof name === "string" ? name : undefined;
-}
-
-function foyerRoomId(site: Site, name: string | undefined): string | null {
-  const needle = name?.trim().toLowerCase();
-  if (!needle) return null;
-  return site.rooms.find((row) => row.name.toLowerCase() === needle)?.id ?? null;
-}
-
 export function occupancyFromPeer(opts: {
   site: Site;
   payload: {
@@ -42,25 +30,11 @@ export function occupancyFromPeer(opts: {
   now?: Date;
 }): OccupancySnapshot {
   const rooms: OccupancySnapshot["rooms"] = {};
-  const relayName = roomNameOf(opts.payload.room);
-  const bound = foyerRoomId(opts.site, relayName);
   const first = occupancyFromValue(opts.payload.occupancy);
-  if (first && bound) rooms[bound] = first;
-
-  const vars = opts.payload.vars ?? {};
-  for (const [id, item] of Object.entries(vars)) {
-    const mapped = opts.site.relayRoomMap[id] || opts.site.relayRoomMap[item.name] || null;
-    const room =
-      mapped ||
-      opts.site.rooms.find((row) => row.name.toLowerCase() === item.name.toLowerCase())?.id ||
-      null;
-    const status = occupancyFromValue(item.value);
-    if (room && status && !rooms[room]) rooms[room] = status;
-  }
-
-  if (relayName && opts.payload.host?.locked) {
-    const room = foyerRoomId(opts.site, relayName);
-    if (room && !rooms[room]) rooms[room] = "in-session";
+  const locked = Boolean(opts.payload.host?.locked);
+  for (const room of opts.site.rooms) {
+    if (first) rooms[room.id] = first;
+    else if (locked) rooms[room.id] = "in-session";
   }
   return { atIso: (opts.now ?? new Date()).toISOString(), rooms };
 }

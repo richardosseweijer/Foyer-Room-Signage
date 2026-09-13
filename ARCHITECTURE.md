@@ -103,7 +103,7 @@ Accepted `GET /api/peer` body (Relay `buildPeerGet`):
 }
 ```
 
-`occupancy` is `available | in-session | busy | do-not-disturb | closed`. Foyer binds it to the room whose **name** matches `room.name`. Var labels that equal a room name remain a fallback. `host.locked` is in-session only when occupancy is missing. Setup occupancy other than Auto is local and is not written back.
+`occupancy` is `available | in-session | busy | do-not-disturb | closed`. One Relay and one Foyer share this PC / this room. Foyer applies that field to its room — **names do not have to match**. `room` / `vars` are ignored for occupancy. `host.locked` is in-session only when occupancy is missing. When Setup occupancy is Auto and Relay occupancy is present, that value is the plate status (calendar still lists sessions). Setup occupancy other than Auto is local and is not written back.
 - Room occupancy in Setup: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay. Sessions stay on the plate.
 - Wayfinding is **not** this app.
 
