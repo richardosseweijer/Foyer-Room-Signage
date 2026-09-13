@@ -202,7 +202,7 @@ export function composeFrame(input: ComposeInput): Frame {
     identity: {
       siteName: site.name,
       roomName: roomNames.length ? roomNames.join(" · ") : (room?.name ?? site.name),
-      floorLabel: getFloorLabel(site, room?.floorId),
+      floorLabel: site.floors.length > 1 ? getFloorLabel(site, room?.floorId) : "",
       logoUrl: look.logoOn ? site.logoPath : null,
     },
     status,
