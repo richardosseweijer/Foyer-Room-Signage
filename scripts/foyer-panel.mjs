@@ -30,7 +30,10 @@ const server = createServer((req, res) => {
       headers,
     },
     (incoming) => {
-      res.writeHead(incoming.statusCode ?? 502, incoming.headers);
+      const headers = { ...incoming.headers };
+      const type = String(headers["content-type"] ?? headers["Content-Type"] ?? "");
+      if (type.includes("text/html")) headers["cache-control"] = "no-store";
+      res.writeHead(incoming.statusCode ?? 502, headers);
       incoming.pipe(res);
     },
   );

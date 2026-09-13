@@ -43,7 +43,21 @@ function removeTree(target) {
   }
 }
 
-function restore(oldHead) {
+function copyBuiltAssets() {
+  let copied = false;
+  for (const name of ["dist", ".output", ".vinxi"]) {
+    const from = path.join(stage, name);
+    const to = path.join(root, name);
+    if (!fs.existsSync(from)) continue;
+    removeTree(to);
+    fs.cpSync(from, to, { recursive: true });
+    log(`copied ${name}`);
+    copied = true;
+  }
+  if (!copied || !fs.existsSync(path.join(root, "dist"))) {
+    throw new Error("staged build produced no dist/");
+  }
+}
   log(`rolling back to ${oldHead}`);
   run("git", ["reset", "--hard", oldHead]);
   const saved = path.join(rollback, "node_modules");
@@ -98,6 +112,7 @@ try {
   else removeTree(current);
   const built = path.join(stage, "node_modules");
   if (fs.existsSync(built)) fs.renameSync(built, current);
+  copyBuiltAssets();
   switched = true;
   log(`release ${gitText(["rev-parse", "HEAD"])} ready`);
 } catch (err) {

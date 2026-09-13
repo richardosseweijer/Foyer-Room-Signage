@@ -429,7 +429,7 @@ bash scripts/foyer-status.sh
 
 Uncommitted source edits block the button. `data/foyer-*.json` is not in git and is left alone.
 
-The updater then `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the sudoers snippet in §7.
+The updater then copies `dist/` from the staged build and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the sudoers snippet in §7.
 
 ---
 

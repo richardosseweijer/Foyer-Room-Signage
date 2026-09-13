@@ -318,3 +318,10 @@
   text-wrap: pretty;
   color: var(--sign-muted);
 }
+
+.door-empty {
+  margin: 0;
+  font-size: clamp(1.05rem, 3vw, 1.45rem);
+  font-weight: 500;
+  color: var(--sign-muted);
+}

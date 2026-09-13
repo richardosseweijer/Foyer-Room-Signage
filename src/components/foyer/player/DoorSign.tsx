@@ -25,7 +25,9 @@ export function DoorSign({ frame }: { frame: Frame }) {
             <p className="door-session-title">{now.title}</p>
             {now.description ? <p className="door-copy">{now.description}</p> : null}
           </div>
-        ) : null}
+        ) : (
+          <p className="door-empty">Nothing scheduled</p>
+        )}
         {next ? (
           <div className="door-session is-next">
             <p className="door-label">Next · {formatWhen(next.startIso, frame.clock.timezone)}</p>
