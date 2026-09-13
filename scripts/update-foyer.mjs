@@ -58,6 +58,8 @@ function copyBuiltAssets() {
     throw new Error("staged build produced no dist/");
   }
 }
+
+function restore(oldHead) {
   log(`rolling back to ${oldHead}`);
   run("git", ["reset", "--hard", oldHead]);
   const saved = path.join(rollback, "node_modules");
