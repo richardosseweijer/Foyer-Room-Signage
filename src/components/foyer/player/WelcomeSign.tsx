@@ -1,6 +1,12 @@
+import { STATUS_LABELS } from "@/lib/foyer/palettes";
 import type { Frame } from "@/lib/foyer/types";
 import { welcomeStartLine } from "./format";
-import { StatusPill } from "./StatusPill";
+
+function quietStatus(status: Frame["status"]) {
+  if (status === "closed") return "Closed";
+  if (status === "available") return "Open";
+  return STATUS_LABELS[status];
+}
 
 export function WelcomeSign({ frame }: { frame: Frame }) {
   const slots = frame.look.slots;
@@ -15,8 +21,8 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
   return (
     <div className="welcome-wall">
       <div className="welcome-hero">
-        <p className="welcome-kicker">{room}</p>
-        <h1 className="welcome-title">{headline ? headline.title : "Open"}</h1>
+        <p className="welcome-kicker">{headline ? room : frame.identity.siteName || room}</p>
+        <h1 className="welcome-title">{headline ? headline.title : room}</h1>
         {cue || description ? (
           <div className="welcome-rail">
             {cue ? <p className="welcome-cue">{cue}</p> : null}
@@ -33,7 +39,7 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
         ) : (
           <span />
         )}
-        {slots.status ? <StatusPill status={frame.status} size="sm" openClosed /> : null}
+        {slots.status ? <p className="welcome-status">{quietStatus(frame.status)}</p> : null}
       </div>
     </div>
   );

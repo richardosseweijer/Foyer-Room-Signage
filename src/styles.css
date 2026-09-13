@@ -148,10 +148,10 @@
 
 .welcome-kicker {
   margin: 0;
-  max-width: 22ch;
-  font-size: clamp(1.05rem, 2.1vw, 1.55rem);
+  max-width: 90%;
+  font-size: clamp(1.25rem, 2.8vw, 2.15rem);
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   line-height: 1;
   text-transform: uppercase;
   color: var(--sign-muted);
@@ -159,27 +159,27 @@
 
 .welcome-title {
   margin: 0;
-  max-width: 16ch;
-  font-size: clamp(3.4rem, 9.2vw, 8.75rem);
+  max-width: 92%;
+  font-size: clamp(4.6rem, 12.5vw, 13.5rem);
   font-weight: 600;
-  letter-spacing: -0.055em;
-  line-height: 0.9;
+  letter-spacing: -0.06em;
+  line-height: 0.86;
   text-wrap: pretty;
 }
 
 .welcome-rail {
   display: flex;
-  max-width: min(36rem, 92%);
+  max-width: min(44rem, 92%);
   flex-direction: column;
   gap: 0.55rem;
-  margin-top: 0.35rem;
-  padding-inline-start: clamp(0.85rem, 1.6vw, 1.4rem);
-  border-inline-start: 2px solid color-mix(in oklab, var(--sign-accent) 55%, transparent);
+  margin-top: 0.5rem;
+  padding-inline-start: clamp(1rem, 1.8vw, 1.6rem);
+  border-inline-start: 2px solid color-mix(in oklab, var(--sign-accent) 45%, transparent);
 }
 
 .welcome-cue {
   margin: 0;
-  font-size: clamp(1.15rem, 2.3vw, 1.7rem);
+  font-size: clamp(1.35rem, 2.8vw, 2.15rem);
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--sign-fg);
@@ -187,11 +187,20 @@
 
 .welcome-copy {
   margin: 0;
-  font-size: clamp(1rem, 1.7vw, 1.25rem);
+  font-size: clamp(1.05rem, 1.9vw, 1.4rem);
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.35;
   text-wrap: pretty;
   color: var(--sign-muted);
+}
+
+.welcome-status {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--sign-muted) 80%, transparent);
 }
 
 .welcome-foot {

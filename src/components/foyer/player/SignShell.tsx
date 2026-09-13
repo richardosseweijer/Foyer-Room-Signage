@@ -31,7 +31,7 @@ export function SignShell({
       {frame.look.logoOn || frame.look.slots.clock ? (
         <div
           className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 sm:px-10"
-          style={{ minHeight: frame.look.logoOn ? band : "3.25rem" }}
+          style={{ minHeight: frame.look.logoOn ? (frame.template === "welcome" ? `min(${band}, 10vh)` : band) : "3.25rem" }}
         >
           {frame.look.slots.clock ? (
             <p
