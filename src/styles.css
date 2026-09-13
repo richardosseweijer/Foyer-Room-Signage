@@ -152,6 +152,15 @@
 .sign-root[data-scale="giant"] .door-mark {
   font-size: clamp(3.2rem, 11vw, 4.8rem);
 }
+.sign-root[data-scale="large"] .door-clock {
+  font-size: clamp(1.075rem, 3.8vw, 1.7rem);
+}
+.sign-root[data-scale="extra-large"] .door-clock {
+  font-size: clamp(1.3rem, 4.5vw, 2rem);
+}
+.sign-root[data-scale="giant"] .door-clock {
+  font-size: clamp(1.6rem, 5.5vw, 2.4rem);
+}
 
 .sign-root:fullscreen,
 .sign-root:-webkit-full-screen,
@@ -327,14 +336,13 @@
 .door-foot {
   display: flex;
   flex-shrink: 0;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 1.25rem;
   margin-top: auto;
 }
 
 .door-mark,
-.door-clock,
 .door-status {
   margin: 0;
   font-size: calc(clamp(1.7rem, 6.2vw, 2.75rem) * var(--type-scale, 1));
@@ -344,6 +352,11 @@
 }
 
 .door-clock {
+  margin: 0;
+  font-size: calc(clamp(0.85rem, 3.1vw, 1.375rem) * var(--type-scale, 1));
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--sign-muted);
 }
