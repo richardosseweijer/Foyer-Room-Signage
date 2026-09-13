@@ -289,7 +289,7 @@
 
 .door-queue-item {
   display: grid;
-  grid-template-columns: 4.4rem minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.25rem 1rem;
   align-items: start;
 }
@@ -340,6 +340,7 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  white-space: nowrap;
   color: var(--sign-muted);
 }
 
