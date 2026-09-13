@@ -61,7 +61,7 @@ export function SignShell({
         className={
           frame.template === "welcome"
             ? "flex min-h-0 flex-1 flex-col px-[clamp(1.75rem,5.5vw,5.25rem)] pb-[clamp(1.35rem,3.8vh,2.8rem)]"
-            : "flex min-h-0 flex-1 flex-col px-8 pb-10 sm:px-12 sm:pb-12"
+            : "flex min-h-0 flex-1 flex-col px-[clamp(1.25rem,5vw,2.5rem)] pb-[clamp(1.25rem,4vh,2.25rem)]"
         }
       >
         {children}

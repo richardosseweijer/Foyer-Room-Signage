@@ -241,26 +241,36 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  gap: clamp(1.1rem, 3.2vh, 1.8rem);
-}
-
-.door-ident {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  gap: clamp(1rem, 2.8vh, 1.75rem);
 }
 
 .door-name {
   margin: 0;
-  font-size: clamp(2.2rem, 8vw, 3.8rem);
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+  min-height: 28vh;
+  max-width: 100%;
+  font-size: clamp(3.4rem, 18vw, 7rem);
   font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 0.92;
+  letter-spacing: -0.06em;
+  line-height: 0.86;
+  text-wrap: pretty;
+}
+
+.door-indent {
+  display: flex;
+  min-height: 0;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: clamp(0.85rem, 2vh, 1.25rem);
+  padding-inline-start: clamp(1.15rem, 5.5vw, 2.4rem);
+  border-inline-start: 2px solid color-mix(in oklab, var(--sign-accent) 42%, transparent);
 }
 
 .door-status {
   margin: 0;
-  font-size: clamp(1.05rem, 3.4vw, 1.45rem);
+  font-size: clamp(1.05rem, 3.6vw, 1.4rem);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -283,64 +293,70 @@
 
 .door-now {
   display: flex;
-  min-height: 0;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.28rem;
 }
 
 .door-now-title {
   margin: 0;
-  font-size: clamp(2rem, 7vw, 3.4rem);
+  font-size: clamp(1.45rem, 5.4vw, 2.05rem);
   font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1.02;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
   text-wrap: pretty;
 }
 
 .door-now-when {
   margin: 0;
-  font-size: clamp(1rem, 2.6vw, 1.25rem);
+  font-size: clamp(0.95rem, 2.8vw, 1.15rem);
   font-weight: 600;
   color: var(--sign-muted);
 }
 
 .door-queue {
   display: flex;
-  min-height: 0;
-  flex: 1;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: clamp(0.85rem, 2.4vh, 1.35rem);
+  gap: 0.85rem;
+  margin-top: 0.15rem;
+  padding-inline-start: clamp(0.7rem, 3vw, 1.15rem);
 }
 
 .door-queue-item {
+  display: grid;
+  grid-template-columns: 4.4rem minmax(0, 1fr);
+  gap: 0.15rem 0.85rem;
+  align-items: start;
+}
+
+.door-queue-time {
+  margin: 0;
+  padding-top: 0.18em;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--sign-muted);
+}
+
+.door-queue-body {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.15rem;
 }
 
 .door-queue-title {
   margin: 0;
-  font-size: clamp(1.25rem, 4.2vw, 1.85rem);
+  font-size: clamp(1.05rem, 3.8vw, 1.4rem);
   font-weight: 600;
   letter-spacing: -0.03em;
-  line-height: 1.12;
+  line-height: 1.15;
   text-wrap: pretty;
-}
-
-.door-label {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--sign-muted);
 }
 
 .door-copy {
   margin: 0;
-  max-width: 36rem;
-  font-size: var(--sign-meta);
+  font-size: clamp(0.88rem, 2.6vw, 1.05rem);
   font-weight: 500;
   line-height: 1.35;
   text-wrap: pretty;
@@ -349,7 +365,7 @@
 
 .door-empty {
   margin: 0;
-  font-size: clamp(1.05rem, 3vw, 1.45rem);
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
   font-weight: 500;
   color: var(--sign-muted);
 }
