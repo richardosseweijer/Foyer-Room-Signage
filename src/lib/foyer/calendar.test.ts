@@ -100,7 +100,7 @@ test("overlapping meetings prefer the later start as now", () => {
   assert.equal(snap.rooms.cedar?.next, null);
 });
 
-test("later holds up to three upcoming sessions", () => {
+test("later holds up to four upcoming sessions", () => {
   const site = demoSite();
   const events = [1, 2, 3, 4].map((hour) => ({
     title: `{Cedar} Slot ${hour}`,
@@ -118,7 +118,7 @@ test("later holds up to three upcoming sessions", () => {
   });
   assert.equal(snap.rooms.cedar?.now, null);
   assert.equal(snap.rooms.cedar?.next?.title, "Slot 1");
-  assert.equal(snap.rooms.cedar?.later?.map((row) => row.title).join(","), "Slot 1,Slot 2,Slot 3");
+  assert.equal(snap.rooms.cedar?.later?.map((row) => row.title).join(","), "Slot 1,Slot 2,Slot 3,Slot 4");
 });
 
 test("calendar bind required without an address keeps last-good", async () => {

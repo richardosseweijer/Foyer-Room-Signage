@@ -182,7 +182,7 @@ export function snapshotFromEvents(opts: {
     rooms[roomId] = {
       now: current ? toMeeting(current, current.busy) : null,
       next: upcoming[0] ? toMeeting(upcoming[0], upcoming[0].busy) : null,
-      later: upcoming.slice(0, 3).map((event) => toMeeting(event, event.busy)),
+      later: upcoming.slice(0, 4).map((event) => toMeeting(event, event.busy)),
       busy: Boolean(current?.busy),
     };
   }
@@ -297,7 +297,7 @@ export function sanitizeSnapshot(snapshot: CalendarSnapshot): CalendarSnapshot {
     rooms[id] = {
       now: sanitizeMeeting(row.now, { busy, emptyTitleFallback: "Meeting" }),
       next: sanitizeMeeting(row.next, { busy, emptyTitleFallback: "Meeting" }),
-      later: (row.later ?? []).slice(0, 3).map((item) => sanitizeMeeting(item, { busy: false, emptyTitleFallback: "Meeting" })).filter((item): item is Meeting => Boolean(item)),
+      later: (row.later ?? []).slice(0, 4).map((item) => sanitizeMeeting(item, { busy: false, emptyTitleFallback: "Meeting" })).filter((item): item is Meeting => Boolean(item)),
       busy,
     };
   }

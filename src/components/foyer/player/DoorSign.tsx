@@ -37,7 +37,9 @@ function SessionRow({
 }
 
 export function DoorSign({ frame }: { frame: Frame }) {
-  const queue = (frame.following ?? []).slice(0, 3);
+  const queueAll = frame.following ?? [];
+  const current = frame.now ?? queueAll[0] ?? null;
+  const queue = (frame.now ? queueAll : queueAll.slice(1)).slice(0, 3);
   return (
     <div className="door-wall">
       <div className="door-ident">
@@ -46,14 +48,14 @@ export function DoorSign({ frame }: { frame: Frame }) {
           {statusLine(frame.status)}
         </p>
       </div>
-      {frame.now ? <SessionRow meeting={frame.now} timezone={frame.clock.timezone} size="now" /> : null}
+      {current ? <SessionRow meeting={current} timezone={frame.clock.timezone} size="now" /> : null}
       {queue.length ? (
         <div className="door-queue">
           {queue.map((meeting) => (
             <SessionRow key={`${meeting.startIso}-${meeting.title}`} meeting={meeting} timezone={frame.clock.timezone} size="queue" />
           ))}
         </div>
-      ) : !frame.now ? (
+      ) : !current ? (
         <p className="door-empty">Nothing scheduled</p>
       ) : null}
     </div>
