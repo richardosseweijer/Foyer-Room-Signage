@@ -35,11 +35,14 @@
   --sign-muted: #5c5850;
   --sign-line: color-mix(in oklab, var(--sign-fg) 14%, transparent);
   --sign-accent: #5f7a63;
-  --sign-available: #5f7a63;
-  --sign-session: #1c1b19;
-  --sign-soon: #9a7040;
-  --sign-closed: #8a6d5d;
-  --sign-busy: #6e655c;
+  --sign-available: #2f9e4f;
+  --sign-session: #d4a017;
+  --sign-soon: #d4a017;
+  --sign-closed: #d13b32;
+  --sign-busy: #d4a017;
+  --type-scale: 1;
+  --door-scale: 1;
+  --welcome-scale: 1;
   background: var(--sign-bg);
   color: var(--sign-fg);
   font-family: var(--font-sans);
@@ -68,10 +71,10 @@
   --sign-fg: #1c1b19;
   --sign-muted: #5c5850;
   --sign-accent: #5f7a63;
-  --sign-available: #5f7a63;
-  --sign-session: #1c1b19;
-  --sign-soon: #9a7040;
-  --sign-closed: #8a6d5d;
+  --sign-available: #2f9e4f;
+  --sign-session: #d4a017;
+  --sign-soon: #d4a017;
+  --sign-closed: #d13b32;
 }
 
 .sign-root[data-palette="orchard"] {
@@ -79,10 +82,10 @@
   --sign-fg: #2a241c;
   --sign-muted: #6a5e4e;
   --sign-accent: #3f5c45;
-  --sign-available: #3f5c45;
-  --sign-session: #2a241c;
-  --sign-soon: #8d6230;
-  --sign-closed: #7a5a4a;
+  --sign-available: #2d8a45;
+  --sign-session: #c49220;
+  --sign-soon: #c49220;
+  --sign-closed: #c63c33;
 }
 
 .sign-root[data-palette="ink"] {
@@ -90,10 +93,10 @@
   --sign-fg: #ece8df;
   --sign-muted: #a39b8e;
   --sign-accent: #8fa394;
-  --sign-available: #8fa394;
-  --sign-session: #ece8df;
-  --sign-soon: #c4a06a;
-  --sign-closed: #b08978;
+  --sign-available: #5dcc74;
+  --sign-session: #e8c34a;
+  --sign-soon: #e8c34a;
+  --sign-closed: #ee5b52;
 }
 
 .sign-root[data-palette="contrast"] {
@@ -101,20 +104,53 @@
   --sign-fg: #111111;
   --sign-muted: #333333;
   --sign-accent: #111111;
-  --sign-available: #0b5c32;
-  --sign-session: #111111;
-  --sign-soon: #7a4d00;
-  --sign-closed: #5c1f1f;
-}
-
-.sign-root[data-scale="large"] {
-  --sign-name: clamp(2.8rem, 8.5vw, 5.8rem);
-  --sign-meta: clamp(1.05rem, 2.3vw, 1.4rem);
+  --sign-available: #0b7a32;
+  --sign-session: #c9a000;
+  --sign-soon: #c9a000;
+  --sign-closed: #c41e1e;
 }
 
 .sign-root[data-scale="comfort"] {
-  --sign-name: clamp(2.3rem, 6.8vw, 4.6rem);
-  --sign-meta: clamp(1rem, 2vw, 1.25rem);
+  --type-scale: 1;
+  --door-scale: 1;
+  --welcome-scale: 1;
+}
+
+.sign-root[data-scale="large"] {
+  --type-scale: 1.28;
+  --door-scale: 1.28;
+  --welcome-scale: 1.16;
+}
+
+.sign-root[data-scale="extra-large"] {
+  --type-scale: 1.6;
+  --door-scale: 1.6;
+  --welcome-scale: 1.32;
+}
+
+.sign-root[data-scale="giant"] {
+  --type-scale: 2.05;
+  --door-scale: 2.05;
+  --welcome-scale: 1.5;
+}
+
+.sign-root[data-scale="large"] .door-name {
+  font-size: clamp(3.5rem, 15vw, 6.8rem);
+}
+.sign-root[data-scale="extra-large"] .door-name {
+  font-size: clamp(4.4rem, 18vw, 8.2rem);
+}
+.sign-root[data-scale="giant"] .door-name {
+  font-size: clamp(5.4rem, 22vw, 10rem);
+}
+.sign-root[data-scale="large"] .door-mark {
+  font-size: clamp(2.15rem, 7.6vw, 3.4rem);
+}
+.sign-root[data-scale="extra-large"] .door-mark {
+  font-size: clamp(2.6rem, 9vw, 4rem);
+}
+.sign-root[data-scale="giant"] .door-mark {
+  font-size: clamp(3.2rem, 11vw, 4.8rem);
 }
 
 .sign-root:fullscreen,
@@ -149,7 +185,7 @@
 .welcome-kicker {
   margin: 0;
   max-width: 90%;
-  font-size: clamp(1.25rem, 2.8vw, 2.15rem);
+  font-size: calc(clamp(1.25rem, 2.8vw, 2.15rem) * var(--welcome-scale, 1));
   font-weight: 600;
   letter-spacing: 0.14em;
   line-height: 1;
@@ -160,7 +196,7 @@
 .welcome-title {
   margin: 0;
   max-width: 92%;
-  font-size: clamp(4.6rem, 12.5vw, 13.5rem);
+  font-size: calc(clamp(4.6rem, 12.5vw, 13.5rem) * var(--welcome-scale, 1));
   font-weight: 600;
   letter-spacing: -0.06em;
   line-height: 0.86;
@@ -179,7 +215,7 @@
 
 .welcome-cue {
   margin: 0;
-  font-size: clamp(1.35rem, 2.8vw, 2.15rem);
+  font-size: calc(clamp(1.35rem, 2.8vw, 2.15rem) * var(--welcome-scale, 1));
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--sign-fg);
@@ -244,19 +280,10 @@
   gap: clamp(1.15rem, 3.2vh, 2rem);
 }
 
-.door-clock {
-  margin: 0 0 0.15rem;
-  align-self: flex-end;
-  font-size: 0.92rem;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--sign-muted);
-}
-
 .door-name {
   margin: 0;
   max-width: 100%;
-  font-size: clamp(3.4rem, 18vw, 7rem);
+  font-size: calc(clamp(2.8rem, 12vw, 5.4rem) * var(--type-scale, 1));
   font-weight: 600;
   letter-spacing: -0.06em;
   line-height: 0.86;
@@ -297,11 +324,28 @@
   align-items: start;
 }
 
+.door-foot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-top: auto;
+}
+
+.door-mark,
+.door-clock,
 .door-status {
   margin: 0;
-  font-size: clamp(1.05rem, 3.6vw, 1.4rem);
+  font-size: calc(clamp(1.7rem, 6.2vw, 2.75rem) * var(--type-scale, 1));
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.door-clock {
+  font-variant-numeric: tabular-nums;
+  color: var(--sign-muted);
 }
 
 .door-status[data-status="available"] {
@@ -322,7 +366,7 @@
 
 .door-now-title {
   margin: 0;
-  font-size: clamp(1.45rem, 5.4vw, 2.05rem);
+  font-size: calc(clamp(1.35rem, 4.6vw, 2rem) * var(--type-scale, 1));
   font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -331,7 +375,7 @@
 
 .door-now-when {
   margin: 0;
-  font-size: clamp(0.95rem, 2.8vw, 1.15rem);
+  font-size: calc(clamp(0.95rem, 2.6vw, 1.15rem) * var(--type-scale, 1));
   font-weight: 600;
   color: var(--sign-muted);
 }
@@ -339,7 +383,7 @@
 .door-queue-time {
   margin: 0;
   padding-top: 0.18em;
-  font-size: 0.92rem;
+  font-size: calc(0.92rem * var(--type-scale, 1));
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -356,7 +400,7 @@
 
 .door-queue-title {
   margin: 0;
-  font-size: clamp(1.05rem, 3.8vw, 1.4rem);
+  font-size: calc(clamp(1.05rem, 3.4vw, 1.4rem) * var(--type-scale, 1));
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.15;
