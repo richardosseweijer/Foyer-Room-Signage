@@ -101,7 +101,7 @@ export function demoSite(): Site {
   site.floors = [{ id: "f1", label: "Ground" }];
   site.calendars = [{ id: "shared", label: "Room calendar" }];
   site.sharedCalendarId = "shared";
-  site.relayUrl = "http://127.0.0.1:8088";
+  site.relayUrl = "http://127.0.0.1:8081";
   site.rooms = [
     {
       id: "cedar",

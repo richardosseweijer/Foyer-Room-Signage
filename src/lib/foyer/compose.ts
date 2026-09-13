@@ -107,8 +107,10 @@ function statusForRoom(
   if (room.occupancy === "closed") return "closed";
   if (room.occupancy === "in-session") return "in-session";
   if (room.occupancy === "available") return "available";
+  if (room.occupancy === "do-not-disturb") return "do-not-disturb";
   if (relay === "closed") return "closed";
   if (relay === "in-session") return "in-session";
+  if (relay === "do-not-disturb") return "do-not-disturb";
   if (relay === "busy") return "busy";
   if (!inHours(room.hours, now, timeZone)) return "closed";
   if (cal?.busy && meetingCurrent(cal.now, now)) return "busy";

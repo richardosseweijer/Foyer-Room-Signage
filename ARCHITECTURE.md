@@ -88,6 +88,22 @@ Write a `foyer-site.json.transaction` journal, then secrets, then site (temp + f
 - Palette **names** (`linen`, `orchard`, `ink`, `contrast`) are locked.
 - One room on this PC. Untagged calendar events go to that room. `{RoomName}` still routes when present.
 - Relay occupancy is ingest in `src/lib/foyer/relay.ts` (HMAC GET `/api/peer`), **loopback** (`127.0.0.1:8081`). Not AV-LAN, not guest wifi.
+
+Accepted `GET /api/peer` body (Relay `buildPeerGet`):
+
+```json
+{
+  "ok": true,
+  "v": 1,
+  "room": { "id": "relay-room", "name": "Cedar" },
+  "host": { "dim": false, "locked": false, "pageId": null },
+  "occupancy": "available",
+  "vars": { "v1": { "name": "occupancy", "value": "available" } },
+  "macros": {}
+}
+```
+
+`occupancy` is `available | in-session | busy | do-not-disturb | closed`. Foyer binds it to the room whose **name** matches `room.name`. Var labels that equal a room name remain a fallback. `host.locked` is in-session only when occupancy is missing. Setup occupancy other than Auto is local and is not written back.
 - Room occupancy in Setup: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay. Sessions stay on the plate.
 - Wayfinding is **not** this app.
 

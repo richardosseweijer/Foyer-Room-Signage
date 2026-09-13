@@ -480,7 +480,9 @@ export function ConfigApp() {
 
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
           <h2 className="text-xl font-semibold tracking-tight">Relay</h2>
-          <p className="text-sm text-muted">Occupancy only, on loopback. Device control stays in Relay.</p>
+          <p className="text-sm text-muted">
+            Occupancy only, on loopback. Room names in Foyer and Relay must match. Device control stays in Relay.
+          </p>
           <label className="flex items-center gap-3 text-sm">
             <input
               type="checkbox"

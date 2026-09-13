@@ -7,7 +7,7 @@ import { composeFrame, inHours } from "./compose.ts";
 import { defaultLook } from "./look.ts";
 import { emptyCalendarSnapshot } from "./calendar.ts";
 import { emptySite } from "./site.ts";
-import type { CalendarSnapshot, Display, Site } from "./types.ts";
+import type { CalendarSnapshot, Display, OccupancySnapshot, Site } from "./types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +47,7 @@ function frame(opts: {
   site?: Site;
   display?: Display;
   calendar?: CalendarSnapshot;
+  occupancy?: OccupancySnapshot | null;
   now?: Date;
 }) {
   const site = opts.site ?? siteWith();
@@ -56,6 +57,7 @@ function frame(opts: {
     site,
     display,
     calendar: opts.calendar ?? emptyCalendarSnapshot(now),
+    occupancy: opts.occupancy,
     now,
     pairing: { bound: true },
   });
@@ -266,6 +268,41 @@ test("HTML in a meeting title is stripped before the frame", () => {
 
 test("inHours skips empty day lists as always-open (hours exist but days empty = open)", () => {
   assert.equal(inHours({ start: "09:00", end: "17:00", days: [] }, new Date("2026-09-11T20:00:00Z")), true);
+});
+
+test("Setup do-not-disturb beats calendar and Relay", () => {
+  const now = new Date("2026-09-11T12:00:00Z");
+  const calendar: CalendarSnapshot = {
+    atIso: now.toISOString(),
+    rooms: {
+      cedar: {
+        now: {
+          title: "Budget",
+          host: "Ada",
+          description: "",
+          startIso: "2026-09-11T11:00:00Z",
+          endIso: "2026-09-11T13:00:00Z",
+        },
+        next: null,
+      },
+    },
+  };
+  const occupancy: OccupancySnapshot = { atIso: now.toISOString(), rooms: { cedar: "in-session" } };
+  const out = frame({ site: siteWith("do-not-disturb"), calendar, occupancy, now });
+  assert.equal(out.status, "do-not-disturb");
+  assert.equal(out.now?.title, "Budget");
+});
+
+test("Auto uses Relay do-not-disturb", () => {
+  const now = new Date("2026-09-11T12:00:00Z");
+  const occupancy: OccupancySnapshot = { atIso: now.toISOString(), rooms: { cedar: "do-not-disturb" } };
+  assert.equal(frame({ occupancy, now }).status, "do-not-disturb");
+});
+
+test("Setup available beats Relay closed", () => {
+  const now = new Date("2026-09-11T12:00:00Z");
+  const occupancy: OccupancySnapshot = { atIso: now.toISOString(), rooms: { cedar: "closed" } };
+  assert.equal(frame({ site: siteWith("available"), occupancy, now }).status, "available");
 });
 
 test("split display paints two panes with description", () => {

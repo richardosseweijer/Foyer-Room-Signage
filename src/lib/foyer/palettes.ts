@@ -20,6 +20,7 @@ export const STATUS_LABELS: Record<Status, string> = {
   "starting-soon": "Starting soon",
   closed: "Closed",
   busy: "Busy",
+  "do-not-disturb": "Do not disturb",
 };
 
 export const ARROW_LABELS: Record<Arrow, string> = {

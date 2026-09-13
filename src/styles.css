@@ -376,6 +376,9 @@
 .door-status[data-status="busy"] {
   color: var(--sign-busy);
 }
+.door-status[data-status="do-not-disturb"] {
+  color: var(--sign-closed);
+}
 
 .door-now-title {
   margin: 0;
