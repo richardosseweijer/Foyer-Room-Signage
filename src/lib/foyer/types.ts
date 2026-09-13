@@ -17,6 +17,7 @@ export const FOYER_MODULES = [
   { id: "net", path: "src/lib/foyer/net.ts" },
   { id: "video", path: "src/lib/foyer/video.ts" },
   { id: "listen", path: "src/lib/foyer/listen.ts" },
+  { id: "panel", path: "src/lib/foyer/panel.ts" },
   { id: "update", path: "src/lib/foyer/update.ts" },
   { id: "kiosk", path: "src/lib/foyer/kiosk.ts" },
 ] as const;
@@ -26,7 +27,9 @@ export const BOARD_TEMPLATES = ["welcome", "door"] as const;
 export const ARROWS = ["off", "left", "right", "up", "down"] as const;
 export const TYPE_SCALES = ["comfort", "large", "extra-large", "giant"] as const;
 export const PALETTES = ["linen", "orchard", "ink", "contrast"] as const;
-export const STATUSES = ["available", "in-session", "starting-soon", "closed", "busy"] as const;
+export const STATUSES = ["available", "in-session", "starting-soon", "closed", "busy", "do-not-disturb"] as const;
+export const ROOM_OCCUPANCIES = ["auto", "available", "in-session", "closed", "do-not-disturb"] as const;
+export const LIVE_OCCUPANCIES = ["available", "in-session", "closed", "busy", "do-not-disturb"] as const;
 export const YOU_ARE_HERE = [0, 90, 180, 270] as const;
 export const BINDING_SLOTS = ["single", "left", "right"] as const;
 
@@ -35,6 +38,8 @@ export type Arrow = (typeof ARROWS)[number];
 export type TypeScale = (typeof TYPE_SCALES)[number];
 export type PaletteName = (typeof PALETTES)[number];
 export type Status = (typeof STATUSES)[number];
+export type RoomOccupancy = (typeof ROOM_OCCUPANCIES)[number];
+export type LiveOccupancy = (typeof LIVE_OCCUPANCIES)[number];
 export type YouAreHereDeg = (typeof YOU_ARE_HERE)[number];
 export type BindingSlot = (typeof BINDING_SLOTS)[number];
 
@@ -80,7 +85,7 @@ export const RoomSchema = z.strictObject({
   name: z.string(),
   floorId: z.string(),
   hours: HoursSchema,
-  occupancy: z.enum(["auto", "available", "in-session", "closed"]),
+  occupancy: z.enum(ROOM_OCCUPANCIES),
   calendarId: z.string().nullable(),
 });
 export type Room = z.infer<typeof RoomSchema>;
@@ -130,6 +135,8 @@ export const SiteSchema = z.strictObject({
   demoRev: z.number().int().default(0),
   outboundNicIndex: z.number().int().min(0).nullable().default(null),
   outboundNicName: z.string().nullable().default(null),
+  avLanNicIndex: z.number().int().min(0).nullable().default(null),
+  avLanNicName: z.string().nullable().default(null),
   videoOutputIndex: z.number().int().min(0).nullable().default(null),
   videoOutputName: z.string().nullable().default(null),
 });
@@ -161,7 +168,7 @@ export type CalendarSnapshot = z.infer<typeof CalendarSnapshotSchema>;
 
 export const OccupancySnapshotSchema = z.strictObject({
   atIso: z.string(),
-  rooms: z.record(z.string(), z.enum(["available", "in-session", "closed", "busy"])),
+  rooms: z.record(z.string(), z.enum(LIVE_OCCUPANCIES)),
 });
 export type OccupancySnapshot = z.infer<typeof OccupancySnapshotSchema>;
 

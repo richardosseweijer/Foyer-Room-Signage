@@ -100,6 +100,7 @@ export function ConfigApp() {
           sitePin: sitePin.trim() || undefined,
           techPin: techPin.trim() || undefined,
           outboundNicIndex: current.outboundNicIndex,
+          avLanNicIndex: current.avLanNicIndex,
           videoOutputIndex: current.videoOutputIndex,
         },
       });
@@ -271,8 +272,8 @@ export function ConfigApp() {
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
         <h2 className="text-xl font-semibold tracking-tight">This PC</h2>
         <p className="text-sm text-muted">
-          Welcome uses a local HDMI on this machine. Pick one — Chromium starts on that output.
-          Calendar pulls go out the selected NIC (or any NIC if unset / no IPv4).
+          Two physical NICs on this PC. Foyer does not read Relay’s picks — set the same interfaces there yourself.
+          Welcome uses a local HDMI. Calendar and GitHub go out LAN. The door plate binds AV-LAN.
         </p>
         <label className="flex flex-col gap-2 text-sm">
           Welcome video output
@@ -293,7 +294,27 @@ export function ConfigApp() {
           </select>
         </label>
         <label className="flex flex-col gap-2 text-sm">
-          Outbound NIC
+          AV-LAN
+          <select
+            className={inputClass}
+            value={site.avLanNicIndex ?? ""}
+            onChange={(e) =>
+              setSite({
+                ...site,
+                avLanNicIndex: e.target.value === "" ? null : Number(e.target.value),
+              })
+            }
+          >
+            <option value="">Not set (door plate on all interfaces)</option>
+            {nics.map((row) => (
+              <option key={`av-${row.name}`} value={row.index}>
+                {row.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-2 text-sm">
+          LAN (internet)
           <select
             className={inputClass}
             value={site.outboundNicIndex ?? ""}
@@ -304,14 +325,19 @@ export function ConfigApp() {
               })
             }
           >
-            <option value="">Any (not bound)</option>
+            <option value="">Not set (calendar not bound)</option>
             {nics.map((row) => (
-              <option key={row.name} value={row.index}>
+              <option key={`lan-${row.name}`} value={row.index}>
                 {row.label}
               </option>
             ))}
           </select>
         </label>
+        {site.avLanNicIndex !== null &&
+        site.outboundNicIndex !== null &&
+        site.avLanNicIndex === site.outboundNicIndex ? (
+          <p className="text-sm text-muted">AV-LAN and LAN are the same interface. Fine for a test box; split them in the room.</p>
+        ) : null}
       </section>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
@@ -343,11 +369,13 @@ export function ConfigApp() {
               <option value="auto">Auto</option>
               <option value="available">Available</option>
               <option value="in-session">In session</option>
+              <option value="do-not-disturb">Do not disturb</option>
               <option value="closed">Closed</option>
             </select>
           </div>
         ))}
         <p className="text-sm text-muted">
+          Auto follows hours, calendar, and Relay. Do not disturb stays on until you switch back.
           A shared calendar can tag events with <code className="text-fg">{`{${site.rooms[0]?.name ?? "Cedar"}}`}</code>.
           With one room on this PC, untagged events land here too.
         </p>
@@ -383,13 +411,13 @@ export function ConfigApp() {
             checked={site.relayEnabled}
             onChange={(e) => setSite({ ...site, relayEnabled: e.target.checked })}
           />
-          Pull occupancy from Relay on this PC
+          Pull occupancy from Relay on this PC (loopback, not either NIC)
         </label>
         <input
           className={inputClass}
           value={site.relayUrl ?? ""}
           onChange={(e) => setSite({ ...site, relayUrl: e.target.value })}
-          placeholder="http://127.0.0.1"
+          placeholder="http://127.0.0.1:8081"
         />
         <input
           className={inputClass}

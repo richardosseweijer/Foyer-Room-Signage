@@ -108,7 +108,14 @@ export async function refreshIngest() {
   let localAddress = nic?.ipv4 ?? null;
   let note = "";
   if (wantBind && !localAddress) {
-    note = "Outbound NIC has no IPv4 — pulling without a bind.";
+    note = "LAN (internet) NIC has no IPv4 — calendar not pulled.";
+    mem.ingestNote = note;
+    mem.occupancy = await fetchRelayOccupancy({
+      site: mem.site,
+      secret: mem.secrets.relaySecret,
+      lastGood: lastOcc,
+    });
+    return;
   }
   mem.calendar = await buildCalendarSnapshot({
     site: mem.site,

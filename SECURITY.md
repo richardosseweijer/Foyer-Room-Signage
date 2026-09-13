@@ -13,25 +13,26 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 - A stolen disk has `data/`.
 - Google event titles are untrusted input (XSS).
 - The outbound NIC must not accept inbound Foyer.
-- The rack AP must not reach Relay, Google, or Setup.
+- The door tablet sits on **AV-LAN** with the DSP. HMAC on Relay stays required. Foyer ↔ Relay stays on loopback.
 
 ## Baseline
 
 | Control | Rule |
 |---|---|
-| Listen | Welcome on `0.0.0.0:8080` so Setup is reachable from a config laptop (`src/lib/foyer/listen.ts`). Firewall: 8080 on the config LAN only — never the rack AP or WAN. Room panel on `:8082`. Setup is not on the panel listener. |
-| Calendar bind | ICS fetch uses the Setup-selected outbound NIC (`src/lib/foyer/net.ts` + `src/lib/foyer/calendar.ts`). If a NIC is selected but has no IPv4, Setup shows a warning and ingest pulls **unbound** rather than showing a blank wall. |
+| Listen | Welcome on `0.0.0.0:8080` so the HDMI kiosk and Setup work (`src/lib/foyer/listen.ts`). Room panel (`src/lib/foyer/panel.ts`) binds the Setup-selected **AV-LAN** IPv4 on `:8082` (all interfaces until that NIC is picked). Firewall: 8080/8082 on AV-LAN only — never the internet NIC. |
+| Calendar bind | ICS fetch uses the Setup-selected **LAN (internet)** NIC (`src/lib/foyer/net.ts`). If that NIC is picked but has no IPv4, calendar is **not** pulled (last-good stays). No fallback onto AV-LAN. |
 | Two PINs | **Site** PIN unlocks `/config`. **Tech** PIN unlocks the endpoint sheet. Cross-gate: site PIN is rejected on tech, tech PIN is rejected on config. |
 | First PIN | `1234` then force a stronger one. Weak list in `src/lib/foyer/pins.ts`. |
 | Lockout | 5 fails / 5 min per gate. Process memory; a restart clears the counter. |
 | Pairing | Welcome (local video) is always bound. Room panel: display token after claim. Unpaired glass shows a code, not room data. |
 | Calendar | Server pulls Google ICS. Tablets never see the URL. Titles **and descriptions** sanitized. `{RoomName}` routes; one-room PC also accepts untagged events. Private → `Busy`. |
-| Relay | HMAC GET `/api/peer` from `src/lib/foyer/relay.ts`. Secret stays in `foyer-secrets.json`. Occupancy snapshot only on the frame. |
+| Relay | HMAC GET `/api/peer` from `src/lib/foyer/relay.ts` on **loopback**. Secret stays in `foyer-secrets.json`. Occupancy snapshot only on the frame. |
 | Secrets | `data/foyer-secrets.json`: hashed PINs, ICS URLs, tokens. Export strips them. Not in git. |
 | Logos | jpeg/png/webp, size cap. No SVG. |
 | Logs | No PIN, no ICS, no token in log lines. `data/foyer-update.log` is git SHAs and npm only. |
 | Update | Setup session required. Dirty source refuses. `data/` is not in the worktree swap. |
 | Kiosk | Setup session. Restarts a **fixed** unit name (`foyer-kiosk.service`) only. |
+| Panel bind | Saving a new AV-LAN NIC restarts `foyer-panel.service` only (`src/lib/foyer/panel.ts`). |
 | Defaults | Deny. Open glass is an explicit switch, off in production. |
 
 ## PINs

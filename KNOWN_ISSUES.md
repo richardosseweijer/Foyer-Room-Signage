@@ -5,8 +5,8 @@ Beta. Not audited.
 - Welcome kiosk replaces the tty1 login console (`Conflicts=getty@tty1`). SSH is unchanged. A missing GPU driver or the wrong HDMI leaves a black seat; Foyer itself can still be healthy on loopback.
 - Snap Chromium under cage may need `--no-sandbox` on this dedicated PC.
 - Outfit is loaded from Google Fonts. Offline kiosk falls back to system fonts (`fonts-liberation` / `fonts-noto-core`).
-- Welcome/Setup bind `0.0.0.0:8080`. Firewall 8080 on the config LAN only — never the rack AP or WAN. The kiosk still loads `http://127.0.0.1:8080/`.
-- Calendar source-bind uses the IPv4 of the NIC picked in Setup. If that NIC has no address, ingest warns and pulls unbound.
+- Welcome/Setup bind `0.0.0.0:8080`. Firewall 8080 on **AV-LAN** only — never the internet NIC. The kiosk still loads `http://127.0.0.1:8080/`.
+- Calendar source-bind uses the LAN (internet) NIC. If that NIC is picked but has no IPv4, ingest does **not** pull (last-good stays). No AV-LAN fallback.
 - Recurring Google events (`RRULE`) are not expanded. Only the seed `DTSTART` is shown.
 - Room panel `:8082` is a reverse proxy to welcome. If welcome is down, the plate returns 502. The proxy must keep the tablet `Host` header or `getGlassFrame` throws and the plate shows “Could not reach Foyer.”
 - Pairing pickup tokens live in process memory. A Foyer restart before the tablet polls means the code must be shown again.

@@ -79,9 +79,11 @@ export function migrateToRoomAppliance(site: Site): Site {
     },
     outboundNicIndex: site.outboundNicIndex ?? null,
     outboundNicName: site.outboundNicName ?? null,
+    avLanNicIndex: site.avLanNicIndex ?? null,
+    avLanNicName: site.avLanNicName ?? null,
     videoOutputIndex: site.videoOutputIndex ?? null,
     videoOutputName: site.videoOutputName ?? null,
-    relayUrl: site.relayUrl ?? "http://127.0.0.1:8088",
+    relayUrl: site.relayUrl ?? "http://127.0.0.1:8081",
   };
 }
 

@@ -76,6 +76,8 @@ export function emptySite(): Site {
     demoRev: 0,
     outboundNicIndex: null,
     outboundNicName: null,
+    avLanNicIndex: null,
+    avLanNicName: null,
     videoOutputIndex: null,
     videoOutputName: null,
   };

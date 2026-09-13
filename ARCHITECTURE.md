@@ -26,9 +26,10 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **transport** | `src/lib/foyer/transport.ts` | Pairing codes, display tokens, snapshot/patch seq | layout, palette, event parsing |
 | **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC, occupancy snapshot | UI, compose internals, ICS |
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
-| **net** | `src/lib/foyer/net.ts` | Indexed NICs, outbound bind | compose, PINs, calendar parse |
+| **net** | `src/lib/foyer/net.ts` | Indexed NICs, AV-LAN bind, LAN (internet) calendar bind | compose, PINs, calendar parse |
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs | compose, calendar, listen |
 | **listen** | `src/lib/foyer/listen.ts` | Welcome host/port, panel port, path allowlist | compose, calendar, secrets |
+| **panel** | `src/lib/foyer/panel.ts` | Restart `foyer-panel.service` after AV-LAN bind changes | compose, calendar, secrets |
 | **update** | `src/lib/foyer/update.ts` | Git identity, spawn updater | compose, calendar, secrets, PINs |
 | **kiosk** | `src/lib/foyer/kiosk.ts` | Restart `foyer-kiosk.service` | compose, calendar, secrets |
 
@@ -49,11 +50,9 @@ A plate may hold only:
 - `v`, `seq`, `displayId`, `roomId`, `template`
 - `look` (palette **name**, arrow, typeScale, logo flags, slots including countdown and clock)
 - `identity` (siteName, roomName, floorLabel, logoUrl or null)
-- `status`, `clock`, `now`, `next`, `following` (up to four upcoming meetings for the door plate)
+- `status`, `clock`, `now`, `next`, `following` (bounded upcoming list; the door plate clips to the screen)
 - `panes`, `directory` (empty on this appliance), `catalog` (id+name for the tech sheet), `message`
 - `pairing` (bound, or unbound + code), `openGlass`
-
-**Never on a frame:** `icsUrl`, `pin`, `sitePin`, `techPin`, display token, peer secret, NIC names, video output ids, attendee emails, raw HTML.
 
 **Never on a frame:** `icsUrl`, `pin`, `sitePin`, `techPin`, display token, peer secret, NIC names, video output ids, attendee emails, raw HTML.
 
@@ -63,11 +62,12 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 
 | Listener | Bind | Serves |
 |---|---|---|
-| Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop |
-| Room panel | `:8082` (AP address on Ubuntu) | `/play/door` only. `/config`, `/play/welcome`, and other `/play/*` ids are 404. `/` redirects to the door. |
-| Outbound NIC | no Foyer socket | Calendar fetch source address, selected in Setup as an **indexed** dropdown |
+| Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop on AV-LAN |
+| Room panel | AV-LAN IPv4 `:8082` (all interfaces until that NIC is picked) | `/play/door` and `/config` (site PIN). Other `/play/*` ids are 404. `/` redirects to the door. |
+| LAN (internet) NIC | no Foyer socket | Calendar fetch source address. GitHub update uses the default route on this NIC. |
+| Foyer ↔ Relay | `127.0.0.1` | Occupancy HMAC. Not either NIC. |
 
-Welcome is always bound. The room panel pairs. Setup is `/config` on the welcome listener.
+Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
 
 Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktree, then switches the live checkout. `data/` is never copied. Log: `data/foyer-update.log`. A zip-only copy cannot use the button.
 
@@ -75,7 +75,7 @@ Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktre
 
 | File | Contents |
 |---|---|
-| `data/foyer-site.json` | Room profile, looks (palette **names**), hours, outbound NIC index/name, video output index/name. No PINs, no ICS URLs. |
+| `data/foyer-site.json` | Room profile, looks (palette **names**), hours, AV-LAN NIC index/name, LAN (internet) NIC index/name, video output index/name. No PINs, no ICS URLs. |
 | `data/foyer-secrets.json` | Site PIN hash, tech PIN hash, display tokens, ICS URLs. |
 
 Write a `foyer-site.json.transaction` journal, then secrets, then site (temp + fsync + rename). Matching `.good` copies refresh after a successful pair. Boot recovers the journal if valid, else the last-good pair, else an empty site. A bad file is renamed `.bad`.
@@ -87,7 +87,8 @@ Write a `foyer-site.json.transaction` journal, then secrets, then site (temp + f
 - First site PIN `1234`, then a stronger one is required. Tech PIN unset until Setup sets it (must differ).
 - Palette **names** (`linen`, `orchard`, `ink`, `contrast`) are locked.
 - One room on this PC. Untagged calendar events go to that room. `{RoomName}` still routes when present.
-- Relay occupancy is ingest in `src/lib/foyer/relay.ts` (HMAC GET `/api/peer`), typically `127.0.0.1`.
+- Relay occupancy is ingest in `src/lib/foyer/relay.ts` (HMAC GET `/api/peer`), **loopback** (`127.0.0.1:8081`). Not AV-LAN, not guest wifi.
+- Room occupancy in Setup: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay. Sessions stay on the plate.
 - Wayfinding is **not** this app.
 
 ## 7. Surfaces

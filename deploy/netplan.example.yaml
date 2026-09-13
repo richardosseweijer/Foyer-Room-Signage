@@ -4,12 +4,9 @@
 network:
   version: 2
   ethernets:
-    enp1s0: # AV LAN — Relay / DSP. No default route.
+    enp1s0: # AV-LAN — DSP, door tablet, config laptop. No default route.
       dhcp4: false
-      addresses: [10.20.0.10/24]
+      addresses: [10.0.25.10/24]
       routes: []
-    enp2s0: # Outbound — calendar, apt, GitHub
+    enp2s0: # LAN (internet) — calendar, apt, GitHub, Relay telemetry
       dhcp4: true
-    enp3s0: # Rack AP — room plate only
-      dhcp4: false
-      addresses: [10.64.0.1/24]

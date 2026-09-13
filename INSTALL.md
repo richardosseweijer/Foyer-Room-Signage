@@ -7,9 +7,9 @@ Foyer is a **room appliance**:
 | Piece | What it does |
 | --- | --- |
 | Welcome | Chromium kiosk on **one local video output** (HDMI B). Loopback only. |
-| Room plate | Tablet on the **rack AP**. Foyer listens on port **8082**. No internet on that SSID. |
-| Calendar | Pulls Google ICS **only** through the outbound NIC you pick in Setup. |
-| Relay | Occupancy from Relay on this PC (`127.0.0.1`, Relay’s production port **8081**). |
+| Room plate | Tablet on **AV-LAN**. Foyer binds **8082** to the AV-LAN IPv4 you pick in Setup. |
+| Calendar | Pulls Google ICS **only** through the **LAN (internet)** NIC you pick in Setup. |
+| Relay | Occupancy from Relay on this PC (`127.0.0.1:8081`). Not either NIC. |
 
 Wayfinding is **not** installed by this guide.
 
@@ -23,13 +23,13 @@ OS packages this guide installs (npm packages come from `npm ci --include=dev` i
 | `build-essential` | Native Node modules during `npm ci` |
 | `nodejs` 22 | Runtime (`--experimental-strip-types` for the panel) |
 | `iproute2` | `ip` / `ss` |
-| `ufw` | Incoming deny; 8082 only on the rack AP |
+| `ufw` | Incoming deny; 8080/8082 on AV-LAN only |
 | `seatd` `cage` `wlr-randr` | Welcome compositor + HDMI pick |
 | `chromium` or `chromium-browser` | Welcome kiosk |
 | `fonts-liberation` `fonts-noto-core` | Type if Google Fonts is unreachable |
 | `mesa-vulkan-drivers` `libgl1-mesa-dri` | GPU for cage |
 
-`undici` is an npm dependency (calendar fetch bound to the outbound NIC). Vite stays in **devDependencies**; that is why `--include=dev` is required even in production.
+`undici` is an npm dependency (calendar fetch bound to the LAN NIC). Vite stays in **devDependencies**; that is why `--include=dev` is required even in production.
 
 Commands below are run in a terminal as a normal user that can use `sudo`.
 
@@ -105,7 +105,7 @@ The clone has no site file and no secrets file. Those appear under `data/` after
 | --- | --- | --- | --- |
 | Dev | `npm run dev` | welcome `:8080` | First check |
 | Production | `npm run build` then `npm start` | welcome `0.0.0.0:8080` | 24/7 |
-| Panel | `npm run start:panel` | `0.0.0.0:8082` | Door tablet |
+| Panel | `npm run start:panel` | AV-LAN `:8082` (all interfaces until picked) | Door tablet |
 
 Relay (if installed) stays on **8081**. Do not run Relay `npm run dev` (8080) at the same time as Foyer.
 
@@ -170,24 +170,23 @@ ss -lptn | grep -E '8080|8081|8082'
 
 ## 5. Firewall
 
-Welcome/Setup is on **8080** for the config laptop (outbound NIC). The room plate is **8082** on the rack AP only. Do not open 8080 on the AP or to the internet.
+Welcome/Setup is on **8080** (`0.0.0.0`, kiosk uses loopback). The room plate is **8082** on **AV-LAN** only. Do not open either port on the internet NIC.
 
 ```bash
 sudo apt-get install -y ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow OpenSSH
-# Config laptop / outbound LAN:
-sudo ufw allow in on <OUT-IFACE> to any port 8080 proto tcp
-# Rack AP clients only:
-sudo ufw allow in on <AP-IFACE> to any port 8082 proto tcp
+# AV-LAN (config laptop + door tablet):
+sudo ufw allow in on <AV-IFACE> to any port 8080 proto tcp
+sudo ufw allow in on <AV-IFACE> to any port 8082 proto tcp
 sudo ufw enable
 sudo ufw status
 ```
 
-Replace `<OUT-IFACE>` and `<AP-IFACE>` (`ip -br addr`).
+Replace `<AV-IFACE>` (`ip -br addr`). Nothing inbound on the internet NIC.
 
-Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080 or 8082. Do **not** let AP clients reach Relay (`8081`) or Setup (`8080`).
+Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080 or 8082. Foyer ↔ Relay stays on loopback; HMAC on Relay `:8081` stays required because the tablet is on the same AV-LAN as the DSP.
 
 A copy-paste sketch lives in `deploy/ufw.example.sh`.
 
@@ -373,38 +372,35 @@ If the kiosk stays on the Ubuntu login TTY: the unit is the old one (no `Conflic
 
 ---
 
-## 8. Rack AP (room plate)
+## 8. Door tablet (AV-LAN)
 
-Use a **dedicated AP in the driverack**, not guest Wi-Fi.
+The plate shares the **AV-LAN** with Relay-controlled devices. It is not on guest wifi.
 
-1. SSID e.g. `foyer-<room>`, WPA2, **no WAN / no internet**.
-2. DHCP from the AP. Give this PC a static address on that subnet, e.g. `10.64.0.1`.
-3. Tablet joins the SSID, opens `http://10.64.0.1:8082/play/door`.
-4. Leave **Open glass** on for this rack AP (Setup). There is no pairing-code field in Setup; the plate on this SSID is trusted by that switch.
+1. Give this PC a static IPv4 on AV-LAN.
+2. In Setup pick that NIC under **AV-LAN** (indexed dropdown). Save. The panel unit rebinds `:8082` to that address.
+3. Tablet opens `http://AV-LAN-IP:8082/play/door`.
+4. Pick **LAN (internet)** for calendar. Relay occupancy URL stays `http://127.0.0.1:8081`.
 
-The panel listener **404s** Setup and welcome. That is correct.
-
-Confirm from a laptop on the AP:
+Confirm from a laptop on AV-LAN:
 
 ```bash
-curl -sI http://10.64.0.1:8082/config          # 404
-curl -sI http://10.64.0.1:8082/play/welcome    # 404
-curl -sI http://10.64.0.1:8082/play/dc         # 404
-curl -s  -o /dev/null -w "%{http_code}\n" http://10.64.0.1:8082/play/door
-# Google from the tablet must fail. Relay :8081 from the tablet must fail.
+curl -sI http://AV-LAN-IP:8082/config          # 200 (Setup, site PIN)
+curl -sI http://AV-LAN-IP:8082/play/welcome    # 404
+curl -sI http://AV-LAN-IP:8082/play/dc         # 404
+curl -s  -o /dev/null -w "%{http_code}\n" http://AV-LAN-IP:8082/play/door
 ```
 
 ---
 
-## 9. Three networks (do this before a paying venue)
+## 9. Two NICs (do this before a paying venue)
 
 | Interface | Role | Default route? | Foyer socket |
 | --- | --- | --- | --- |
-| `av` | Relay / DSP | no | no |
-| `out` | Calendar, apt, GitHub, **Setup** | yes | **8080** |
-| AP | Room plate | no | **8082 only** |
+| AV-LAN | DSP, door tablet, config laptop | no | **8082** (and Setup **8080** via firewall) |
+| LAN (internet) | Calendar, apt, GitHub, Relay telemetry | yes | none inbound |
+| loopback | Foyer ↔ Relay HMAC | — | **8081** / **8080** |
 
-Setup → **Outbound NIC** must be `out`. If that NIC is selected but has no IPv4, Foyer keeps the last calendar snapshot (fail closed).
+Setup → **LAN (internet)** must be the guest/WAN NIC. If that NIC is selected but has no IPv4, Foyer keeps the last calendar snapshot (fail closed). Setup → **AV-LAN** is the door bind. Foyer does not read Relay’s NIC picks — set the same interfaces in both apps.
 
 A netplan sketch is in `deploy/netplan.example.yaml`. Do not copy it blindly — names (`enp1s0`) differ per PC.
 
@@ -448,12 +444,12 @@ Copy both off the disk before a re-image. A failed write keeps last-good (`.good
 ## Checks before you leave the room
 
 1. Welcome shows the session on the HDMI you chose.
-2. Room plate on the AP shows the same room; Setup is unreachable from the tablet.
+2. Room plate on AV-LAN shows the same room.
 3. Unplug Relay: meetings still show.
-4. Unplug outbound NIC: last calendar remains; welcome still paints.
-5. Unplug the AP: welcome still paints.
+4. Unplug LAN (internet) NIC: last calendar remains; welcome still paints.
+5. Unplug AV-LAN: welcome still paints; the tablet goes dark.
 6. Site PIN is no longer `1234`.
-7. Open glass is **on** only for the rack AP, **off** if that SSID is shared.
+7. Open glass is **off** unless you trust every device on AV-LAN.
 
 Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC is down, Liberation / Noto still paint.
 
@@ -462,7 +458,8 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 ## Notes
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
-- Relay production is **8081**. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082**.
+- Relay production is **8081** on loopback for Foyer. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082** on AV-LAN.
+- Setup occupancy: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.
 - Tests: `npm test` (Foyer cases live under `src/lib/foyer/*.test.ts`).
-- Setup: `http://FOYER-IP:8080/config` from the config laptop. Firewall 8080 on the outbound NIC only.
+- Setup: `http://AV-LAN-IP:8080/config` from the config laptop. Firewall 8080/8082 on AV-LAN only.

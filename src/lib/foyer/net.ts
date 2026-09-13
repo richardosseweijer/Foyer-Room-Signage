@@ -31,15 +31,32 @@ export function listNics(): NicRow[] {
   return rows;
 }
 
-export function resolveOutbound(site: { outboundNicName: string | null; outboundNicIndex: number | null }): NicRow | null {
+export function resolveNic(opts: { nicName: string | null; nicIndex: number | null }): NicRow | null {
   const nics = listNics();
-  if (site.outboundNicName) {
-    const byName = nics.find((row) => row.name === site.outboundNicName);
+  if (opts.nicName) {
+    const byName = nics.find((row) => row.name === opts.nicName);
     if (byName) return byName;
   }
-  if (site.outboundNicIndex !== null && site.outboundNicIndex !== undefined) {
-    const byIndex = nics.find((row) => row.index === site.outboundNicIndex);
+  if (opts.nicIndex !== null && opts.nicIndex !== undefined) {
+    const byIndex = nics.find((row) => row.index === opts.nicIndex);
     if (byIndex) return byIndex;
   }
   return null;
+}
+
+/** LAN (internet) NIC — calendar and GitHub. */
+export function resolveOutbound(site: { outboundNicName: string | null; outboundNicIndex: number | null }): NicRow | null {
+  return resolveNic({ nicName: site.outboundNicName, nicIndex: site.outboundNicIndex });
+}
+
+/** AV-LAN NIC — door plate :8082. */
+export function resolveAvLan(site: { avLanNicName: string | null; avLanNicIndex: number | null }): NicRow | null {
+  return resolveNic({ nicName: site.avLanNicName, nicIndex: site.avLanNicIndex });
+}
+
+/** Door plate bind. Unset → all interfaces (first boot). Set with IPv4 → that address. Set without IPv4 → loopback so the plate does not leak onto the other NIC. */
+export function panelListenHost(site: { avLanNicName: string | null; avLanNicIndex: number | null }): string {
+  const nic = resolveAvLan(site);
+  if (!nic) return "0.0.0.0";
+  return nic.ipv4 ?? "127.0.0.1";
 }

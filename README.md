@@ -3,10 +3,10 @@
 Foyer **0.2.0** (beta). Room signage that lives **on the Relay PC**.
 
 - **Welcome** — this PC’s local video output (HDMI kiosk)
-- **Room plate** — tablet on the in-rack AP (own HTTP listener)
+- **Room plate** — tablet on **AV-LAN** (`:8082` bound to that NIC)
 - **Not this app** — lobby wayfinding (separate product)
 
-Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box.
+Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box. Each has its own NIC pickers; they do not share config.
 
 Clone is unused until you start it. First boot writes `data/foyer-site.json` and `data/foyer-secrets.json` on the host. Those files are not in git.
 
@@ -19,18 +19,18 @@ npm ci --include=dev
 | Script | Command | Bind | Use |
 | --- | --- | --- | --- |
 | Dev / kiosk | `npm run dev` | welcome `0.0.0.0:8080` | Local edit |
-| Room panel | `npm run start:panel` | `0.0.0.0:8082` | Door tablet on the rack AP |
+| Room panel | `npm run start:panel` | AV-LAN `:8082` (all interfaces until picked) | Door tablet |
 | Production | `npm run build` then `npm start` | welcome `0.0.0.0:8080` | 24/7 next to Relay (`:8081`) |
 
 | Surface | Where |
 | --- | --- |
-| Welcome (HDMI) | `http://127.0.0.1:8080/` (kiosk) or `http://FOYER-IP:8080/` |
-| Setup | `http://FOYER-IP:8080/config` |
-| Room plate | `http://FOYER-ON-AP:8082/play/door` |
+| Welcome (HDMI) | `http://127.0.0.1:8080/` (kiosk) or `http://AV-LAN-IP:8080/` |
+| Setup | `http://AV-LAN-IP:8080/config` |
+| Room plate | `http://AV-LAN-IP:8082/play/door` |
 
 Do not start with raw `npx vite`. Scripts run `scripts/with-app-env.mjs`.
 
-First site PIN is `1234`. You must set a stronger one. Welcome on the local output does not pair. The room plate pairs with a code (or **Open glass** on a trusted rack AP). Calendar ICS URLs never leave the server. Setup → **Update from GitHub** fetches `main`. See [Security](SECURITY.md).
+First site PIN is `1234`. You must set a stronger one. Welcome on the local output does not pair. The room plate pairs with a code (or **Open glass** on a trusted rack AP). Calendar ICS URLs never leave the server. Setup occupancy can force **Do not disturb** (Relay var `dnd` does the same). Setup → **Update from GitHub** fetches `main`. See [Security](SECURITY.md).
 
 Foolproof Ubuntu install: **[INSTALL.md](INSTALL.md)**
 

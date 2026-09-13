@@ -43,6 +43,15 @@ test("composer output parses as Frame", () => {
   assert.equal(parsed.success, true);
 });
 
+test("do-not-disturb occupancy and status parse", () => {
+  const site = sampleSite();
+  site.rooms[0]!.occupancy = "do-not-disturb";
+  assert.equal(parseSite(site).success, true);
+  const parsed = parseFrame(frameOf(site));
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.success && parsed.data.status, "do-not-disturb");
+});
+
 test("extra icsUrl on a frame fails parse", () => {
   const parsed = parseFrame({ ...frameOf(), icsUrl: "https://evil.example/cal.ics" });
   assert.equal(parsed.success, false);
@@ -96,12 +105,15 @@ test("site without nic or video fields still parses", () => {
   const raw = JSON.parse(JSON.stringify(sampleSite())) as Record<string, unknown>;
   delete raw.outboundNicIndex;
   delete raw.outboundNicName;
+  delete raw.avLanNicIndex;
+  delete raw.avLanNicName;
   delete raw.videoOutputIndex;
   delete raw.videoOutputName;
   const parsed = parseSite(raw);
   assert.equal(parsed.success, true);
   if (parsed.success) {
     assert.equal(parsed.data.outboundNicIndex, null);
+    assert.equal(parsed.data.avLanNicIndex, null);
     assert.equal(parsed.data.videoOutputName, null);
   }
 });

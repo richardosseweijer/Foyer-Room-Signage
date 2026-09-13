@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Setup **AV-LAN** and **LAN (internet)** indexed NIC pickers (Foyer does not read Relay’s)
+- Door plate `:8082` binds the AV-LAN IPv4; LAN NIC has no IPv4 → calendar is not pulled
+- Type scales: Extra large and Giant
+- Room tablet can open Setup (`/config` on `:8082`, site PIN)
+- Door plate: session state in the lower-right corner (technician toggle)
+- Update-from-GitHub script parses again (`restore()` was broken)
+- Room occupancy **Do not disturb** (Setup override or Relay `dnd`)
+
 ## 0.2.0
 
 Audit against the room-appliance contract, then small verified fixes.

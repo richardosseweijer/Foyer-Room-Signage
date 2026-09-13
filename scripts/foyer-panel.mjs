@@ -1,8 +1,20 @@
 import { createServer, request as proxyRequest } from "node:http";
 import { PANEL_PORT, panelDecision, panelUpstreamHeaders } from "../src/lib/foyer/listen.ts";
+import { panelListenHost } from "../src/lib/foyer/net.ts";
+import { defaultDataPaths, loadPair } from "../src/lib/foyer/persist.ts";
 
 const TARGET_PORT = 8080;
 const TARGET_HOST = "127.0.0.1";
+
+function bindHost() {
+  try {
+    const paths = defaultDataPaths();
+    const loaded = loadPair(paths.secretPath, paths.sitePath);
+    return panelListenHost(loaded.site);
+  } catch {
+    return "0.0.0.0";
+  }
+}
 
 const server = createServer((req, res) => {
   const pathOnly = (req.url ?? "/").split("?")[0] ?? "/";
@@ -72,6 +84,7 @@ server.on("upgrade", (req, socket, head) => {
   up.end();
 });
 
-server.listen(PANEL_PORT, "0.0.0.0", () => {
-  console.info(`[foyer] room panel on :${PANEL_PORT}`);
+const host = bindHost();
+server.listen(PANEL_PORT, host, () => {
+  console.info(`[foyer] room panel on ${host}:${PANEL_PORT}`);
 });

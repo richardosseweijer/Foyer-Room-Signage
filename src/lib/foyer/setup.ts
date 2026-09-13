@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { ROOM_OCCUPANCIES } from "./types.ts";
 
 export const unlockSite = createServerFn({ method: "POST" })
   .validator(z.object({ pin: z.string(), clientKey: z.string() }))
@@ -27,7 +28,7 @@ export const getSetup = createServerFn({ method: "POST" })
     const { listVideoOutputs } = await import("./video.ts");
     const { gitIdentity } = await import("./update.ts");
     const { icsHostHint } = await import("./calendar.ts");
-    const { resolveOutbound } = await import("./net.ts");
+    const { resolveAvLan, resolveOutbound } = await import("./net.ts");
     if (!readSession(data.session, "site")) return { ok: false as const, reason: "auth" as const };
     await ensureLoaded();
     const mem = memory();
@@ -36,6 +37,7 @@ export const getSetup = createServerFn({ method: "POST" })
     const room = mem.site.rooms[0];
     const cal = room ? mem.calendar.rooms[room.id] : undefined;
     const nic = resolveOutbound(mem.site);
+    const av = resolveAvLan(mem.site);
     return {
       ok: true as const,
       site: mem.site,
@@ -52,6 +54,7 @@ export const getSetup = createServerFn({ method: "POST" })
         atIso: mem.calendar.atIso,
         note: mem.ingestNote,
         nic: nic ? nic.label : "Any (not bound)",
+        avLan: av ? av.label : "Not set (panel listens on all interfaces)",
         nowTitle: cal?.now?.title ?? "",
         nextTitle: cal?.next?.title ?? "",
       },
@@ -68,7 +71,7 @@ export const saveSetup = createServerFn({ method: "POST" })
         z.object({
           id: z.string(),
           name: z.string(),
-          occupancy: z.enum(["auto", "available", "in-session", "closed"]),
+          occupancy: z.enum(ROOM_OCCUPANCIES),
         }),
       ),
       icsUrl: z.string().optional(),
@@ -79,6 +82,7 @@ export const saveSetup = createServerFn({ method: "POST" })
       sitePin: z.string().optional(),
       techPin: z.string().optional(),
       outboundNicIndex: z.number().int().min(0).nullable().optional(),
+      avLanNicIndex: z.number().int().min(0).nullable().optional(),
       videoOutputIndex: z.number().int().min(0).nullable().optional(),
     }),
   )
@@ -104,12 +108,16 @@ export const saveSetup = createServerFn({ method: "POST" })
     }
     const nics = listNics();
     const outputs = listVideoOutputs();
-    const nic =
-      data.outboundNicIndex === undefined
-        ? { index: mem.site.outboundNicIndex, name: mem.site.outboundNicName }
-        : data.outboundNicIndex === null
-          ? { index: null, name: null }
-          : { index: data.outboundNicIndex, name: nics.find((row) => row.index === data.outboundNicIndex)?.name ?? null };
+    const pickNic = (
+      incoming: number | null | undefined,
+      current: { index: number | null; name: string | null },
+    ) => {
+      if (incoming === undefined) return current;
+      if (incoming === null) return { index: null, name: null };
+      return { index: incoming, name: nics.find((row) => row.index === incoming)?.name ?? null };
+    };
+    const nic = pickNic(data.outboundNicIndex, { index: mem.site.outboundNicIndex, name: mem.site.outboundNicName });
+    const av = pickNic(data.avLanNicIndex, { index: mem.site.avLanNicIndex, name: mem.site.avLanNicName });
     const output =
       data.videoOutputIndex === undefined
         ? { index: mem.site.videoOutputIndex, name: mem.site.videoOutputName }
@@ -119,6 +127,7 @@ export const saveSetup = createServerFn({ method: "POST" })
               index: data.videoOutputIndex,
               name: outputs.find((row) => row.index === data.videoOutputIndex)?.name ?? null,
             };
+    const avChanged = av.index !== mem.site.avLanNicIndex || av.name !== mem.site.avLanNicName;
     const site = {
       ...mem.site,
       name: data.name.trim() || mem.site.name,
@@ -128,6 +137,8 @@ export const saveSetup = createServerFn({ method: "POST" })
       openGlass: data.openGlass ?? mem.site.openGlass,
       outboundNicIndex: nic.index,
       outboundNicName: nic.name,
+      avLanNicIndex: av.index,
+      avLanNicName: av.name,
       videoOutputIndex: output.index,
       videoOutputName: output.name,
       rooms: mem.site.rooms.map((room) => {
@@ -152,6 +163,10 @@ export const saveSetup = createServerFn({ method: "POST" })
       secretsPatch.relaySecret = data.relaySecret;
     }
     await saveSite(site, secretsPatch);
+    if (avChanged) {
+      const { restartPanel } = await import("./panel.ts");
+      restartPanel();
+    }
     return { ok: true as const };
   });
 
