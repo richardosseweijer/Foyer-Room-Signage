@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as PlayDisplayIdRouteImport } from './routes/play.$displayId'
+import { Route as ApiPeerRouteImport } from './routes/api/peer'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const PlayDisplayIdRoute = PlayDisplayIdRouteImport.update({
   path: '/play/$displayId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPeerRoute = ApiPeerRouteImport.update({
+  id: '/api/peer',
+  path: '/api/peer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
   '/play/$displayId': typeof PlayDisplayIdRoute
+  '/api/peer': typeof ApiPeerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
   '/play/$displayId': typeof PlayDisplayIdRoute
+  '/api/peer': typeof ApiPeerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
   '/play/$displayId': typeof PlayDisplayIdRoute
+  '/api/peer': typeof ApiPeerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/config' | '/play/$displayId'
+  fullPaths: '/' | '/config' | '/play/$displayId' | '/api/peer'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/config' | '/play/$displayId'
-  id: '__root__' | '/' | '/config' | '/play/$displayId'
+  to: '/' | '/config' | '/play/$displayId' | '/api/peer'
+  id: '__root__' | '/' | '/config' | '/play/$displayId' | '/api/peer'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConfigRoute: typeof ConfigRoute
   PlayDisplayIdRoute: typeof PlayDisplayIdRoute
+  ApiPeerRoute: typeof ApiPeerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayDisplayIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/peer': {
+      id: '/api/peer'
+      path: '/api/peer'
+      fullPath: '/api/peer'
+      preLoaderRoute: typeof ApiPeerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConfigRoute: ConfigRoute,
   PlayDisplayIdRoute: PlayDisplayIdRoute,
+  ApiPeerRoute: ApiPeerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

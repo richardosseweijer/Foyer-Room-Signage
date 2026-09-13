@@ -6,4 +6,4 @@ Follow [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`SECURITY.md`](SECURITY.md). Do
 
 Auth (Better Auth) stays off. PINs are scrypt hashes in `data/foyer-secrets.json`. No Postgres.
 
-Default timezone `Europe/Amsterdam`. Building and room names are user-editable. Welcome is `/` on the local video output. Room panel listens on `:8082` bound to the Setup **AV-LAN** NIC. **LAN (internet)** is a second indexed dropdown; calendar fetch binds to that address. Foyer ↔ Relay is loopback. Foyer does not read Relay’s NIC picks.
+Default timezone `Europe/Amsterdam`. Building and room names are user-editable. Welcome is `/` on the local video output. Room panel listens on `:8082` bound to the Setup **AV-LAN** NIC. **LAN (internet)** is a second indexed dropdown; calendar fetch binds to that address. Foyer ↔ Relay is loopback. Foyer does not read Relay’s NIC picks. Relay reads the current or next calendar session from `GET /api/peer` on `:8080`. Occupancy stays Auto for Relay to set the plate.

@@ -1,11 +1,106 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { OccupancySnapshot, Site } from "./types.ts";
 import { LIVE_OCCUPANCIES } from "./types.ts";
+import type { PeerSession } from "./calendar.ts";
 
 const TIMEOUT_MS = 4_000;
+const SKEW_MS = 90_000;
+const used = new Map<string, number>();
 
 export function signPeer(key: string, method: string, path: string, ts: string, body: string) {
   return createHmac("sha256", key).update(`${ts}\n${method.toUpperCase()}\n${path}\n${body}`).digest("hex");
+}
+
+export function hostnameOf(host: string) {
+  const t = host.trim().toLowerCase();
+  if (!t) return "";
+  if (t.startsWith("[")) {
+    const end = t.indexOf("]");
+    return end > 0 ? t.slice(1, end) : t;
+  }
+  if (/^\d+\.\d+\.\d+\.\d+(?::\d+)?$/.test(t)) return t.split(":")[0];
+  if (t.includes(":") && !t.startsWith("::") && t.split(":").length === 2) return t.split(":")[0];
+  return t;
+}
+
+export function isLoopbackHostname(host: string) {
+  const name = hostnameOf(host);
+  return name === "127.0.0.1" || name === "localhost" || name === "::1";
+}
+
+export function isLoopbackUrl(raw: string) {
+  try {
+    return isLoopbackHostname(new URL(raw).hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function isLoopbackRequest(request: Request) {
+  const hosts: string[] = [];
+  try {
+    hosts.push(new URL(request.url).hostname);
+  } catch {
+    /* ignore */
+  }
+  const header = request.headers.get("host");
+  if (header) hosts.push(header);
+  const fwd = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (fwd) hosts.push(fwd);
+  const fwdHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (fwdHost) hosts.push(fwdHost);
+  const named = hosts.map((h) => h.trim()).filter(Boolean);
+  if (!named.length) return false;
+  return named.every(isLoopbackHostname);
+}
+
+export function verifyPeerRequest(opts: {
+  key: string;
+  method: string;
+  path: string;
+  ts: string;
+  body: string;
+  sig: string;
+}) {
+  if (!opts.key || !opts.sig || !opts.ts) return false;
+  if (opts.sig !== opts.sig.trim().toLowerCase()) return false;
+  const stamp = Number(opts.ts);
+  if (!Number.isFinite(stamp) || Math.abs(Date.now() - stamp) > SKEW_MS) return false;
+  const sig = opts.sig.trim().toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(sig)) return false;
+  const expect = signPeer(opts.key, opts.method, opts.path, opts.ts, opts.body);
+  const replay = `${expect}:${opts.ts}`;
+  const now = Date.now();
+  for (const [key, at] of used) {
+    if (now - at > SKEW_MS) used.delete(key);
+  }
+  if (used.has(replay)) return false;
+  try {
+    const a = Buffer.from(expect, "hex");
+    const b = Buffer.from(sig, "hex");
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+    used.set(replay, now);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Loopback GET is allowed unsigned. HMAC, if sent, must match. Non-loopback is denied. */
+export function authorizePeerGet(opts: { key: string; request: Request; path?: string }) {
+  if (!isLoopbackRequest(opts.request)) return false;
+  const sig = opts.request.headers.get("x-relay-auth") || "";
+  const ts = opts.request.headers.get("x-relay-ts") || "";
+  if (!sig && !ts) return true;
+  if (!opts.key) return false;
+  return verifyPeerRequest({
+    key: opts.key,
+    method: "GET",
+    path: opts.path ?? "/api/peer",
+    ts,
+    body: "",
+    sig,
+  });
 }
 
 export function occupancyFromValue(value: unknown): OccupancySnapshot["rooms"][string] | null {
@@ -54,25 +149,32 @@ export function peerEndpoint(raw: string): URL | null {
   }
 }
 
+export function buildFoyerPeerGet(opts: { session: PeerSession | null }) {
+  return {
+    ok: true as const,
+    v: 1 as const,
+    session: opts.session,
+  };
+}
+
 export async function fetchRelayOccupancy(opts: {
   site: Site;
   secret: string;
   lastGood?: OccupancySnapshot | null;
 }): Promise<OccupancySnapshot | null> {
   const url = opts.site.relayUrl?.trim();
-  const key = opts.secret.trim();
-  if (!opts.site.relayEnabled || !url || !key) return opts.lastGood ?? null;
+  if (!opts.site.relayEnabled || !url) return opts.lastGood ?? null;
   const endpoint = peerEndpoint(url);
   if (!endpoint) return opts.lastGood ?? null;
-  const ts = String(Date.now());
-  const sig = signPeer(key, "GET", "/api/peer", ts, "");
+  if (!isLoopbackUrl(endpoint.toString())) return opts.lastGood ?? null;
+  // Loopback GET is unsigned so a pasted secret that does not match Relay cannot
+  // 401 occupancy. HMAC still required for POST macros; verify if headers are sent.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(endpoint, {
       method: "GET",
       signal: controller.signal,
-      headers: { "x-relay-auth": sig, "x-relay-ts": ts },
     });
     if (!res.ok) return opts.lastGood ?? null;
     const payload = (await res.json()) as {

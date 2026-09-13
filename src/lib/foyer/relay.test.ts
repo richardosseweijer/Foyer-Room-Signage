@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { occupancyFromPeer, occupancyFromValue, peerEndpoint, signPeer } from "./relay.ts";
+import { occupancyFromPeer, occupancyFromValue, peerEndpoint, signPeer, isLoopbackHostname, isLoopbackRequest, authorizePeerGet, buildFoyerPeerGet } from "./relay.ts";
 import { demoSite } from "./seed.ts";
 
 test("Relay HMAC matches the documented peer formula", () => {
@@ -82,4 +82,38 @@ test("vars are not used to bind occupancy", () => {
 test("peerEndpoint does not throw on a hostname without a scheme", () => {
   assert.equal(peerEndpoint("relay.local")?.pathname, "/api/peer");
   assert.equal(peerEndpoint("not a url"), null);
+});
+
+test("loopback hostnames are the only peer GET surface", () => {
+  assert.equal(isLoopbackHostname("127.0.0.1"), true);
+  assert.equal(isLoopbackHostname("127.0.0.1:8080"), true);
+  assert.equal(isLoopbackHostname("localhost"), true);
+  assert.equal(isLoopbackHostname("10.0.25.10"), false);
+  assert.equal(isLoopbackHostname("10.0.25.10:8082"), false);
+});
+
+test("unsigned loopback GET is allowed; AV-LAN is not", () => {
+  const loop = new Request("http://127.0.0.1:8080/api/peer", { method: "GET" });
+  const lan = new Request("http://10.0.25.10:8082/api/peer", { method: "GET" });
+  assert.equal(isLoopbackRequest(loop), true);
+  assert.equal(isLoopbackRequest(lan), false);
+  assert.equal(authorizePeerGet({ key: "", request: loop }), true);
+  assert.equal(authorizePeerGet({ key: "secret", request: loop }), true);
+  assert.equal(authorizePeerGet({ key: "secret", request: lan }), false);
+  const bad = new Request("http://127.0.0.1:8080/api/peer", {
+    method: "GET",
+    headers: { "x-relay-auth": "ab", "x-relay-ts": String(Date.now()) },
+  });
+  assert.equal(authorizePeerGet({ key: "secret", request: bad }), false);
+});
+
+test("foyer peer GET body is session only", () => {
+  const body = buildFoyerPeerGet({
+    session: { kind: "next", title: "Board lunch", startIso: "2026-09-11T12:00:00Z", endIso: "2026-09-11T13:00:00Z" },
+  });
+  assert.equal(body.ok, true);
+  assert.equal(body.v, 1);
+  assert.equal(body.session?.kind, "next");
+  assert.equal(body.session?.title, "Board lunch");
+  assert.equal(buildFoyerPeerGet({ session: null }).session, null);
 });

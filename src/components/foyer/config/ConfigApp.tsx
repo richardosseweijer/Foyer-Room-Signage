@@ -451,7 +451,8 @@ export function ConfigApp() {
             </div>
           ))}
           <p className="text-sm text-muted">
-            Auto follows hours, calendar, and Relay. Anything else stays until you change it. Tag shared-calendar events with{" "}
+            Auto follows hours, calendar, and Relay occupancy. Leave Auto if Relay should set the plate status.
+            Anything else stays until you change it. Tag shared-calendar events with{" "}
             <code className="text-fg">{roomTag}</code>. One room on this PC also takes untagged events.
           </p>
         </section>
@@ -481,7 +482,9 @@ export function ConfigApp() {
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
           <h2 className="text-xl font-semibold tracking-tight">Relay</h2>
           <p className="text-sm text-muted">
-            Occupancy only, on loopback. This Foyer is this Relay’s room — names do not have to match. Device control stays in Relay.
+            Occupancy from Relay, calendar back to Relay, on loopback. This Foyer is this Relay’s room — names do
+            not have to match. Device control stays in Relay. Relay reads the current (or next) session from{" "}
+            <code className="text-fg">GET http://127.0.0.1:8080/api/peer</code>.
           </p>
           <label className="flex items-center gap-3 text-sm">
             <input
@@ -503,7 +506,7 @@ export function ConfigApp() {
           </Field>
           <Field
             label="Peer secret"
-            hint={hasRelaySecret ? "Stored. Paste a new value to replace it. Same string as in Relay." : "Same string as in Relay."}
+            hint={hasRelaySecret ? "Stored. Not required for occupancy on this PC — leave blank. Paste a new value to replace it." : "Not required on this PC. Loopback occupancy GET is unsigned. Same string as Relay if you set one for macros."}
           >
             <input
               className={inputClass}

@@ -57,6 +57,10 @@ export const getSetup = createServerFn({ method: "POST" })
         avLan: av ? av.label : "Not set (panel listens on all interfaces)",
         nowTitle: cal?.now?.title ?? "",
         nextTitle: cal?.next?.title ?? "",
+        nowStart: cal?.now?.startIso ?? "",
+        nowEnd: cal?.now?.endIso ?? "",
+        nextStart: cal?.next?.startIso ?? "",
+        nextEnd: cal?.next?.endIso ?? "",
       },
     };
   });

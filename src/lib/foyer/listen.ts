@@ -12,6 +12,7 @@ export function panelDecision(path: string): PanelDecision {
   if (clean === "/") return "door";
   if (clean === "/play/door") return "allow";
   if (clean === "/config" || clean.startsWith("/config/")) return "allow";
+  if (clean === "/api/peer") return "deny";
   if (clean.startsWith("/play/")) return "deny";
   return "allow";
 }

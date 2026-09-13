@@ -292,6 +292,41 @@ export async function buildCalendarSnapshot(opts: {
   return snapshotFromEvents({ site: opts.site, eventsByFeed, now });
 }
 
+export type PeerSession = {
+  kind: "now" | "next";
+  title: string;
+  startIso: string;
+  endIso: string;
+};
+
+/** Current meeting if one is live; otherwise the next one. Null if the room is empty. */
+export function sessionFromCalendar(opts: {
+  snapshot: CalendarSnapshot;
+  roomId?: string | null;
+  now?: Date;
+}): PeerSession | null {
+  const rooms = opts.snapshot.rooms;
+  const row = (opts.roomId && rooms[opts.roomId]) || Object.values(rooms)[0];
+  if (!row) return null;
+  const nowMs = (opts.now ?? new Date()).getTime();
+  const live = row.now;
+  if (live) {
+    const start = Date.parse(live.startIso);
+    const end = Date.parse(live.endIso);
+    if (Number.isFinite(start) && Number.isFinite(end) && start <= nowMs && nowMs < end) {
+      return { kind: "now", title: live.title, startIso: live.startIso, endIso: live.endIso };
+    }
+  }
+  const upcoming = row.next;
+  if (upcoming) {
+    const start = Date.parse(upcoming.startIso);
+    if (Number.isFinite(start) && start > nowMs) {
+      return { kind: "next", title: upcoming.title, startIso: upcoming.startIso, endIso: upcoming.endIso };
+    }
+  }
+  return null;
+}
+
 export function sanitizeSnapshot(snapshot: CalendarSnapshot): CalendarSnapshot {
   const rooms: CalendarSnapshot["rooms"] = {};
   for (const [id, row] of Object.entries(snapshot.rooms)) {

@@ -32,6 +32,7 @@ const mem: Memory = {
 };
 
 let ingestTimer: ReturnType<typeof setInterval> | null = null;
+let occupancyTimer: ReturnType<typeof setInterval> | null = null;
 
 export function memory() {
   return mem;
@@ -75,6 +76,7 @@ export async function ensureLoaded() {
       /* last calendar stays; plates still boot */
     }
     if (!ingestTimer) ingestTimer = setInterval(() => void refreshIngest().catch(() => undefined), 30_000);
+    if (!occupancyTimer) occupancyTimer = setInterval(() => void refreshOccupancy().catch(() => undefined), 4_000);
     return mem;
   }
   const next = migrateDemo(mem.site);
@@ -100,9 +102,17 @@ export async function persistNow() {
   }
 }
 
+export async function refreshOccupancy() {
+  const lastOcc = mem.occupancy;
+  mem.occupancy = await fetchRelayOccupancy({
+    site: mem.site,
+    secret: mem.secrets.relaySecret,
+    lastGood: lastOcc,
+  });
+}
+
 export async function refreshIngest() {
   const lastCal = mem.calendar;
-  const lastOcc = mem.occupancy;
   const nic = resolveOutbound(mem.site);
   const wantBind = mem.site.outboundNicName != null || mem.site.outboundNicIndex != null;
   let localAddress = nic?.ipv4 ?? null;
@@ -110,11 +120,7 @@ export async function refreshIngest() {
   if (wantBind && !localAddress) {
     note = "LAN (internet) NIC has no IPv4 — calendar not pulled.";
     mem.ingestNote = note;
-    mem.occupancy = await fetchRelayOccupancy({
-      site: mem.site,
-      secret: mem.secrets.relaySecret,
-      lastGood: lastOcc,
-    });
+    await refreshOccupancy();
     return;
   }
   mem.calendar = await buildCalendarSnapshot({
@@ -125,11 +131,7 @@ export async function refreshIngest() {
     requireBind: wantBind && Boolean(localAddress),
   });
   mem.ingestNote = note;
-  mem.occupancy = await fetchRelayOccupancy({
-    site: mem.site,
-    secret: mem.secrets.relaySecret,
-    lastGood: lastOcc,
-  });
+  await refreshOccupancy();
 }
 
 export function bumpSeq(displayId: string) {

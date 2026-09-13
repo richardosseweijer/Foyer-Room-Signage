@@ -3,7 +3,7 @@ import { DEFAULT_TIMEZONE, emptySite } from "./site.ts";
 import type { Arrow, Display, Look, Room, Site } from "./types.ts";
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
-export const ROOM_APPLIANCE_REV = 4;
+export const ROOM_APPLIANCE_REV = 5;
 const LEGACY_DISPLAY_IDS = new Set([
   "cedar-door",
   "cedar-welcome",
@@ -84,7 +84,17 @@ export function migrateToRoomAppliance(site: Site): Site {
     videoOutputIndex: site.videoOutputIndex ?? null,
     videoOutputName: site.videoOutputName ?? null,
     relayUrl: site.relayUrl ?? "http://127.0.0.1:8081",
+    relayEnabled: site.relayEnabled || isLoopbackRelay(site.relayUrl ?? "http://127.0.0.1:8081"),
   };
+}
+
+function isLoopbackRelay(url: string) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === "127.0.0.1" || host === "localhost" || host === "::1";
+  } catch {
+    return false;
+  }
 }
 
 export function migrateToBoardPlates(site: Site): Site {
@@ -102,6 +112,7 @@ export function demoSite(): Site {
   site.calendars = [{ id: "shared", label: "Room calendar" }];
   site.sharedCalendarId = "shared";
   site.relayUrl = "http://127.0.0.1:8081";
+  site.relayEnabled = true;
   site.rooms = [
     {
       id: "cedar",

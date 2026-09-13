@@ -8,9 +8,9 @@ test("welcome and panel ports are distinct", () => {
   assert.equal(WELCOME_HOST, "0.0.0.0");
 });
 
-test("panel listener denies setup, welcome, and other plates", () => {
-  assert.equal(panelDecision("/config"), "deny");
-  assert.equal(panelDecision("/config/"), "deny");
+test("panel listener denies welcome and other plates, allows setup", () => {
+  assert.equal(panelDecision("/config"), "allow");
+  assert.equal(panelDecision("/config/"), "allow");
   assert.equal(panelDecision("/play/welcome"), "deny");
   assert.equal(panelDecision("/play/dc"), "deny");
   assert.equal(panelDecision("/play/wayfinding"), "deny");
@@ -24,6 +24,7 @@ test("panel listener sends the root to the room plate", () => {
 test("panel listener allows assets and server functions", () => {
   assert.equal(panelDecision("/src/components/foyer/player/Player.tsx"), "allow");
   assert.equal(panelDecision("/_serverFn/foo"), "allow");
+  assert.equal(panelDecision("/api/peer"), "deny");
 });
 
 test("panel proxy keeps the tablet Host, not loopback", () => {

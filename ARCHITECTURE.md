@@ -20,11 +20,11 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **pins.server** | `src/lib/foyer/pins.server.ts` | scrypt hash/verify, lockout map | compose, play, calendar |
 | **site** | `src/lib/foyer/site.ts` | This room, hours, display↔room, logo path | theme, Google bytes, PINs, NICs |
 | **look** | `src/lib/foyer/look.ts` | Per-display palette **name**, slots, type scale | calendar, secrets, net |
-| **calendar** | `src/lib/foyer/calendar.ts` | ICS URL (from secrets), optional source IP, events | UI, WebSocket, occupancy override |
+| **calendar** | `src/lib/foyer/calendar.ts` | ICS URL (from secrets), optional source IP, events, current-or-next session | UI, WebSocket, occupancy override |
 | **sanitize** | `src/lib/foyer/sanitize.ts` | Title/host/message cleaning | everything else |
 | **compose** | `src/lib/foyer/compose.ts` | Site + look + calendar snapshot + clock → Frame | fs, fetch, ws, secrets, react, net |
 | **transport** | `src/lib/foyer/transport.ts` | Pairing codes, display tokens, snapshot/patch seq | layout, palette, event parsing |
-| **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC, occupancy snapshot | UI, compose internals, ICS |
+| **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC, occupancy snapshot, Foyer `GET /api/peer` session body | UI, compose internals, ICS |
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, AV-LAN bind, LAN (internet) calendar bind | compose, PINs, calendar parse |
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs | compose, calendar, listen |
@@ -65,7 +65,7 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 | Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop on AV-LAN |
 | Room panel | AV-LAN IPv4 `:8082` (all interfaces until that NIC is picked) | `/play/door` and `/config` (site PIN). Other `/play/*` ids are 404. `/` redirects to the door. |
 | LAN (internet) NIC | no Foyer socket | Calendar fetch source address. GitHub update uses the default route on this NIC. |
-| Foyer ↔ Relay | `127.0.0.1` | Occupancy HMAC. Not either NIC. |
+| Foyer ↔ Relay | `127.0.0.1` | Occupancy HMAC GET to Relay `:8081/api/peer`. Calendar session HMAC GET on Foyer `:8080/api/peer`. Not either NIC. |
 
 Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
 

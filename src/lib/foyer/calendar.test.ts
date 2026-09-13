@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseIcsEvents, snapshotFromEvents, buildCalendarSnapshot, emptyCalendarSnapshot, icsHostHint } from "./calendar.ts";
+import { parseIcsEvents, snapshotFromEvents, buildCalendarSnapshot, emptyCalendarSnapshot, icsHostHint, sessionFromCalendar } from "./calendar.ts";
 import { demoSite } from "./seed.ts";
 
 const ICS = `BEGIN:VCALENDAR
@@ -145,5 +145,46 @@ test("ics host hint never includes the path or query", () => {
     "calendar.google.com",
   );
   assert.equal(icsHostHint(""), "");
+});
+
+test("sessionFromCalendar prefers the live meeting, else the next one", () => {
+  const site = demoSite();
+  const now = new Date("2026-09-11T10:30:00Z");
+  const snap = snapshotFromEvents({
+    site,
+    eventsByFeed: {
+      shared: [
+        {
+          title: "{Cedar} Design review",
+          host: "",
+          description: "",
+          startIso: "2026-09-11T10:00:00Z",
+          endIso: "2026-09-11T11:00:00Z",
+          busy: false,
+          tokens: ["Cedar"],
+        },
+        {
+          title: "{Cedar} Board lunch",
+          host: "",
+          description: "",
+          startIso: "2026-09-11T12:00:00Z",
+          endIso: "2026-09-11T13:00:00Z",
+          busy: false,
+          tokens: ["Cedar"],
+        },
+      ],
+    },
+    now,
+  });
+  const live = sessionFromCalendar({ snapshot: snap, roomId: "cedar", now });
+  assert.equal(live?.kind, "now");
+  assert.equal(live?.title, "Design review");
+  assert.equal(live?.startIso, "2026-09-11T10:00:00Z");
+  assert.equal(live?.endIso, "2026-09-11T11:00:00Z");
+  const later = sessionFromCalendar({ snapshot: snap, roomId: "cedar", now: new Date("2026-09-11T11:10:00Z") });
+  assert.equal(later?.kind, "next");
+  assert.equal(later?.title, "Board lunch");
+  const empty = sessionFromCalendar({ snapshot: snap, roomId: "cedar", now: new Date("2026-09-11T18:00:00Z") });
+  assert.equal(empty, null);
 });
 

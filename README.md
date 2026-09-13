@@ -1,12 +1,12 @@
 # Foyer
 
-Foyer **0.2.0** (beta). Room signage that lives **on the Relay PC**.
+Foyer **0.2.1** (beta). Room signage that lives **on the Relay PC**.
 
 - **Welcome** — this PC’s local video output (HDMI kiosk)
 - **Room plate** — tablet on **AV-LAN** (`:8082` bound to that NIC)
 - **Not this app** — lobby wayfinding (separate product)
 
-Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box. Each has its own NIC pickers; they do not share config.
+Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box. Each has its own NIC pickers; they do not share config. Relay sets occupancy; Foyer offers the current (or next) calendar session back on loopback `GET /api/peer`.
 
 Clone is unused until you start it. First boot writes `data/foyer-site.json` and `data/foyer-secrets.json` on the host. Those files are not in git.
 
