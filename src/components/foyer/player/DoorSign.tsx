@@ -84,7 +84,7 @@ export function DoorSign({ frame }: { frame: Frame }) {
         <FitQueue meetings={queue} timezone={frame.clock.timezone} />
       </div>
       {frame.look.slots.status !== false ? (
-        <p className="door-corner" data-status={frame.status}>
+        <p className="door-status door-corner mt-auto self-end" data-status={frame.status}>
           {statusLine(frame.status)}
         </p>
       ) : null}
