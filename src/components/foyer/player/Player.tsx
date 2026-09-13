@@ -75,7 +75,7 @@ export function Player({ displayId }: { displayId: string }) {
   }
 
   return (
-    <div ref={root} className={`plate-root relative min-h-dvh${tech ? " is-tech" : ""}`}>
+    <div ref={root} className={`plate-root relative h-dvh min-h-dvh overflow-hidden${tech ? " is-tech" : ""}`}>
       {!frame.pairing.bound ? (
         <PairingScreen frame={frame} />
       ) : (
@@ -94,7 +94,7 @@ export function Player({ displayId }: { displayId: string }) {
           }}
         />
       ) : null}
-      <FullscreenButton target={root} />
+      {frame.template !== "welcome" ? <FullscreenButton target={root} /> : null}
     </div>
   );
 }

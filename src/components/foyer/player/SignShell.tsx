@@ -13,7 +13,7 @@ export function SignShell({
   const band = `${Math.max(8, Math.min(20, frame.look.logoBand))}vh`;
   return (
     <div
-      className="sign-root relative flex min-h-dvh flex-col"
+      className="sign-root relative flex h-dvh min-h-dvh flex-col overflow-hidden"
       data-palette={frame.look.palette}
       data-scale={frame.look.typeScale}
     >
@@ -57,7 +57,15 @@ export function SignShell({
           <span />
         </div>
       ) : null}
-      <div className="flex flex-1 flex-col px-8 pb-10 sm:px-12 sm:pb-12">{children}</div>
+      <div
+        className={
+          frame.template === "welcome"
+            ? "flex min-h-0 flex-1 flex-col px-[clamp(1.75rem,5.5vw,5.25rem)] pb-[clamp(1.35rem,3.8vh,2.8rem)]"
+            : "flex flex-1 flex-col px-8 pb-10 sm:px-12 sm:pb-12"
+        }
+      >
+        {children}
+      </div>
     </div>
   );
 }

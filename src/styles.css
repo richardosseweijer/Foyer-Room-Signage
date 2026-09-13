@@ -126,3 +126,102 @@
   width: 100%;
   background: var(--sign-bg, #f4efe6);
 }
+
+.welcome-wall {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(1.25rem, 3.5vh, 2.75rem);
+}
+
+.welcome-hero {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(0.85rem, 2.2vh, 1.6rem);
+}
+
+.welcome-kicker {
+  margin: 0;
+  max-width: 22ch;
+  font-size: clamp(1.05rem, 2.1vw, 1.55rem);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--sign-muted);
+}
+
+.welcome-title {
+  margin: 0;
+  max-width: 16ch;
+  font-size: clamp(3.4rem, 9.2vw, 8.75rem);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+  text-wrap: pretty;
+}
+
+.welcome-rail {
+  display: flex;
+  max-width: min(36rem, 92%);
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+  padding-inline-start: clamp(0.85rem, 1.6vw, 1.4rem);
+  border-inline-start: 2px solid color-mix(in oklab, var(--sign-accent) 55%, transparent);
+}
+
+.welcome-cue {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.3vw, 1.7rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--sign-fg);
+}
+
+.welcome-copy {
+  margin: 0;
+  font-size: clamp(1rem, 1.7vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.4;
+  text-wrap: pretty;
+  color: var(--sign-muted);
+}
+
+.welcome-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.welcome-next {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.welcome-next-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sign-muted);
+}
+
+.welcome-next-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.1vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: pretty;
+}
