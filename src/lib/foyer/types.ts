@@ -139,6 +139,7 @@ export const SiteSchema = z.strictObject({
   avLanNicName: z.string().nullable().default(null),
   videoOutputIndex: z.number().int().min(0).nullable().default(null),
   videoOutputName: z.string().nullable().default(null),
+  welcomeFooter: z.string().default(""),
 });
 export type Site = z.infer<typeof SiteSchema>;
 
@@ -210,6 +211,7 @@ export const FrameSchema = z.strictObject({
     roomName: z.string(),
     floorLabel: z.string(),
     logoUrl: z.string().nullable(),
+    footer: z.string().default(""),
   }),
   status: z.enum(STATUSES),
   clock: z.strictObject({

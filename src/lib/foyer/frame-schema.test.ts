@@ -109,12 +109,14 @@ test("site without nic or video fields still parses", () => {
   delete raw.avLanNicName;
   delete raw.videoOutputIndex;
   delete raw.videoOutputName;
+  delete raw.welcomeFooter;
   const parsed = parseSite(raw);
   assert.equal(parsed.success, true);
   if (parsed.success) {
     assert.equal(parsed.data.outboundNicIndex, null);
     assert.equal(parsed.data.avLanNicIndex, null);
     assert.equal(parsed.data.videoOutputName, null);
+    assert.equal(parsed.data.welcomeFooter, "");
   }
 });
 

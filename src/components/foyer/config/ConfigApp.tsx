@@ -114,6 +114,7 @@ export function ConfigApp() {
           outboundNicIndex: current.outboundNicIndex,
           avLanNicIndex: current.avLanNicIndex,
           videoOutputIndex: current.videoOutputIndex,
+          welcomeFooter: current.welcomeFooter ?? "",
         },
       });
       if (!result.ok) {
@@ -366,6 +367,14 @@ export function ConfigApp() {
                 </option>
               ))}
             </select>
+          </Field>
+          <Field label="Welcome footer" hint="One line under the wall. Blank hides it.">
+            <input
+              className={inputClass}
+              value={site.welcomeFooter ?? ""}
+              onChange={(e) => setSite({ ...site, welcomeFooter: e.target.value })}
+              maxLength={200}
+            />
           </Field>
           <Field label="AV-LAN" hint="Door tablet listens on :8082 on this address. Save to apply.">
             <select

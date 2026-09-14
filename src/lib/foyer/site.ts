@@ -80,6 +80,7 @@ export function emptySite(): Site {
     avLanNicName: null,
     videoOutputIndex: null,
     videoOutputName: null,
+    welcomeFooter: "",
   };
 }
 

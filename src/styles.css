@@ -280,6 +280,19 @@
   text-wrap: pretty;
 }
 
+.welcome-line {
+  margin: 0;
+  max-width: 92%;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--sign-line);
+  font-size: clamp(0.95rem, 1.7vw, 1.25rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  text-wrap: pretty;
+  color: var(--sign-muted);
+}
+
 .door-wall {
   display: flex;
   height: 100%;

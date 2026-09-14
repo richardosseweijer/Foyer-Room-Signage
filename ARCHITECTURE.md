@@ -49,7 +49,7 @@ A plate may hold only:
 
 - `v`, `seq`, `displayId`, `roomId`, `template`
 - `look` (palette **name**, arrow, typeScale, logo flags, slots including countdown and clock)
-- `identity` (siteName, roomName, floorLabel, logoUrl or null)
+- `identity` (siteName, roomName, floorLabel, logoUrl or null, footer — welcome one-liner, empty hides it)
 - `status`, `clock`, `now`, `next`, `following` (bounded upcoming list; the door plate clips to the screen)
 - `panes`, `directory` (empty on this appliance), `catalog` (id+name for the tech sheet), `message`
 - `pairing` (bound, or unbound + code), `openGlass`

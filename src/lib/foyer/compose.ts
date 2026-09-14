@@ -198,6 +198,7 @@ export function composeFrame(input: ComposeInput): Frame {
       roomName: roomNames.length ? roomNames.join(" · ") : (room?.name ?? site.name),
       floorLabel: site.floors.length > 1 ? getFloorLabel(site, room?.floorId) : "",
       logoUrl: look.logoOn ? site.logoPath : null,
+      footer: display.template === "welcome" ? sanitizeMessage(site.welcomeFooter) : "",
     },
     status,
     clock: { iso: now.toISOString(), timezone: site.timezone || "UTC" },

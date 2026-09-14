@@ -186,6 +186,24 @@ test("welcome still paints the session after hours", () => {
   assert.equal(out.next?.title, "Late session");
 });
 
+test("welcome footer is optional and stripped", () => {
+  const site = siteWith();
+  site.welcomeFooter = "Wifi <b>Guest</b> · code 4821";
+  site.displays.push({
+    id: "welcome",
+    label: "Welcome",
+    roomId: "cedar",
+    bindings: [{ roomId: "cedar", slot: "single", arrow: "off" }],
+    zoneId: null,
+    template: "welcome",
+  });
+  const painted = frame({ site, display: site.displays[2] });
+  assert.equal(painted.identity.footer, "Wifi Guest · code 4821");
+  assert.equal(frame({ site }).identity.footer, "");
+  site.welcomeFooter = "";
+  assert.equal(frame({ site, display: site.displays[2] }).identity.footer, "");
+});
+
 test("welcome keeps the session when occupancy is forced available", () => {
   const site = siteWith("available");
   const welcome: Display = {

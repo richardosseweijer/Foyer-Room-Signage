@@ -17,6 +17,7 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
     slots.countdown && headline ? welcomeStartLine(headline.startIso, frame.clock.iso, frame.clock.timezone) : "";
   const description = slots.message ? (headline?.description ?? "").trim() : "";
   const room = frame.identity.roomName || frame.identity.siteName;
+  const footer = frame.identity.footer.trim();
 
   return (
     <div className="welcome-wall">
@@ -41,6 +42,7 @@ export function WelcomeSign({ frame }: { frame: Frame }) {
         )}
         {slots.status ? <p className="welcome-status">{quietStatus(frame.status)}</p> : null}
       </div>
+      {footer ? <p className="welcome-line">{footer}</p> : null}
     </div>
   );
 }

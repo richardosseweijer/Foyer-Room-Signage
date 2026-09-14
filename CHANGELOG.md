@@ -10,7 +10,7 @@
 - [`FOYER-RELAY.md`](FOYER-RELAY.md) pair table lists Relay 0.9.7 (wire unchanged).
 - Setup **AV-LAN** and **LAN (internet)** indexed NIC pickers (Foyer does not read Relay’s)
 - Door plate `:8082` binds the AV-LAN IPv4; LAN NIC has no IPv4 → calendar is not pulled
-- Relay occupancy is 1:1 on this PC (no room-name match). Setup override stays local
+- Optional welcome footer line from Setup (blank hides it)
 - Type scales: Extra large and Giant
 - Room tablet can open Setup (`/config` on `:8082`, site PIN)
 - Door plate: session state in the lower-right corner (technician toggle)

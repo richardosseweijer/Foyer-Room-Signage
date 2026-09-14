@@ -88,6 +88,7 @@ export const saveSetup = createServerFn({ method: "POST" })
       outboundNicIndex: z.number().int().min(0).nullable().optional(),
       avLanNicIndex: z.number().int().min(0).nullable().optional(),
       videoOutputIndex: z.number().int().min(0).nullable().optional(),
+      welcomeFooter: z.string().max(200).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -145,6 +146,7 @@ export const saveSetup = createServerFn({ method: "POST" })
       avLanNicName: av.name,
       videoOutputIndex: output.index,
       videoOutputName: output.name,
+      welcomeFooter: data.welcomeFooter !== undefined ? data.welcomeFooter.trim() : mem.site.welcomeFooter,
       rooms: mem.site.rooms.map((room) => {
         const patch = data.rooms.find((item) => item.id === room.id);
         return patch ? { ...room, name: patch.name.trim() || room.name, occupancy: patch.occupancy } : room;
