@@ -7,6 +7,7 @@
 - [`FOYER-RELAY.md`](FOYER-RELAY.md) matches Relay 0.9.6.
 
 ## Unreleased
+- Docs (K5): single **Day-one dual-head (same host)** checklist in [`FOYER-RELAY.md`](FOYER-RELAY.md) (byte-identical with Relay); [`INSTALL.md`](INSTALL.md) §7c points “start here”. Docs-only; no version bump.
 - Ops (K4): [`scripts/install-host-sudoers.sh`](scripts/install-host-sudoers.sh) installs `/etc/sudoers.d/foyer-kiosk` from [`deploy/sudoers.foyer-kiosk`](deploy/sudoers.foyer-kiosk) (`FOYER_USER`/`SUDOERS_USER`/`SUDO_USER`, mode 0440, `visudo -cf` pre/post; root required). [`INSTALL.md`](INSTALL.md) §7 prefers the script (fallback `cp`/`sed` of the same template); removes the divergent inline `tee` allowlist. Update/pull/reboot still do **not** install host drop-ins. No app/code change; no version bump.
 - Kiosk K3: restart classifies sudoers/polkit failures → clear hint to install `deploy/sudoers.foyer-kiosk` as `/etc/sudoers.d/foyer-kiosk` (INSTALL.md §7); Setup shows that detail instead of a generic unit blurb.
 - Docs (K0): sync [`FOYER-RELAY.md`](FOYER-RELAY.md) with Relay dual-head narrative; occupancy is AV-LAN HTTP (not `127.0.0.1:8081`); INSTALL §7c points at Relay LINUX.md §7a (R1 shipped).
