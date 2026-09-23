@@ -5,7 +5,7 @@ Foyer **0.2.2** (beta). Room signage that lives **on the Relay PC**.
 - **Welcome** — this PC’s local video output (HDMI/DP under **sway**)
 - **Room panel (local)** — optional second head: Relay control UI via a second Chromium (**F3**)
 - **Room plate** — tablet on **AV-LAN** (`:8082` bound to that NIC)
-- **F2 / F3** — Setup dual scan-based pickers + same-output reject; dual Chromium under one compositor — [INSTALL.md §7b](INSTALL.md), [ARCHITECTURE.md §4a](ARCHITECTURE.md)
+- **F2 / F3 / F4** — Setup dual scan-based pickers + same-output reject; dual Chromium; Welcome clear/change restarts kiosk; Ubuntu Server lab checklist — [INSTALL.md §7b / §7c](INSTALL.md), [ARCHITECTURE.md §4a](ARCHITECTURE.md)
 - **Not this app** — lobby wayfinding (separate product)
 
 Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box. Each has its own NIC pickers; they do not share config. How they talk: **[FOYER-RELAY.md](FOYER-RELAY.md)**.

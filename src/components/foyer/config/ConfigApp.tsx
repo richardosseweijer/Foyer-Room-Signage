@@ -358,14 +358,14 @@ export function ConfigApp() {
           </p>
           <Field
             label="Welcome HDMI"
-            hint="Welcome wall. Changing this starts the kiosk. One display: Welcome or Room panel, not both on the same head."
+            hint="Welcome wall. Changing or clearing this restarts the kiosk. One display: Welcome or Room panel, not both on the same head. Same-output picks are rejected without restart."
           >
             <select
               className={inputClass}
               value={site.videoOutputIndex ?? ""}
               onChange={(e) => {
                 const videoOutputIndex = e.target.value === "" ? null : Number(e.target.value);
-                void save({ videoOutputIndex }, { startKiosk: videoOutputIndex !== null });
+                void save({ videoOutputIndex }, { startKiosk: true });
               }}
             >
               <option value="">Not set</option>
@@ -378,7 +378,7 @@ export function ConfigApp() {
           </Field>
           <Field
             label="Room panel HDMI"
-            hint="Relay control UI on this local head (second Chromium under the same sway seat). Must differ from Welcome. Changing this restarts the kiosk."
+            hint="Relay control UI on this local head (second Chromium under the same sway seat). Must differ from Welcome. Changing or clearing this restarts the kiosk."
           >
             <select
               className={inputClass}

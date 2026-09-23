@@ -2,6 +2,10 @@
 # Room-panel Chromium under the Foyer compositor (sway) — F3.
 # Loads Relay control UI from FOYER_ROOM_PANEL_URL (site relayUrl / AV-LAN).
 # Separate profile so Welcome and Room panel never share Chromium state.
+# --class=foyer-room-panel: sway matches both app_id (Wayland) and class (XWayland).
+# Prefer apt chromium / chromium-browser over snap (INSTALL §7 / §7c).
+# Optional FOYER_CHROMIUM_NO_SANDBOX=1 for snap namespace errors on this dedicated seat.
+# Soft-fail (exit 0) when URL unset or unsafe — Room-panel-only skip must not crash sway.
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 CHROME="$(command -v chromium || command -v chromium-browser || echo /usr/bin/chromium)"
@@ -40,7 +44,8 @@ wait_relay() {
 
 mkdir -p "$USER_DATA"
 wait_relay || true
-exec "$CHROME" \
+
+set -- \
   --ozone-platform=wayland \
   --enable-features=UseOzonePlatform \
   --class=foyer-room-panel \
@@ -53,5 +58,8 @@ exec "$CHROME" \
   --disable-translate \
   --autoplay-policy=no-user-gesture-required \
   --check-for-update-interval=31536000 \
-  --disable-dev-shm-usage \
-  "$URL"
+  --disable-dev-shm-usage
+if [ "${FOYER_CHROMIUM_NO_SANDBOX:-}" = "1" ]; then
+  set -- "$@" --no-sandbox
+fi
+exec "$CHROME" "$@" "$URL"

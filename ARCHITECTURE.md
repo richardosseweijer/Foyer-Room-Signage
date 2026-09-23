@@ -27,7 +27,7 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC, occupancy snapshot, Foyer `GET /api/peer` session body | UI, compose internals, ICS |
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, AV-LAN bind, LAN (internet) calendar bind | compose, PINs, calendar parse |
-| **video** | `src/lib/foyer/video.ts` | Indexed local video outputs (DRM scan `/sys/class/drm`; today: one Welcome pick) | compose, calendar, listen |
+| **video** | `src/lib/foyer/video.ts` | Indexed local video outputs (DRM scan `/sys/class/drm`; Welcome + Room panel picks + env body) | compose, calendar, listen |
 | **listen** | `src/lib/foyer/listen.ts` | Welcome host/port, panel port, path allowlist | compose, calendar, secrets |
 | **panel** | `src/lib/foyer/panel.ts` | Restart `foyer-panel.service` after AV-LAN bind changes | compose, calendar, secrets |
 | **update** | `src/lib/foyer/update.ts` | Git identity, spawn updater | compose, calendar, secrets, PINs |
@@ -72,7 +72,7 @@ Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on th
 Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktree, then switches the live checkout. `data/` is never copied. Log: `data/foyer-update.log`. A zip-only copy cannot use the button.
 
 
-## 4a. Local displays (F1 / F2 / F3)
+## 4a. Local displays (F1 / F2 / F3 / F4)
 
 **Current:** one **sway** seat on tty1 (wlroots multi-output; one DRM master). `src/lib/foyer/video.ts` lists physical DRM connectors under `/sys/class/drm` (scan-based; 1–4 connected heads). Setup stores **two** independent picks — Welcome (`videoOutputIndex` / `videoOutputName`) and Room panel (`roomPanelVideoOutputIndex` / `roomPanelVideoOutputName`). Same connector for both roles is rejected on save. `src/lib/foyer/kiosk.ts` restarts fixed unit `foyer-kiosk.service`. Persist writes `data/foyer-kiosk.env`:
 
@@ -80,14 +80,14 @@ Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktre
 - `FOYER_ROOM_PANEL_VIDEO_OUTPUT` — Room panel (explicit; empty when unset)
 - `FOYER_ROOM_PANEL_URL` — site `relayUrl` as `http://host[:port]/` (Relay control UI; empty when unset)
 
-At unit start `scripts/foyer-kiosk-sway.sh` enables the picked head(s), assigns workspaces per role, and execs:
+At unit start `scripts/foyer-kiosk-sway.sh` enables the picked head(s), assigns workspaces per role (`app_id=` **and** `class=` matchers for Chromium `--class`), and execs:
 
 | Role | Script | Profile | URL |
 |---|---|---|---|
 | Welcome | `scripts/foyer-kiosk.sh` | `data/chromium-welcome` | `http://127.0.0.1:8080/` |
 | Room panel | `scripts/foyer-kiosk-room-panel.sh` | `data/chromium-room-panel` | `FOYER_ROOM_PANEL_URL` (Relay) |
 
-Welcome-only / Room-panel-only / both. Foyer does **not** start Relay’s `relay-kiosk`. The AV-LAN door tablet on `:8082` is unchanged.
+Welcome-only / Room-panel-only / both. Setup **change or clear** of either role restarts `foyer-kiosk` when save succeeds (same-output reject does not). Room-panel script exits 0 if `FOYER_ROOM_PANEL_URL` is unset/unsafe. Foyer does **not** start Relay’s `relay-kiosk`. The AV-LAN door tablet on `:8082` is unchanged. Ubuntu Server / Wyse 5070 lab checklist: [INSTALL.md §7c](INSTALL.md).
 
 | Role | Surface | Status |
 |---|---|---|

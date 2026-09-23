@@ -2,6 +2,8 @@
 # Launch sway as the Foyer multi-output compositor (F3 dual Chromium).
 # Generates a minimal config from FOYER_VIDEO_OUTPUT / FOYER_ROOM_PANEL_VIDEO_OUTPUT.
 # Welcome → loopback Foyer; Room panel → Relay URL (FOYER_ROOM_PANEL_URL).
+# Keep BOTH app_id= and class= matchers for foyer-welcome / foyer-room-panel:
+# Chromium --class sets Wayland app_id and XWayland WM_CLASS depending on packaging.
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 CONF="${XDG_RUNTIME_DIR:-/tmp}/foyer-sway.conf"
