@@ -1,29 +1,12 @@
 #!/bin/sh
-# Cage client on tty1: pin HDMI, wait for welcome, then Chromium on Wayland.
+# Welcome Chromium client under the Foyer compositor (sway).
+# Waits for local welcome, then kiosk-loads loopback :8080.
+# Profile dir is isolated so F3 can add a second Chromium later.
 set -eu
+ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 CHROME="$(command -v chromium || command -v chromium-browser || echo /usr/bin/chromium)"
 URL="http://127.0.0.1:8080/"
-
-apply_output() {
-  command -v wlr-randr >/dev/null 2>&1 || return 0
-  [ -n "${FOYER_VIDEO_OUTPUT:-}" ] || return 0
-  i=0
-  while [ "$i" -lt 15 ]; do
-    if wlr-randr >/dev/null 2>&1; then
-      break
-    fi
-    i=$((i + 1))
-    sleep 0.4
-  done
-  wlr-randr --output "$FOYER_VIDEO_OUTPUT" --on >/dev/null 2>&1 || true
-  wlr-randr 2>/dev/null | awk '
-    /^[A-Za-z0-9._-]+/ { print $1 }
-  ' | while read -r name; do
-    [ -n "$name" ] || continue
-    [ "$name" = "$FOYER_VIDEO_OUTPUT" ] && continue
-    wlr-randr --output "$name" --off >/dev/null 2>&1 || true
-  done
-}
+USER_DATA="${ROOT}/data/chromium-welcome"
 
 wait_welcome() {
   i=0
@@ -36,11 +19,12 @@ wait_welcome() {
   done
 }
 
-apply_output &
+mkdir -p "$USER_DATA"
 wait_welcome || true
 exec "$CHROME" \
   --ozone-platform=wayland \
   --enable-features=UseOzonePlatform \
+  --user-data-dir="$USER_DATA" \
   --kiosk \
   --no-first-run \
   --noerrdialogs \
