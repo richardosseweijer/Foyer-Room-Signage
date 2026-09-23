@@ -140,7 +140,7 @@ export function ConfigApp() {
       setRelaySecret("");
       setIcsUrl("");
       await load(session);
-      if (opts?.startKiosk && current.videoOutputIndex !== null && current.videoOutputIndex !== undefined) {
+      if (opts?.startKiosk) {
         await runKiosk();
       }
       return true;
@@ -378,14 +378,14 @@ export function ConfigApp() {
           </Field>
           <Field
             label="Room panel HDMI"
-            hint="Local head reserved for Relay control UI (second Chromium is F3). Must differ from Welcome. Either role may stay Not set."
+            hint="Relay control UI on this local head (second Chromium under the same sway seat). Must differ from Welcome. Changing this restarts the kiosk."
           >
             <select
               className={inputClass}
               value={site.roomPanelVideoOutputIndex ?? ""}
               onChange={(e) => {
                 const roomPanelVideoOutputIndex = e.target.value === "" ? null : Number(e.target.value);
-                void save({ roomPanelVideoOutputIndex });
+                void save({ roomPanelVideoOutputIndex }, { startKiosk: true });
               }}
             >
               <option value="">Not set</option>

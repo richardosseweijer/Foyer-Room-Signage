@@ -1,13 +1,34 @@
 #!/bin/sh
-# Launch sway as the Foyer multi-output compositor (F1 foundation).
-# Generates a minimal config from FOYER_VIDEO_OUTPUT, then execs sway.
-# Still one Welcome Chromium on the chosen head; other outputs off.
+# Launch sway as the Foyer multi-output compositor (F3 dual Chromium).
+# Generates a minimal config from FOYER_VIDEO_OUTPUT / FOYER_ROOM_PANEL_VIDEO_OUTPUT.
+# Welcome → loopback Foyer; Room panel → Relay URL (FOYER_ROOM_PANEL_URL).
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 CONF="${XDG_RUNTIME_DIR:-/tmp}/foyer-sway.conf"
 KIOSK_SH="${ROOT}/scripts/foyer-kiosk.sh"
+ROOM_KIOSK_SH="${ROOT}/scripts/foyer-kiosk-room-panel.sh"
 
 mkdir -p "${XDG_RUNTIME_DIR:-/tmp}"
+
+is_safe_connector() {
+  case "$1" in
+    ""|*[!A-Za-z0-9._-]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+WELCOME_OUT=""
+ROOM_OUT=""
+if is_safe_connector "${FOYER_VIDEO_OUTPUT:-}"; then
+  WELCOME_OUT="$FOYER_VIDEO_OUTPUT"
+elif [ -n "${FOYER_VIDEO_OUTPUT:-}" ]; then
+  printf '%s\n' "foyer-kiosk-sway: ignoring unsafe FOYER_VIDEO_OUTPUT" >&2
+fi
+if is_safe_connector "${FOYER_ROOM_PANEL_VIDEO_OUTPUT:-}"; then
+  ROOM_OUT="$FOYER_ROOM_PANEL_VIDEO_OUTPUT"
+elif [ -n "${FOYER_ROOM_PANEL_VIDEO_OUTPUT:-}" ]; then
+  printf '%s\n' "foyer-kiosk-sway: ignoring unsafe FOYER_ROOM_PANEL_VIDEO_OUTPUT" >&2
+fi
 
 {
   printf '%s\n' \
@@ -19,27 +40,45 @@ mkdir -p "${XDG_RUNTIME_DIR:-/tmp}"
     'bar {' \
     '    mode invisible' \
     '}' \
+    'for_window [app_id="foyer-welcome"] fullscreen enable' \
+    'for_window [class="foyer-welcome"] fullscreen enable' \
+    'for_window [app_id="foyer-room-panel"] fullscreen enable' \
+    'for_window [class="foyer-room-panel"] fullscreen enable' \
     'for_window [app_id="chromium"] fullscreen enable' \
     'for_window [app_id="chromium-browser"] fullscreen enable' \
     'for_window [class="Chromium"] fullscreen enable' \
     'for_window [class="Chromium-browser"] fullscreen enable'
 
-  if [ -n "${FOYER_VIDEO_OUTPUT:-}" ]; then
-    # DRM connector names are alphanumeric / . _ - (from /sys/class/drm).
-    case "$FOYER_VIDEO_OUTPUT" in
-      *[!A-Za-z0-9._-]*)
-        printf '%s\n' "foyer-kiosk-sway: ignoring unsafe FOYER_VIDEO_OUTPUT" >&2
-        ;;
-      *)
-        # Single-Welcome mode (F1): blank every head, then enable the Setup pick.
-        # F3 can later enable a second output under this same compositor.
-        printf '%s\n' 'output * disable'
-        printf 'output %s enable\n' "$FOYER_VIDEO_OUTPUT"
-        ;;
-    esac
+  if [ -n "$WELCOME_OUT" ] || [ -n "$ROOM_OUT" ]; then
+    # Blank every head, then enable only the role picks (Welcome-only, Room-only, or both).
+    printf '%s\n' 'output * disable'
+    if [ -n "$WELCOME_OUT" ]; then
+      printf 'output %s enable\n' "$WELCOME_OUT"
+    fi
+    if [ -n "$ROOM_OUT" ]; then
+      printf 'output %s enable\n' "$ROOM_OUT"
+    fi
   fi
 
-  printf 'exec %s\n' "$KIOSK_SH"
+  if [ -n "$WELCOME_OUT" ]; then
+    printf 'workspace foyer-welcome output %s\n' "$WELCOME_OUT"
+    printf '%s\n' 'assign [app_id="foyer-welcome"] workspace foyer-welcome'
+    printf '%s\n' 'assign [class="foyer-welcome"] workspace foyer-welcome'
+  fi
+  if [ -n "$ROOM_OUT" ]; then
+    printf 'workspace foyer-room output %s\n' "$ROOM_OUT"
+    printf '%s\n' 'assign [app_id="foyer-room-panel"] workspace foyer-room'
+    printf '%s\n' 'assign [class="foyer-room-panel"] workspace foyer-room'
+  fi
+
+  # Welcome Chromium when Welcome pick is set, or when neither role is set (F1 fallback).
+  # Room-panel-only skips Welcome.
+  if [ -n "$WELCOME_OUT" ] || [ -z "$ROOM_OUT" ]; then
+    printf 'exec %s\n' "$KIOSK_SH"
+  fi
+  if [ -n "$ROOM_OUT" ]; then
+    printf 'exec %s\n' "$ROOM_KIOSK_SH"
+  fi
 } >"$CONF"
 
 exec /usr/bin/sway -c "$CONF"

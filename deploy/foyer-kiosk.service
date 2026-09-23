@@ -1,9 +1,9 @@
 # Takes tty1 from the Ubuntu Server console so sway paints over the login TTY.
 # HDMI must be connected before this unit starts.
-# Setup writes data/foyer-kiosk.env (FOYER_VIDEO_OUTPUT) then restarts this unit.
-# F1: multi-output compositor foundation; still one Welcome Chromium on the pick.
+# Setup writes data/foyer-kiosk.env (Welcome + Room panel outputs + Relay URL) then restarts this unit.
+# F3: one sway seat; Welcome and/or Room-panel Chromium per Setup picks.
 [Unit]
-Description=Foyer welcome kiosk (local video)
+Description=Foyer local-video kiosk (sway dual Chromium)
 After=foyer.service systemd-user-sessions.service plymouth-quit-wait.service
 Requires=foyer.service
 Conflicts=getty@tty1.service

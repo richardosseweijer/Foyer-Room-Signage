@@ -6,7 +6,7 @@ Foyer is a **room appliance**:
 
 | Piece | What it does |
 | --- | --- |
-| Welcome | Chromium kiosk on **one local video output** under **sway** (F1). Loopback only. Setup dual pickers (F2) land; second Chromium is F3 — see §7b. |
+| Welcome | Chromium kiosk on a local video output under **sway**. Loopback only. Optional second head (Room panel → Relay) is F3 — see §7b. |
 | Room plate | Tablet on **AV-LAN**. Foyer binds **8082** to the AV-LAN IPv4 you pick in Setup. |
 | Calendar | Pulls Google ICS **only** through the **LAN (internet)** NIC you pick in Setup. |
 | Relay | Occupancy from Relay on this PC (`127.0.0.1:8081`). Not either NIC. |
@@ -24,7 +24,7 @@ OS packages this guide installs (npm packages come from `npm ci --include=dev` i
 | `nodejs` 22 | Runtime (`--experimental-strip-types` for the panel) |
 | `iproute2` | `ip` / `ss` |
 | `ufw` | Incoming deny; 8080/8082 on AV-LAN only |
-| `seatd` `sway` `wlr-randr` | Welcome multi-output compositor + DRM output picks (F1/F2; one Welcome Chromium until F3) |
+| `seatd` `sway` `wlr-randr` | Multi-output compositor + DRM picks; Welcome and/or Room-panel Chromium (F3) |
 | `chromium` or `chromium-browser` | Welcome kiosk |
 | `fonts-liberation` `fonts-noto-core` | Type if Google Fonts is unreachable |
 | `mesa-vulkan-drivers` `libgl1-mesa-dri` | GPU for sway |
@@ -154,7 +154,7 @@ Then [http://127.0.0.1:18080/config](http://127.0.0.1:18080/config).
 
 In **This PC**:
 
-1. **Welcome HDMI** — pick the HDMI/DP that faces the room (`0 — …`, `1 — …`). Optional **Room panel HDMI** for a second head later (must differ; one display = one role).
+1. **Welcome HDMI** — pick the HDMI/DP that faces the room (`0 — …`, `1 — …`). Optional **Room panel HDMI** for Relay control UI on another head (must differ; one display = one role).
 2. **Outbound NIC** — pick the interface that can reach Google, not the AV LAN and not the rack AP.
 3. **Timezone** — dropdown (e.g. America/Chicago).
 
@@ -297,7 +297,7 @@ If `chromium` is missing, try `chromium-browser`. `which chromium chromium-brows
 
 `unclutter` is X11 and does nothing under Wayland. Skip it.
 
-`cage` is **not** required for new installs (legacy single-app compositor). F1 uses **sway** so a later Room-panel head can share one DRM master (F2 pickers live; F3 Chromium).
+`cage` is **not** required for new installs (legacy single-app compositor). **sway** owns both Welcome and Room-panel heads under one DRM master (F3).
 
 Disable blanking and sleep:
 
@@ -309,16 +309,17 @@ sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.ta
 
 Sway needs a real HDMI/DP connected **before** start. This unit **takes tty1** from the Ubuntu login prompt so Chromium covers that console. SSH is unchanged.
 
-At start, `scripts/foyer-kiosk-sway.sh` writes a minimal sway config from `FOYER_VIDEO_OUTPUT` (Welcome pick in `data/foyer-kiosk.env`): disable every output, enable the chosen connector, then `exec` the Welcome Chromium script. F2 also writes `FOYER_ROOM_PANEL_VIDEO_OUTPUT` (ignored by sway until F3).
+At start, `scripts/foyer-kiosk-sway.sh` writes a minimal sway config from `data/foyer-kiosk.env`: disable every output, enable Welcome and/or Room panel connectors, assign workspaces, then `exec` the matching Chromium script(s).
 
 ```bash
 USER_NAME="$(whoami)"
 HOME_DIR="$HOME"
 chmod +x "${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk.sh"
+chmod +x "${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk-room-panel.sh"
 chmod +x "${HOME_DIR}/Foyer-Room-Signage/scripts/foyer-kiosk-sway.sh"
 sudo tee /etc/systemd/system/foyer-kiosk.service >/dev/null <<EOF
 [Unit]
-Description=Foyer welcome kiosk (local video)
+Description=Foyer local-video kiosk (sway dual Chromium)
 After=foyer.service systemd-user-sessions.service plymouth-quit-wait.service
 Requires=foyer.service
 Conflicts=getty@tty1.service
@@ -358,7 +359,7 @@ sudo systemctl status foyer-kiosk --no-pager
 
 This unit **stops the tty1 login prompt** and paints Chromium over that console. SSH is unchanged.
 
-Picking **Welcome HDMI** in Setup saves it and restarts this unit so Chromium covers that DRM connector. Other outputs stay **off** until F3 (Room panel pick is persisted only).
+Picking **Welcome HDMI** or **Room panel HDMI** in Setup saves it and restarts this unit so Chromium covers that DRM connector. Unpicked heads stay **off**.
 
 Setup → **Enable local output** is a retry of that restart. The Foyer user needs passwordless systemctl:
 
@@ -376,30 +377,37 @@ The unit runs **sway** (wlroots multi-output), not cage. The generated config ha
 If the kiosk stays on the Ubuntu login TTY: the unit is the old one (no `Conflicts=getty@tty1`, or still `ExecStart=…cage…`). Re-run this section, then `sudo systemctl daemon-reload && sudo systemctl restart foyer-kiosk`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome from the config laptop at `http://FOYER-IP:8080/`.
 
 
-### 7b. Dual-role Setup pickers (F2 shipped) / second Chromium (F3 planned)
+### 7b. Dual-role local displays (F2 pickers + F3 dual Chromium)
 
-**Current (§7 / §7a + F2):** one `foyer-kiosk.service` under **sway** on tty1. Setup has **two** independent **scan-based** DRM pickers — **Welcome HDMI** and **Room panel HDMI** — listing live connectors from `/sys/class/drm` (1–4 connected heads as they appear; not hard-coded HDMI-1/2). Saving writes `data/foyer-kiosk.env`:
+**Current (§7 / §7a + F2 + F3):** one `foyer-kiosk.service` under **sway** on tty1. Setup has **two** independent **scan-based** DRM pickers — **Welcome HDMI** and **Room panel HDMI** — listing live connectors from `/sys/class/drm` (1–4 connected heads as they appear; not hard-coded HDMI-1/2). Saving writes `data/foyer-kiosk.env`:
 
-- `FOYER_VIDEO_OUTPUT=…` — Welcome (sway enables this head today; other heads off)
-- `FOYER_ROOM_PANEL_VIDEO_OUTPUT=…` — Room panel pick (empty when unset; **F3** will consume it)
+- `FOYER_VIDEO_OUTPUT=…` — Welcome (empty when unset; F1 fallback to first connected only if Room panel is also unset)
+- `FOYER_ROOM_PANEL_VIDEO_OUTPUT=…` — Room panel pick (empty when unset)
+- `FOYER_ROOM_PANEL_URL=…` — site Relay URL as `http://<host>[:port]/` (empty when unset)
 
-Same connector for both roles is **rejected** (Setup error; no save). One display: Welcome **or** Room panel, not both. Either role may stay **Not set**. Still **one** Chromium (profile `data/chromium-welcome`) on Welcome. The door plate stays a **tablet on AV-LAN** (`:8082`).
+Same connector for both roles is **rejected** (Setup error; no save). One display: Welcome **or** Room panel, not both. Either role may stay **Not set**.
 
-**Planned (F3 only — not live install steps):** keep the **same** multi-output compositor (no second DRM master). Enable the Room panel head in sway, launch a second Chromium (separate user-data-dir) painting Relay control UI at `http://AV-LAN-IPv4:port/` (wire: [`FOYER-RELAY.md`](FOYER-RELAY.md)). Typical hardware: **Dell Wyse 5070 / Ubuntu Server**, often one Intel GPU with two DisplayPort outputs.
-
-| Role | URL / surface | Status |
+| Role | Chromium profile | URL |
 | --- | --- | --- |
-| **Welcome** | Foyer Welcome (`http://127.0.0.1:8080/`) | Live (F1/F2) |
-| **Room panel** | Relay control UI on a second local head | Setup pick + env prep (F2); Chromium/paint is **F3** |
+| **Welcome** | `data/chromium-welcome` | Foyer `http://127.0.0.1:8080/` |
+| **Room panel** | `data/chromium-room-panel` | Relay control UI from `FOYER_ROOM_PANEL_URL` |
 
-Rules enforced in F2 Setup:
+Modes:
 
-1. Pickers stay **scan-based** — options bind to what is plugged in (`/sys/class/drm`), not a fixed connector name list.
+1. **Welcome-only** — enable Welcome head; one Chromium (F1 behavior).
+2. **Room-panel-only** — enable Room panel head; one Chromium loading Relay (single-head panel).
+3. **Both** — enable both heads; two Chromiums under the same sway seat (separate `--class` / workspace assign).
+
+Foyer does **not** start Relay’s **relay-kiosk**. Relay still owns devices and `:8081` ([`FOYER-RELAY.md`](FOYER-RELAY.md)). The door plate tablet on AV-LAN (`:8082`) is unchanged.
+
+Typical hardware: **Dell Wyse 5070 / Ubuntu Server**, often one Intel GPU with two DisplayPort outputs.
+
+Rules:
+
+1. Pickers stay **scan-based** — options bind to what is plugged in (`/sys/class/drm`).
 2. **One display:** Welcome **or** Room panel for that single head.
 3. **Multi-display:** roles on **different** scanned outputs. Same output for both → **reject**.
-4. When F3 drives the Room panel head on this host, Relay’s own **relay-kiosk** is **optional / off** (Foyer paints that head; Relay still owns devices and `:8081` as in [`FOYER-RELAY.md`](FOYER-RELAY.md)).
-
-Do **not** treat dual Chromium / sway dual-enable as live install steps until F3 ships. Follow §7a (single Welcome under sway) for the running kiosk; use Setup’s Room panel picker only to persist the intended head.
+4. When Foyer drives the Room panel head on this host, Relay’s own **relay-kiosk** is **optional / off**.
 
 ---
 
@@ -489,7 +497,7 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 ## Notes
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
-- F1 compositor foundation is **sway** (§7a). F2 Setup dual pickers + same-output reject are live (§7b). Second Chromium / sway dual-enable remains **F3**.
+- Local-video kiosk is **sway** (§7a) with F2 dual Setup pickers and **F3** dual Chromium (§7b).
 - Relay production is **8081** on loopback for Foyer. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Setup occupancy: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.

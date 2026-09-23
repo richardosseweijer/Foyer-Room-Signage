@@ -7,7 +7,8 @@
 - [`FOYER-RELAY.md`](FOYER-RELAY.md) matches Relay 0.9.6.
 
 ## Unreleased
-- Kiosk F2: Setup dual scan-based video pickers (**Welcome HDMI** + **Room panel HDMI**); reject same connector; persist `roomPanelVideoOutputIndex` / `roomPanelVideoOutputName`; write `FOYER_ROOM_PANEL_VIDEO_OUTPUT` beside `FOYER_VIDEO_OUTPUT` in `data/foyer-kiosk.env`. Still one Welcome Chromium; sway dual-enable + second Chromium remain F3 (§7b).
+- Kiosk F3: sway enables Welcome and/or Room panel heads; second Chromium (`data/chromium-room-panel`) loads Relay control UI from `FOYER_ROOM_PANEL_URL` (site `relayUrl`). Welcome-only / Room-panel-only / both. Does not start Relay `relay-kiosk` (§7b).
+- Kiosk F2: Setup dual scan-based video pickers (**Welcome HDMI** + **Room panel HDMI**); reject same connector; persist `roomPanelVideoOutputIndex` / `roomPanelVideoOutputName`; write `FOYER_ROOM_PANEL_VIDEO_OUTPUT` beside `FOYER_VIDEO_OUTPUT` in `data/foyer-kiosk.env`.
 - Kiosk F1: replace **cage** with **sway** multi-output compositor foundation; still one Welcome Chromium on the Setup DRM pick (other outputs off). Config generated at unit start from `FOYER_VIDEO_OUTPUT`; Chromium profile `data/chromium-welcome` prepares dual profiles for F3.
 - Docs (F0/F2): multi-display kiosk Path B — INSTALL §7b, ARCHITECTURE §4a, README, SECURITY, KNOWN_ISSUES (F2 pickers live; F3 Chromium planned).
 - Relay URL: on every load, rewrite empty or loopback → `http://<AV-IPv4>:8081` when AV is set (not only on room-appliance migrate). Deliberate non-loopback URLs stay. `isAllowedRelayUrl` requires `http:` (reject `https://`).

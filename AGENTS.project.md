@@ -8,4 +8,4 @@ Auth (Better Auth) stays off. PINs are scrypt hashes in `data/foyer-secrets.json
 
 Default timezone `Europe/Amsterdam`. Building and room names are user-editable. Welcome is `/` on the local video output. Room panel listens on `:8082` bound to the Setup **AV-LAN** NIC. **LAN (internet)** is a second indexed dropdown; calendar fetch binds to that address. Foyer ↔ Relay occupancy is HTTP to this PC’s AV-LAN `:8081` (loopback lab escape) — [`FOYER-RELAY.md`](FOYER-RELAY.md). Foyer does not read Relay’s NIC picks. Occupancy stays Auto for Relay to set the plate.
 
-Local displays: F1 uses **sway** with one Welcome DRM pick (other outputs off). F2 adds Setup dual pickers + same-output reject + `FOYER_ROOM_PANEL_VIDEO_OUTPUT` env prep. Do **not** ship dual Chromium / sway dual-enable here (that is F3); see INSTALL.md §7b / ARCHITECTURE.md §4a.
+Local displays: one **sway** seat on tty1. F1 foundation + F2 dual Setup pickers (same-output reject) + **F3** dual Chromium (Welcome and/or Room panel). Room panel loads Relay control UI from site `relayUrl` (`FOYER_ROOM_PANEL_URL`); do **not** start Relay’s `relay-kiosk`. See INSTALL.md §7b / ARCHITECTURE.md §4a.

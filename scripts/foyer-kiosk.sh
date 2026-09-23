@@ -1,7 +1,7 @@
 #!/bin/sh
 # Welcome Chromium client under the Foyer compositor (sway).
 # Waits for local welcome, then kiosk-loads loopback :8080.
-# Profile dir is isolated so F3 can add a second Chromium later.
+# Profile dir is isolated from Room-panel Chromium (F3).
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 CHROME="$(command -v chromium || command -v chromium-browser || echo /usr/bin/chromium)"
@@ -24,6 +24,7 @@ wait_welcome || true
 exec "$CHROME" \
   --ozone-platform=wayland \
   --enable-features=UseOzonePlatform \
+  --class=foyer-welcome \
   --user-data-dir="$USER_DATA" \
   --kiosk \
   --no-first-run \
