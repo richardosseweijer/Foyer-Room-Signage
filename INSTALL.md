@@ -6,7 +6,7 @@ Foyer is a **room appliance**:
 
 | Piece | What it does |
 | --- | --- |
-| Welcome | Chromium kiosk on **one local video output** (HDMI B). Loopback only. |
+| Welcome | Chromium kiosk on **one local video output** (today). Loopback only. Planned: multi-display — see §7b. |
 | Room plate | Tablet on **AV-LAN**. Foyer binds **8082** to the AV-LAN IPv4 you pick in Setup. |
 | Calendar | Pulls Google ICS **only** through the **LAN (internet)** NIC you pick in Setup. |
 | Relay | Occupancy from Relay on this PC (`127.0.0.1:8081`). Not either NIC. |
@@ -24,7 +24,7 @@ OS packages this guide installs (npm packages come from `npm ci --include=dev` i
 | `nodejs` 22 | Runtime (`--experimental-strip-types` for the panel) |
 | `iproute2` | `ip` / `ss` |
 | `ufw` | Incoming deny; 8080/8082 on AV-LAN only |
-| `seatd` `cage` `wlr-randr` | Welcome compositor + HDMI pick |
+| `seatd` `cage` `wlr-randr` | Welcome compositor + DRM output pick (today: one head) |
 | `chromium` or `chromium-browser` | Welcome kiosk |
 | `fonts-liberation` `fonts-noto-core` | Type if Google Fonts is unreachable |
 | `mesa-vulkan-drivers` `libgl1-mesa-dri` | GPU for cage |
@@ -370,6 +370,27 @@ cage `-d` skips client decorations. It does **not** use `-s` (that flag allows s
 
 If the kiosk stays on the Ubuntu login TTY: the unit is the old one (no `Conflicts=getty@tty1`). Re-run this section, then `sudo systemctl daemon-reload && sudo systemctl restart foyer-kiosk`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome from the config laptop at `http://FOYER-IP:8080/`.
 
+
+### 7b. Target: multi-display kiosk (planned — not in this tree yet)
+
+**Today (§7 / §7a):** one `foyer-kiosk.service` under **cage** on tty1. Setup has a single **Welcome video output** picker. Outputs are **scan-based**: Foyer lists live DRM connectors from `/sys/class/drm` (same idea as the `ls` in §0). Saving a pick writes `data/foyer-kiosk.env` (`FOYER_VIDEO_OUTPUT=…`); the script turns that head on with `wlr-randr` and turns other heads off. One Chromium loads `http://127.0.0.1:8080/` (Welcome). The door plate stays a **tablet on AV-LAN** (`:8082`), not a second local head.
+
+**Planned (Path B — Foyer-owned multi-output compositor):** Foyer will own local displays through **one** multi-output compositor on this PC (not a hard-coded HDMI-1/2 list). Typical hardware: **Dell Wyse 5070 / Ubuntu Server**, often one Intel GPU with two DisplayPort outputs; support **1–4 connected** heads as they appear in the DRM scan.
+
+| Role | URL / surface | Picker |
+| --- | --- | --- |
+| **Welcome** | Foyer Welcome (`http://127.0.0.1:8080/`) | Independent scan-based output picker |
+| **Room panel** | Relay control UI at `http://AV-LAN-IPv4:port/` (Relay production listen — wire: [`FOYER-RELAY.md`](FOYER-RELAY.md)) | Independent scan-based output picker |
+
+Rules for that future Setup UI:
+
+1. Pickers stay **scan-based** like today — options bind to what is plugged in (`/sys/class/drm`), not a fixed connector name list.
+2. **One display:** the installer picks Welcome **or** Room panel for that single head.
+3. **Multi-display:** assign roles to **different** scanned outputs. Same output for both roles → **reject**.
+4. When Foyer drives the Room panel head on this host, Relay’s own **relay-kiosk** is **optional / off** (Foyer paints that head; Relay still owns devices and `:8081` as in [`FOYER-RELAY.md`](FOYER-RELAY.md)).
+
+Do **not** treat §7b as live install steps. Until Path B ships, follow §7a only.
+
 ---
 
 ## 8. Door tablet (AV-LAN)
@@ -443,7 +464,7 @@ Copy both off the disk before a re-image. A failed write keeps last-good (`.good
 
 ## Checks before you leave the room
 
-1. Welcome shows the session on the HDMI you chose.
+1. Welcome shows the session on the local video output you chose (today: one head — §7).
 2. Room plate on AV-LAN shows the same room.
 3. Unplug Relay: meetings still show.
 4. Unplug LAN (internet) NIC: last calendar remains; welcome still paints.
@@ -458,6 +479,7 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 ## Notes
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
+- Multi-display Path B (§7b) is **planned docs only** in this tree — cage remains single-output until that work lands.
 - Relay production is **8081** on loopback for Foyer. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Setup occupancy: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.

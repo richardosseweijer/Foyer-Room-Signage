@@ -2,8 +2,9 @@
 
 Foyer **0.2.2** (beta). Room signage that lives **on the Relay PC**.
 
-- **Welcome** — this PC’s local video output (HDMI kiosk)
+- **Welcome** — this PC’s local video output (HDMI/DP kiosk; **today:** one head under cage)
 - **Room plate** — tablet on **AV-LAN** (`:8082` bound to that NIC)
+- **Planned** — multi-display Path B (Welcome + optional local Room panel head); see [INSTALL.md §7b](INSTALL.md) and [ARCHITECTURE.md §4a](ARCHITECTURE.md) — **not shipped yet**
 - **Not this app** — lobby wayfinding (separate product)
 
 Relay owns devices. Foyer owns pictures. They are separate processes on the same Ubuntu box. Each has its own NIC pickers; they do not share config. How they talk: **[FOYER-RELAY.md](FOYER-RELAY.md)**.
