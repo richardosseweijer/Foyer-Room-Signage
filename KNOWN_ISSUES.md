@@ -14,5 +14,5 @@ Beta. Not audited.
 - Sites created before 0.2.0 may still have room hours `07:00–23:00` (status Closed overnight). New first-boot sites are all-day. Occupancy Closed is the only override that used to blank sessions; 0.2.0 never blanks them.
 - Wayfinding is not in this app. Leftover `wayfinding` / `split` templates in old JSON are migrated away on load.
 - Ubuntu Server has no compositor until you install sway + seatd (INSTALL.md §7).
-- Welcome kiosk is **one** sway seat and **one** Welcome video output (DRM scan). Dual-role Path B remainder (Welcome + local Room panel heads, independent pickers) is **planned F2/F3** — see INSTALL.md §7b. Until then the door plate stays AV-LAN `:8082`.
+- Welcome kiosk is **one** sway seat and **one** Welcome Chromium (DRM scan). F2 adds a second Setup picker (Room panel) + same-output reject and writes `FOYER_ROOM_PANEL_VIDEO_OUTPUT`; sway still enables Welcome only. Second Chromium is **F3** — see INSTALL.md §7b. Door plate stays AV-LAN `:8082` until then.
 - Update-from-GitHub before 0.2.0 did not copy `dist/`; run `npm run build` once after this upgrade.

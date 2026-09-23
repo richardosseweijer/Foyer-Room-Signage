@@ -80,6 +80,8 @@ export function emptySite(): Site {
     avLanNicName: null,
     videoOutputIndex: null,
     videoOutputName: null,
+    roomPanelVideoOutputIndex: null,
+    roomPanelVideoOutputName: null,
     welcomeFooter: "",
   };
 }

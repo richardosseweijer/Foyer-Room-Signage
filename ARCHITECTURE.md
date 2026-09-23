@@ -72,24 +72,24 @@ Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on th
 Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktree, then switches the live checkout. `data/` is never copied. Log: `data/foyer-update.log`. A zip-only copy cannot use the button.
 
 
-## 4a. Local displays (F1 vs planned F2/F3)
+## 4a. Local displays (F1 / F2 / planned F3)
 
-**F1 (current):** one local Welcome head under **sway** (wlroots multi-output compositor on tty1). `src/lib/foyer/video.ts` lists physical DRM connectors under `/sys/class/drm` (scan-based indexed dropdown). Setup stores one Welcome output; `src/lib/foyer/kiosk.ts` restarts fixed unit `foyer-kiosk.service`. At unit start `scripts/foyer-kiosk-sway.sh` generates a sway config from `FOYER_VIDEO_OUTPUT` (enable pick, disable others) and execs Welcome Chromium (`scripts/foyer-kiosk.sh`, profile `data/chromium-welcome`). The Room plate is **not** a second local head — it is the AV-LAN tablet on `:8082`.
+**F1 + F2 (current):** one local Welcome head under **sway** (wlroots multi-output compositor on tty1). `src/lib/foyer/video.ts` lists physical DRM connectors under `/sys/class/drm` (scan-based; 1–4 connected heads). Setup stores **two** independent picks — Welcome (`videoOutputIndex` / `videoOutputName`) and Room panel (`roomPanelVideoOutputIndex` / `roomPanelVideoOutputName`). Same connector for both roles is rejected on save. `src/lib/foyer/kiosk.ts` restarts fixed unit `foyer-kiosk.service`. Persist writes `data/foyer-kiosk.env` with `FOYER_VIDEO_OUTPUT` (Welcome) and `FOYER_ROOM_PANEL_VIDEO_OUTPUT` (empty when unset). At unit start `scripts/foyer-kiosk-sway.sh` still generates sway config from **Welcome** only (enable that head, disable others) and execs Welcome Chromium (`scripts/foyer-kiosk.sh`, profile `data/chromium-welcome`). The AV-LAN door tablet on `:8082` is unchanged.
 
-**Planned (Path B remainder — F2/F3):** keep the **same** compositor. Two roles with **independent** scan-based pickers (still `/sys/class/drm`, options follow what is plugged in — **not** a hard-coded HDMI-1/2 list; support 1–4 connected heads):
+**Planned (F3):** keep the **same** compositor. Enable the Room panel head and launch a second Chromium (separate user-data-dir) painting Relay control UI at `http://AV-LAN-IPv4:port/` on that head. No second DRM master.
 
-| Role | Surface |
-|---|---|
-| Welcome | Foyer Welcome URL on the chosen local head |
-| Room panel | Relay control UI at `http://AV-LAN-IPv4:port/` on a different local head |
+| Role | Surface | Status |
+|---|---|---|
+| Welcome | Foyer Welcome URL on the chosen local head | Live |
+| Room panel | Relay control UI on a different local head | Setup + env (F2); Chromium/paint **F3** |
 
-One-display: Welcome **or** Room panel on that single head. Multi-display: different outputs per role; same output for both → reject. Second Chromium uses a separate user-data-dir under the same sway seat (no second DRM master). When Foyer drives the Room panel head, Relay’s own relay-kiosk on this host is optional/off. Peer wire stays [`FOYER-RELAY.md`](FOYER-RELAY.md) (identical copy also in Relay).
+One-display: Welcome **or** Room panel on that single head. Multi-display: different outputs per role; same output for both → reject (F2). When F3 drives the Room panel head, Relay’s own relay-kiosk on this host is optional/off. Peer wire stays [`FOYER-RELAY.md`](FOYER-RELAY.md) (identical copy also in Relay).
 
 ## 5. Persistence
 
 | File | Contents |
 |---|---|
-| `data/foyer-site.json` | Room profile, looks (palette **names**), hours, AV-LAN NIC index/name, LAN (internet) NIC index/name, video output index/name. No PINs, no ICS URLs. |
+| `data/foyer-site.json` | Room profile, looks (palette **names**), hours, AV-LAN NIC index/name, LAN (internet) NIC index/name, Welcome + Room panel video output index/name. No PINs, no ICS URLs. |
 | `data/foyer-secrets.json` | Site PIN hash, tech PIN hash, display tokens, ICS URLs. |
 
 Write a `foyer-site.json.transaction` journal, then secrets, then site (temp + fsync + rename). Matching `.good` copies refresh after a successful pair. Boot recovers the journal if valid, else the last-good pair, else an empty site. A bad file is renamed `.bad`.
