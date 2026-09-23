@@ -1,6 +1,6 @@
 # Foyer
 
-Foyer **0.2.2** (beta). Room signage that lives **on the Relay PC**.
+Foyer **0.2.3** (beta). Room signage that lives **on the Relay PC**.
 
 - **Welcome** — this PC’s local video output (HDMI/DP under **sway**)
 - **Room panel (local)** — optional second head: Relay control UI via a second Chromium (**F3**)

@@ -194,9 +194,72 @@ A copy-paste sketch lives in `deploy/ufw.example.sh`.
 
 ## 6. Start on boot (systemd)
 
-Stop the test servers from §4 first (Ctrl+C) so ports 8080 and 8082 are free.
+Linux starts background programs from **unit files**. Prefer the host installer (substitutes `User=` + checkout path from `deploy/`, `daemon-reload`, enables **foyer**, **foyer-panel**, and **foyer-kiosk**). Unlike Relay, **kiosk ON is the default** — Foyer owns the displays on a normal dual-head appliance ([`FOYER-RELAY.md`](FOYER-RELAY.md) day-one).
 
-### 6a. Foyer (welcome)
+Stop the test servers from §4 first (Ctrl+C) so ports 8080 and 8082 are free. Finish `npm ci` + `npm run build` (§4) before enabling. For `foyer-kiosk` to paint cleanly on first enable, install §7 packages / groups / linger **before** (or re-run the installer after).
+
+### 6a. Prefer the host installer (idempotent)
+
+**One-time host step** — `git pull`, in-app **Update from GitHub**, and reboot do **not** install or refresh these units (or the sudoers drop-in). Re-run if `User=` or the checkout path changes. Re-running **replaces** `/etc/systemd/system/foyer.service`, `foyer-panel.service`, and `foyer-kiosk.service` from `deploy/` (re-apply any local unit customizations afterward).
+
+```bash
+# From the repo checkout — User= from FOYER_USER / SUDO_USER / invoking account.
+# WorkingDirectory = this checkout (not a hardcoded ~/… assumption).
+sudo bash scripts/install-host.sh
+# Units only:  sudo bash scripts/install-host-units.sh
+# Units+sudoers is what install-host.sh does (same as --with-sudoers).
+# Or: sudo FOYER_USER=pi bash scripts/install-host.sh
+#
+# Install units but leave foyer-kiosk enablement alone (packages not ready yet):
+#   sudo bash scripts/install-host-units.sh --skip-kiosk-enable
+```
+
+Templates: [`deploy/foyer.service`](deploy/foyer.service), [`deploy/foyer-panel.service`](deploy/foyer-panel.service), [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service). `install-host.sh` also runs [`scripts/install-host-sudoers.sh`](scripts/install-host-sudoers.sh) (§7).
+
+Check:
+
+```bash
+systemctl status foyer --no-pager
+systemctl status foyer-panel --no-pager
+systemctl status foyer-kiosk --no-pager
+cat /etc/systemd/system/foyer.service
+# User= must be your login; WorkingDirectory= this checkout.
+cd ~/Foyer-Room-Signage
+bash scripts/foyer-status.sh
+```
+
+You want `Active: active (running)` on foyer and foyer-panel. `foyer-kiosk` is enabled by default; it may stay inactive/failed until §7 packages and DRM heads are ready — that is expected.
+
+If foyer/panel failed:
+
+```bash
+sudo journalctl -u foyer -e --no-pager
+sudo journalctl -u foyer-panel -e --no-pager
+```
+
+Typical causes: the test server from §4 is still running, `WorkingDirectory` is wrong, or Relay `npm run dev` still owns 8080.
+
+Later:
+
+```bash
+sudo systemctl restart foyer foyer-panel foyer-kiosk
+sudo systemctl stop foyer-kiosk foyer-panel foyer
+# Prefer re-running the installer over hand-editing; or:
+sudo nano /etc/systemd/system/foyer.service
+sudo systemctl daemon-reload
+sudo systemctl restart foyer
+```
+
+### 6b. Manual fallback (tee / editor)
+
+Only if you cannot run the installer. Confirm account and home:
+
+```bash
+whoami
+echo $HOME
+```
+
+#### Foyer (welcome)
 
 ```bash
 USER_NAME="$(whoami)"
@@ -225,7 +288,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-### 6b. Room panel
+#### Room panel
 
 ```bash
 sudo tee /etc/systemd/system/foyer-panel.service >/dev/null <<EOF
@@ -250,9 +313,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-`User=` and `WorkingDirectory=` must match §3.
-
-### 6c. Enable
+`User=` and `WorkingDirectory=` must match §3. Then:
 
 ```bash
 sudo systemctl daemon-reload
@@ -261,21 +322,7 @@ sudo systemctl status foyer --no-pager
 sudo systemctl status foyer-panel --no-pager
 ```
 
-You want `Active: active (running)` on both.
-
-```bash
-cd ~/Foyer-Room-Signage
-bash scripts/foyer-status.sh
-```
-
-If it failed:
-
-```bash
-sudo journalctl -u foyer -e --no-pager
-sudo journalctl -u foyer-panel -e --no-pager
-```
-
-Typical causes: the test server from §4 is still running, `WorkingDirectory` is wrong, or Relay `npm run dev` still owns 8080.
+Install the kiosk unit with §7a (or prefer re-running `sudo bash scripts/install-host-units.sh` after packages).
 
 ---
 
@@ -310,6 +357,18 @@ sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.ta
 Sway needs a real HDMI/DP connected **before** start. This unit **takes tty1** from the Ubuntu login prompt so Chromium covers that console. SSH is unchanged.
 
 At start, `scripts/foyer-kiosk-sway.sh` writes a minimal sway config from `data/foyer-kiosk.env`: disable every output, enable Welcome and/or Room panel connectors, assign workspaces, then `exec` the matching Chromium script(s).
+
+**Prefer the host installer** (§6a) — it already installs and enables `foyer-kiosk.service` from [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service) (User= + checkout path substituted). After packages / groups / linger above:
+
+```bash
+# Re-run if you used --skip-kiosk-enable earlier, or unit is missing/stale:
+sudo bash scripts/install-host-units.sh
+# Or full units+sudoers:
+sudo bash scripts/install-host.sh
+sudo systemctl status foyer-kiosk --no-pager
+```
+
+Manual fallback (same template — only if you cannot run the installer):
 
 ```bash
 USER_NAME="$(whoami)"
@@ -365,10 +424,12 @@ Setup → **Enable local output** is a retry of that restart. The Foyer user nee
 
 **Required once on the appliance** (host `/etc`, not the git tree): Setup can save `data/foyer-kiosk.env` while **restart** still fails with polkit “interactive authentication” / Access denied if `/etc/sudoers.d/foyer-kiosk` is missing. `git pull`, in-app **Update from GitHub**, and reboot refresh code — they do **not** create or refresh this drop-in. Install once below; re-run if `User=` on `foyer.service` / `foyer-panel.service` / `foyer-kiosk.service` changes.
 
-Prefer the install script (substitutes `USER` in [`deploy/sudoers.foyer-kiosk`](deploy/sudoers.foyer-kiosk), mode 0440, `visudo -cf` pre/post):
+Prefer the host installer (§6a) which chains sudoers, or the sudoers script alone (substitutes `USER` in [`deploy/sudoers.foyer-kiosk`](deploy/sudoers.foyer-kiosk), mode 0440, `visudo -cf` pre/post):
 
 ```bash
-# From the repo checkout
+# From the repo checkout — full units + sudoers (preferred first-boot):
+sudo bash scripts/install-host.sh
+# Sudoers only (if units already installed):
 sudo bash scripts/install-host-sudoers.sh
 # Or: sudo FOYER_USER=pi bash scripts/install-host-sudoers.sh
 # Smoke-check (must NOT ask for a password):
@@ -570,7 +631,7 @@ bash scripts/foyer-status.sh
 
 Uncommitted source edits block the button. `data/foyer-*.json` is not in git and is left alone.
 
-The updater then copies `dist/` from the staged build and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs `/etc/sudoers.d/foyer-kiosk` from §7 (`scripts/install-host-sudoers.sh`). Update / pull / reboot do **not** install that drop-in.
+The updater then copies `dist/` from the staged build and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the units + `/etc/sudoers.d/foyer-kiosk` from §6a / §7 (`scripts/install-host.sh` / `scripts/install-host-sudoers.sh`). Update / pull / reboot do **not** install those host files.
 
 ---
 

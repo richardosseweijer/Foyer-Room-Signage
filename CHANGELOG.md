@@ -1,10 +1,9 @@
 # Changelog
 
-## 0.2.2
+## 0.2.3
 
-- Tag `v0.2.2`.
-- Peer GET: loopback is TCP `remoteAddress` (`127.0.0.1` / `::1` / `::ffff:127.0.0.1`), not `Host` / `X-Forwarded-*`. Missing peer is denied. HMAC on non-loopback GET still denied.
-- [`FOYER-RELAY.md`](FOYER-RELAY.md) matches Relay 0.9.6.
+- Tag `v0.2.3`.
+- Ops (K7b): [`scripts/install-host-units.sh`](scripts/install-host-units.sh) + thin [`scripts/install-host.sh`](scripts/install-host.sh) install `foyer` / `foyer-panel` / `foyer-kiosk` from `deploy/` (`FOYER_USER`/`UNIT_USER`/`SUDO_USER`, checkout path substitute, `daemon-reload`, **enable --now all three** by default — Foyer owns displays). `--skip-kiosk-enable` / `--with-sudoers`; `install-host.sh` chains existing [`scripts/install-host-sudoers.sh`](scripts/install-host-sudoers.sh). [`INSTALL.md`](INSTALL.md) §6 prefers the script (manual tee = §6b fallback); §7a points at the installer. Update/pull/reboot still do **not** install `/etc` units. [`FOYER-RELAY.md`](FOYER-RELAY.md) day-one checklist mentions `install-host.sh` (byte-identical with Relay).
 
 ## Unreleased
 - Docs (K5): single **Day-one dual-head (same host)** checklist in [`FOYER-RELAY.md`](FOYER-RELAY.md) (byte-identical with Relay); [`INSTALL.md`](INSTALL.md) §7c points “start here”. Docs-only; no version bump.
