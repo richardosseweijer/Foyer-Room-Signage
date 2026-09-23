@@ -9,7 +9,7 @@ Foyer is a **room appliance**:
 | Welcome | Chromium kiosk on a local video output under **sway**. Loopback only. Optional second head (Room panel → Relay) is F3 — see §7b. |
 | Room plate | Tablet on **AV-LAN**. Foyer binds **8082** to the AV-LAN IPv4 you pick in Setup. |
 | Calendar | Pulls Google ICS **only** through the **LAN (internet)** NIC you pick in Setup. |
-| Relay | Occupancy from Relay on this PC (`127.0.0.1:8081`). Not either NIC. |
+| Relay | Occupancy from Relay on this PC via **AV-LAN HTTP** (`http://<av-lan-ipv4>:8081`). Not loopback; not the internet NIC. |
 
 Wayfinding is **not** installed by this guide.
 
@@ -458,7 +458,7 @@ In Setup → **This PC**:
 
 #### When Foyer paints Room panel
 
-Leave Relay’s own **`relay-kiosk` disabled/off** on this host (Foyer owns the head). Pointer for Relay-side docs: Path B **R1** on Relay will spell the unit off/disable steps; Foyer still must not start `relay-kiosk`.
+Leave Relay’s own **`relay-kiosk` disabled/off** on this host (Foyer owns the head). **R1 is shipped** — see Relay [`LINUX.md`](https://github.com/richardosseweijer/Relay-AV-Room-Control-/blob/main/LINUX.md) §7a (`sudo systemctl disable --now relay-kiosk`). Foyer still must not start `relay-kiosk`.
 
 #### Verify modes
 
@@ -505,7 +505,7 @@ The plate shares the **AV-LAN** with Relay-controlled devices. It is not on gues
 1. Give this PC a static IPv4 on AV-LAN.
 2. In Setup pick that NIC under **AV-LAN** (indexed dropdown). Save. The panel unit rebinds `:8082` to that address.
 3. Tablet opens `http://AV-LAN-IP:8082/play/door`.
-4. Pick **LAN (internet)** for calendar. Relay occupancy URL stays `http://127.0.0.1:8081`.
+4. Pick **LAN (internet)** for calendar. Relay occupancy URL is AV-LAN HTTP (`http://<av-lan-ipv4>:8081`), not `127.0.0.1:8081`.
 
 Confirm from a laptop on AV-LAN:
 

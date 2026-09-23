@@ -112,7 +112,7 @@ Write a `foyer-site.json.transaction` journal, then secrets, then site (temp + f
 - First site PIN `1234`, then a stronger one is required. Tech PIN unset until Setup sets it (must differ).
 - Palette **names** (`linen`, `orchard`, `ink`, `contrast`) are locked.
 - One room on this PC. Untagged calendar events go to that room. `{RoomName}` still routes when present.
-- Relay occupancy is ingest in `src/lib/foyer/relay.ts` (`GET /api/peer`), **loopback** (`127.0.0.1:8081`). Not AV-LAN, not guest wifi. Full request/response, occupancy enum, Auto vs override, and session body: [`FOYER-RELAY.md`](FOYER-RELAY.md).
+- Relay occupancy is ingest in `src/lib/foyer/relay.ts` (`GET /api/peer`) over **AV-LAN HTTP** (`http://<AV-IPv4>:8081`). Not loopback (except lab), not guest wifi. Full request/response, occupancy enum, Auto vs override, and session body: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Room occupancy in Setup: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay. Sessions stay on the plate.
 - Wayfinding is **not** this app.
 
