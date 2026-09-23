@@ -84,6 +84,7 @@ test("closed override keeps the session and marks closed", () => {
       cedar: {
         now: { title: "Budget", host: "Ada", description: "Agenda in the pack.", startIso: "2026-09-11T11:00:00Z", endIso: "2026-09-11T13:00:00Z" },
         next: null,
+        later: [],
       },
     },
   };
@@ -106,6 +107,7 @@ test("manual available still shows the meeting on the door", () => {
           endIso: "2026-09-11T13:00:00Z",
         },
         next: null,
+        later: [],
       },
     },
   };
@@ -122,6 +124,7 @@ test("starting-soon window is ten minutes", () => {
       cedar: {
         now: null,
         next: { title: "Standup", host: "", description: "", startIso: "2026-09-11T12:08:00Z", endIso: "2026-09-11T12:30:00Z" },
+      later: [],
       },
     },
   };
@@ -147,6 +150,7 @@ test("after hours still keeps the next session on the door", () => {
           startIso: "2026-09-11T21:00:00Z",
           endIso: "2026-09-11T22:00:00Z",
         },
+      later: [],
       },
     },
   };
@@ -178,6 +182,7 @@ test("welcome still paints the session after hours", () => {
           startIso: "2026-09-11T21:00:00Z",
           endIso: "2026-09-11T22:00:00Z",
         },
+      later: [],
       },
     },
   };
@@ -227,6 +232,7 @@ test("welcome keeps the session when occupancy is forced available", () => {
           endIso: "2026-09-11T13:00:00Z",
         },
         next: null,
+        later: [],
       },
     },
   };
@@ -275,6 +281,7 @@ test("HTML in a meeting title is stripped before the frame", () => {
           endIso: "2026-09-11T13:00:00Z",
         },
         next: null,
+        later: [],
       },
     },
   };
@@ -302,6 +309,7 @@ test("Setup do-not-disturb beats calendar and Relay", () => {
           endIso: "2026-09-11T13:00:00Z",
         },
         next: null,
+        later: [],
       },
     },
   };
@@ -337,6 +345,7 @@ test("Auto uses Relay available even when a session is on", () => {
           endIso: "2026-09-11T13:00:00Z",
         },
         next: null,
+        later: [],
       },
     },
   };
@@ -374,10 +383,12 @@ test("split display paints two panes with description", () => {
       cedar: {
         now: { title: "Budget", host: "Ada", description: "North wall.", startIso: "2026-09-11T11:00:00Z", endIso: "2026-09-11T13:00:00Z" },
         next: null,
+        later: [],
       },
       maple: {
         now: null,
         next: { title: "Workshop", host: "", description: "Tea at the back.", startIso: "2026-09-11T12:08:00Z", endIso: "2026-09-11T13:00:00Z" },
+      later: [],
       },
     },
   };
@@ -427,6 +438,7 @@ test("wayfinding directory uses the current session, not the next one", () => {
           startIso: "2026-09-11T14:00:00Z",
           endIso: "2026-09-11T15:00:00Z",
         },
+      later: [],
       },
       maple: {
         now: null,
@@ -437,6 +449,7 @@ test("wayfinding directory uses the current session, not the next one", () => {
           startIso: "2026-09-11T12:08:00Z",
           endIso: "2026-09-11T13:15:00Z",
         },
+      later: [],
       },
     },
   };
@@ -501,6 +514,7 @@ test("one-room door plate uses that room when unbound", () => {
           endIso: "2026-09-11T13:00:00Z",
         },
         next: null,
+        later: [],
       },
     },
   };

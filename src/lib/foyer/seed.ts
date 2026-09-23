@@ -62,17 +62,33 @@ export function needsBoardPlates(site: Site) {
 }
 
 
-function relayDefaults(site: Site) {
-  const av = resolveAvLan(site);
-  const def = defaultRelayBaseUrl(av?.ipv4);
+/** Empty or loopback → `http://<AV-IPv4>:8081` when AV is set. Non-loopback URLs stay. */
+export function relayUrlDefaults(
+  site: Pick<Site, "relayUrl" | "relayEnabled">,
+  avIpv4: string | null | undefined,
+) {
+  const def = defaultRelayBaseUrl(avIpv4);
   const current = site.relayUrl?.trim() || "";
   let relayUrl: string | null = current || null;
   if (!relayUrl && def.ok) relayUrl = def.url;
   else if (relayUrl && isLoopbackUrl(relayUrl) && def.ok) relayUrl = def.url;
   const relayEnabled = Boolean(
-    site.relayEnabled || (relayUrl ? isAllowedRelayUrl(relayUrl, av?.ipv4) : false),
+    site.relayEnabled || (relayUrl ? isAllowedRelayUrl(relayUrl, avIpv4) : false),
   );
   return { relayUrl, relayEnabled };
+}
+
+/** Apply `relayUrlDefaults` using live AV-LAN. Same site reference when unchanged. */
+export function applyRelayDefaults(site: Site): Site {
+  const next = relayUrlDefaults(site, resolveAvLan(site)?.ipv4 ?? null);
+  if (next.relayUrl === (site.relayUrl ?? null) && next.relayEnabled === Boolean(site.relayEnabled)) {
+    return site;
+  }
+  return { ...site, ...next };
+}
+
+function relayDefaults(site: Site) {
+  return relayUrlDefaults(site, resolveAvLan(site)?.ipv4 ?? null);
 }
 
 export function migrateToRoomAppliance(site: Site): Site {

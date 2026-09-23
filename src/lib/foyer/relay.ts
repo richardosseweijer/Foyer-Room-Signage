@@ -53,11 +53,13 @@ export function defaultRelayBaseUrl(avIpv4: string | null | undefined, port = 80
   return { ok: true, url: `http://${ip}:${portNum}` };
 }
 
-/** Loopback or this PC's AV-LAN IPv4 (Relay listen host). Other hosts fail closed. */
+/** http: only; loopback or this PC's AV-LAN IPv4 (Relay listen host). https / other hosts fail closed. */
 export function isAllowedRelayUrl(raw: string, avIpv4?: string | null) {
-  if (isLoopbackUrl(raw)) return true;
   try {
-    const host = hostnameOf(new URL(raw).hostname);
+    const u = new URL(raw);
+    if (u.protocol !== "http:") return false;
+    if (isLoopbackHostname(u.hostname)) return true;
+    const host = hostnameOf(u.hostname);
     const av = String(avIpv4 ?? "").trim();
     return Boolean(av && host === av);
   } catch {

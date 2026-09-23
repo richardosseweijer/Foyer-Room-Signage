@@ -127,6 +127,7 @@ test("calendar bind required without an address keeps last-good", async () => {
     cedar: {
       now: { title: "Kept", host: "", description: "", startIso: "2026-01-01T00:00:00Z", endIso: "2026-01-01T01:00:00Z" },
       next: null,
+      later: [],
     },
   };
   const snap = await buildCalendarSnapshot({
