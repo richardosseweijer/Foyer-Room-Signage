@@ -361,18 +361,32 @@ This unit **stops the tty1 login prompt** and paints Chromium over that console.
 
 Picking or clearing **Welcome HDMI** or **Room panel HDMI** in Setup saves it and restarts this unit so Chromium covers that DRM connector (same-output reject does not restart). Unpicked heads stay **off**.
 
-Setup → **Enable local output** is a retry of that restart. The Foyer user needs passwordless systemctl:
+Setup → **Enable local output** is a retry of that restart. The Foyer user needs passwordless `systemctl` for **foyer**, **foyer-panel**, and **foyer-kiosk** only.
+
+**Required once on the appliance** (host `/etc`, not the git tree): Setup can save `data/foyer-kiosk.env` while **restart** still fails with polkit “interactive authentication” / Access denied if `/etc/sudoers.d/foyer-kiosk` is missing. `git pull`, in-app **Update from GitHub**, and reboot refresh code — they do **not** create or refresh this drop-in. Install once below; re-run if `User=` on `foyer.service` / `foyer-panel.service` / `foyer-kiosk.service` changes.
+
+Prefer the install script (substitutes `USER` in [`deploy/sudoers.foyer-kiosk`](deploy/sudoers.foyer-kiosk), mode 0440, `visudo -cf` pre/post):
 
 ```bash
-USER_NAME="$(whoami)"
-sudo tee /etc/sudoers.d/foyer-kiosk >/dev/null <<EOF
-${USER_NAME} ALL=(root) NOPASSWD: /usr/bin/systemctl start foyer.service, /usr/bin/systemctl restart foyer.service, /usr/bin/systemctl try-restart foyer.service, /usr/bin/systemctl stop foyer.service, /usr/bin/systemctl start foyer-panel.service, /usr/bin/systemctl restart foyer-panel.service, /usr/bin/systemctl try-restart foyer-panel.service, /usr/bin/systemctl stop foyer-panel.service, /usr/bin/systemctl start foyer-kiosk.service, /usr/bin/systemctl restart foyer-kiosk.service, /usr/bin/systemctl try-restart foyer-kiosk.service, /usr/bin/systemctl stop foyer-kiosk.service
-EOF
-sudo chmod 440 /etc/sudoers.d/foyer-kiosk
-sudo visudo -c
+# From the repo checkout
+sudo bash scripts/install-host-sudoers.sh
+# Or: sudo FOYER_USER=pi bash scripts/install-host-sudoers.sh
+# Smoke-check (must NOT ask for a password):
+sudo -u "$(whoami)" sudo -n /usr/bin/systemctl is-active foyer-kiosk.service || true
 ```
 
-Or copy the template: `sudo cp deploy/sudoers.foyer-kiosk /etc/sudoers.d/foyer-kiosk`, replace `USER`, then `chown root:root`, `chmod 0440`, `visudo -cf`. Setup → **Enable local output** classifies polkit / missing-sudoers failures and points here (same idea as Relay LINUX.md §7).
+Manual fallback (same template — do **not** paste a divergent inline allowlist):
+
+```bash
+USER_NAME="$(whoami)"   # must match systemd User=
+sudo cp deploy/sudoers.foyer-kiosk /etc/sudoers.d/foyer-kiosk
+sudo sed -i "s/^USER /${USER_NAME} /" /etc/sudoers.d/foyer-kiosk
+sudo chown root:root /etc/sudoers.d/foyer-kiosk
+sudo chmod 0440 /etc/sudoers.d/foyer-kiosk
+sudo visudo -cf /etc/sudoers.d/foyer-kiosk
+```
+
+Single source of truth: [`deploy/sudoers.foyer-kiosk`](deploy/sudoers.foyer-kiosk). Setup → **Enable local output** classifies polkit / missing-sudoers failures and points here (same idea as Relay LINUX.md §7 / `scripts/install-host-sudoers.sh`).
 
 The unit runs **sway** (wlroots multi-output), not cage. The generated config has no Mod-key exit binds (unlike a desktop sway session).
 
@@ -554,7 +568,7 @@ bash scripts/foyer-status.sh
 
 Uncommitted source edits block the button. `data/foyer-*.json` is not in git and is left alone.
 
-The updater then copies `dist/` from the staged build and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the sudoers snippet in §7.
+The updater then copies `dist/` from the staged build and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs `/etc/sudoers.d/foyer-kiosk` from §7 (`scripts/install-host-sudoers.sh`). Update / pull / reboot do **not** install that drop-in.
 
 ---
 
