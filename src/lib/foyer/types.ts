@@ -139,6 +139,8 @@ export const SiteSchema = z.strictObject({
   avLanNicName: z.string().nullable().default(null),
   videoOutputIndex: z.number().int().min(0).nullable().default(null),
   videoOutputName: z.string().nullable().default(null),
+  roomPanelVideoOutputIndex: z.number().int().min(0).nullable().default(null),
+  roomPanelVideoOutputName: z.string().nullable().default(null),
   welcomeFooter: z.string().default(""),
 });
 export type Site = z.infer<typeof SiteSchema>;

@@ -115,6 +115,8 @@ export function migrateToRoomAppliance(site: Site): Site {
     avLanNicName: site.avLanNicName ?? null,
     videoOutputIndex: site.videoOutputIndex ?? null,
     videoOutputName: site.videoOutputName ?? null,
+    roomPanelVideoOutputIndex: site.roomPanelVideoOutputIndex ?? null,
+    roomPanelVideoOutputName: site.roomPanelVideoOutputName ?? null,
     ...relayDefaults(site),
   };
 }

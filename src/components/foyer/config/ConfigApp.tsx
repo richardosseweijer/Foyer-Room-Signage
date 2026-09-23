@@ -114,6 +114,7 @@ export function ConfigApp() {
           outboundNicIndex: current.outboundNicIndex,
           avLanNicIndex: current.avLanNicIndex,
           videoOutputIndex: current.videoOutputIndex,
+          roomPanelVideoOutputIndex: current.roomPanelVideoOutputIndex,
           welcomeFooter: current.welcomeFooter ?? "",
         },
       });
@@ -126,8 +127,11 @@ export function ConfigApp() {
               ? "Set a new site PIN. 1234 cannot stay."
               : reason === "same-as-other"
                 ? "Site PIN and technician PIN must differ."
-                : "Could not save.",
+                : reason === "same-output"
+                  ? "Welcome and Room panel must use different video outputs."
+                  : "Could not save.",
         );
+        if (reason === "same-output") await load(session);
         return false;
       }
       setSaved(true);
@@ -349,9 +353,13 @@ export function ConfigApp() {
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
           <h2 className="text-xl font-semibold tracking-tight">This PC</h2>
           <p className="text-sm text-muted">
-            Welcome on HDMI. Door tablet on AV-LAN. Calendar out LAN. Set the same NICs in Relay — Foyer does not read them.
+            Welcome and optional Room panel on local HDMI/DP. Door tablet on AV-LAN. Calendar out LAN. Set the same
+            NICs in Relay — Foyer does not read them.
           </p>
-          <Field label="HDMI output" hint="Welcome wall. Changing this starts the kiosk.">
+          <Field
+            label="Welcome HDMI"
+            hint="Welcome wall. Changing this starts the kiosk. One display: Welcome or Room panel, not both on the same head."
+          >
             <select
               className={inputClass}
               value={site.videoOutputIndex ?? ""}
@@ -362,7 +370,27 @@ export function ConfigApp() {
             >
               <option value="">Not set</option>
               {outputs.map((row) => (
-                <option key={row.name} value={row.index}>
+                <option key={`welcome-${row.name}`} value={row.index}>
+                  {row.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field
+            label="Room panel HDMI"
+            hint="Local head reserved for Relay control UI (second Chromium is F3). Must differ from Welcome. Either role may stay Not set."
+          >
+            <select
+              className={inputClass}
+              value={site.roomPanelVideoOutputIndex ?? ""}
+              onChange={(e) => {
+                const roomPanelVideoOutputIndex = e.target.value === "" ? null : Number(e.target.value);
+                void save({ roomPanelVideoOutputIndex });
+              }}
+            >
+              <option value="">Not set</option>
+              {outputs.map((row) => (
+                <option key={`room-${row.name}`} value={row.index}>
                   {row.label}
                 </option>
               ))}

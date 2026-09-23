@@ -88,6 +88,7 @@ export const saveSetup = createServerFn({ method: "POST" })
       outboundNicIndex: z.number().int().min(0).nullable().optional(),
       avLanNicIndex: z.number().int().min(0).nullable().optional(),
       videoOutputIndex: z.number().int().min(0).nullable().optional(),
+      roomPanelVideoOutputIndex: z.number().int().min(0).nullable().optional(),
       welcomeFooter: z.string().max(200).optional(),
     }),
   )
@@ -96,7 +97,7 @@ export const saveSetup = createServerFn({ method: "POST" })
     const { assertNewPin, hashPin } = await import("./pins.server.ts");
     const { ensureLoaded, memory, saveSite } = await import("./store.server.ts");
     const { listNics } = await import("./net.ts");
-    const { listVideoOutputs } = await import("./video.ts");
+    const { listVideoOutputs, sameVideoOutputConflict } = await import("./video.ts");
     if (!readSession(data.session, "site")) return { ok: false as const, reason: "auth" as const };
     await ensureLoaded();
     const mem = memory();
@@ -121,17 +122,33 @@ export const saveSetup = createServerFn({ method: "POST" })
       if (incoming === null) return { index: null, name: null };
       return { index: incoming, name: nics.find((row) => row.index === incoming)?.name ?? null };
     };
+    const pickOutput = (
+      incoming: number | null | undefined,
+      current: { index: number | null; name: string | null },
+    ) => {
+      if (incoming === undefined) return current;
+      if (incoming === null) return { index: null, name: null };
+      return { index: incoming, name: outputs.find((row) => row.index === incoming)?.name ?? null };
+    };
     const nic = pickNic(data.outboundNicIndex, { index: mem.site.outboundNicIndex, name: mem.site.outboundNicName });
     const av = pickNic(data.avLanNicIndex, { index: mem.site.avLanNicIndex, name: mem.site.avLanNicName });
-    const output =
-      data.videoOutputIndex === undefined
-        ? { index: mem.site.videoOutputIndex, name: mem.site.videoOutputName }
-        : data.videoOutputIndex === null
-          ? { index: null, name: null }
-          : {
-              index: data.videoOutputIndex,
-              name: outputs.find((row) => row.index === data.videoOutputIndex)?.name ?? null,
-            };
+    const output = pickOutput(data.videoOutputIndex, {
+      index: mem.site.videoOutputIndex,
+      name: mem.site.videoOutputName,
+    });
+    const roomPanel = pickOutput(data.roomPanelVideoOutputIndex, {
+      index: mem.site.roomPanelVideoOutputIndex,
+      name: mem.site.roomPanelVideoOutputName,
+    });
+    if (
+      sameVideoOutputConflict(
+        { name: output.name, index: output.index },
+        { name: roomPanel.name, index: roomPanel.index },
+        outputs,
+      )
+    ) {
+      return { ok: false as const, reason: "same-output" as const };
+    }
     const avChanged = av.index !== mem.site.avLanNicIndex || av.name !== mem.site.avLanNicName;
     const site = {
       ...mem.site,
@@ -146,6 +163,8 @@ export const saveSetup = createServerFn({ method: "POST" })
       avLanNicName: av.name,
       videoOutputIndex: output.index,
       videoOutputName: output.name,
+      roomPanelVideoOutputIndex: roomPanel.index,
+      roomPanelVideoOutputName: roomPanel.name,
       welcomeFooter: data.welcomeFooter !== undefined ? data.welcomeFooter.trim() : mem.site.welcomeFooter,
       rooms: mem.site.rooms.map((room) => {
         const patch = data.rooms.find((item) => item.id === room.id);

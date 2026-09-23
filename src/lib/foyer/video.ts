@@ -8,6 +8,11 @@ export type VideoRow = {
   label: string;
 };
 
+export type VideoPick = {
+  name: string | null;
+  index: number | null;
+};
+
 const DRM = "/sys/class/drm";
 
 function isPhysicalConnector(entry: string) {
@@ -52,24 +57,62 @@ export function listVideoOutputs(): VideoRow[] {
   return rows;
 }
 
+/** Explicit Setup pick only — no fallback. Used for Room panel env and conflict checks. */
+export function resolvePickedVideoOutput(
+  pick: VideoPick,
+  outputs: VideoRow[] = listVideoOutputs(),
+): VideoRow | null {
+  if (pick.name) {
+    const byName = outputs.find((row) => row.name === pick.name);
+    if (byName) return byName;
+  }
+  if (pick.index !== null && pick.index !== undefined) {
+    const byIndex = outputs.find((row) => row.index === pick.index);
+    if (byIndex) return byIndex;
+  }
+  return null;
+}
+
 export function resolveVideoOutput(site: {
   videoOutputName: string | null;
   videoOutputIndex: number | null;
 }): VideoRow | null {
   const outputs = listVideoOutputs();
-  if (site.videoOutputName) {
-    const byName = outputs.find((row) => row.name === site.videoOutputName);
-    if (byName) return byName;
-  }
-  if (site.videoOutputIndex !== null && site.videoOutputIndex !== undefined) {
-    const byIndex = outputs.find((row) => row.index === site.videoOutputIndex);
-    if (byIndex) return byIndex;
-  }
+  const picked = resolvePickedVideoOutput(
+    { name: site.videoOutputName, index: site.videoOutputIndex },
+    outputs,
+  );
+  if (picked) return picked;
   return outputs.find((row) => row.connected) ?? outputs[0] ?? null;
 }
 
-export function kioskEnvBody(site: { videoOutputName: string | null; videoOutputIndex: number | null }) {
-  const row = resolveVideoOutput(site);
-  const name = row && row.name !== "local" ? row.name : "";
-  return `FOYER_VIDEO_OUTPUT=${name}\n`;
+/** True when both roles resolve to the same connector name (reject save). */
+export function sameVideoOutputConflict(
+  welcome: VideoPick,
+  roomPanel: VideoPick,
+  outputs: VideoRow[] = listVideoOutputs(),
+): boolean {
+  const a = resolvePickedVideoOutput(welcome, outputs);
+  const b = resolvePickedVideoOutput(roomPanel, outputs);
+  return Boolean(a && b && a.name === b.name);
+}
+
+function envConnectorName(row: VideoRow | null) {
+  return row && row.name !== "local" ? row.name : "";
+}
+
+export function kioskEnvBody(site: {
+  videoOutputName: string | null;
+  videoOutputIndex: number | null;
+  roomPanelVideoOutputName?: string | null;
+  roomPanelVideoOutputIndex?: number | null;
+}) {
+  const welcomeName = envConnectorName(resolveVideoOutput(site));
+  const roomName = envConnectorName(
+    resolvePickedVideoOutput({
+      name: site.roomPanelVideoOutputName ?? null,
+      index: site.roomPanelVideoOutputIndex ?? null,
+    }),
+  );
+  return `FOYER_VIDEO_OUTPUT=${welcomeName}\nFOYER_ROOM_PANEL_VIDEO_OUTPUT=${roomName}\n`;
 }

@@ -31,7 +31,7 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 | Logos | jpeg/png/webp, size cap. No SVG. |
 | Logs | No PIN, no ICS, no token in log lines. `data/foyer-update.log` is git SHAs and npm only. |
 | Update | Setup session required. Dirty source refuses. `data/` is not in the worktree swap. |
-| Kiosk | Setup session. Restarts a **fixed** unit name (`foyer-kiosk.service`) only. F1: one Welcome head under sway (DRM scan pick). Dual-role second head stays planned — Setup-gated fixed units only ([INSTALL.md §7b](INSTALL.md)). |
+| Kiosk | Setup session. Restarts a **fixed** unit name (`foyer-kiosk.service`) only. F1/F2: one Welcome head under sway; Setup dual DRM scan pickers + same-output reject. Second Chromium remains F3 — Setup-gated fixed units only ([INSTALL.md §7b](INSTALL.md)). |
 | Panel bind | Saving a new AV-LAN NIC restarts `foyer-panel.service` only (`src/lib/foyer/panel.ts`). |
 | Defaults | Deny. Open glass is an explicit switch, off in production. |
 
