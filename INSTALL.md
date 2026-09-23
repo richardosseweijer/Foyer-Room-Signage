@@ -372,6 +372,8 @@ sudo chmod 440 /etc/sudoers.d/foyer-kiosk
 sudo visudo -c
 ```
 
+Or copy the template: `sudo cp deploy/sudoers.foyer-kiosk /etc/sudoers.d/foyer-kiosk`, replace `USER`, then `chown root:root`, `chmod 0440`, `visudo -cf`. Setup → **Enable local output** classifies polkit / missing-sudoers failures and points here (same idea as Relay LINUX.md §7).
+
 The unit runs **sway** (wlroots multi-output), not cage. The generated config has no Mod-key exit binds (unlike a desktop sway session).
 
 If the kiosk stays on the Ubuntu login TTY: the unit is the old one (no `Conflicts=getty@tty1`, or still `ExecStart=…cage…`). Re-run this section, then `sudo systemctl daemon-reload && sudo systemctl restart foyer-kiosk`. `sudo journalctl -u foyer-kiosk -e` is the next step. Confirm welcome from the config laptop at `http://FOYER-IP:8080/`.
