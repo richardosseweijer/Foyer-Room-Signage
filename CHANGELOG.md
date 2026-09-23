@@ -7,6 +7,7 @@
 - [`FOYER-RELAY.md`](FOYER-RELAY.md) matches Relay 0.9.6.
 
 ## Unreleased
+- Kiosk F4: Welcome clear/change also restarts `foyer-kiosk` (same-output reject still skips restart); Chromium `--class` + sway `app_id`/`class` dual matchers documented; optional `FOYER_CHROMIUM_NO_SANDBOX=1`; Ubuntu Server / Wyse 5070 lab checklist INSTALL §7c.
 - Kiosk F3: sway enables Welcome and/or Room panel heads; second Chromium (`data/chromium-room-panel`) loads Relay control UI from `FOYER_ROOM_PANEL_URL` (site `relayUrl`). Welcome-only / Room-panel-only / both. Does not start Relay `relay-kiosk` (§7b).
 - Kiosk F2: Setup dual scan-based video pickers (**Welcome HDMI** + **Room panel HDMI**); reject same connector; persist `roomPanelVideoOutputIndex` / `roomPanelVideoOutputName`; write `FOYER_ROOM_PANEL_VIDEO_OUTPUT` beside `FOYER_VIDEO_OUTPUT` in `data/foyer-kiosk.env`.
 - Kiosk F1: replace **cage** with **sway** multi-output compositor foundation; still one Welcome Chromium on the Setup DRM pick (other outputs off). Config generated at unit start from `FOYER_VIDEO_OUTPUT`; Chromium profile `data/chromium-welcome` prepares dual profiles for F3.

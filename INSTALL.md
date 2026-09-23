@@ -293,7 +293,7 @@ sudo loginctl enable-linger "$USER"
 
 Log out and back in (or reboot) so the `video` / `render` groups apply. `echo $XDG_RUNTIME_DIR` should print `/run/user/$(id -u)`.
 
-If `chromium` is missing, try `chromium-browser`. `which chromium chromium-browser` — use that path in the unit below. Snap Chromium under sway often needs `--no-sandbox` on this dedicated PC; add it only if `journalctl -u foyer-kiosk` shows namespace errors.
+Prefer **apt** `chromium` or `chromium-browser` (not snap). `which chromium chromium-browser` — scripts resolve that path at start. Snap Chromium under a Wayland kiosk seat often needs `--no-sandbox` on this dedicated PC; set `FOYER_CHROMIUM_NO_SANDBOX=1` in `data/foyer-kiosk.env` only if `journalctl -u foyer-kiosk` shows namespace/sandbox errors (see §7c).
 
 `unclutter` is X11 and does nothing under Wayland. Skip it.
 
@@ -359,7 +359,7 @@ sudo systemctl status foyer-kiosk --no-pager
 
 This unit **stops the tty1 login prompt** and paints Chromium over that console. SSH is unchanged.
 
-Picking **Welcome HDMI** or **Room panel HDMI** in Setup saves it and restarts this unit so Chromium covers that DRM connector. Unpicked heads stay **off**.
+Picking or clearing **Welcome HDMI** or **Room panel HDMI** in Setup saves it and restarts this unit so Chromium covers that DRM connector (same-output reject does not restart). Unpicked heads stay **off**.
 
 Setup → **Enable local output** is a retry of that restart. The Foyer user needs passwordless systemctl:
 
@@ -400,7 +400,7 @@ Modes:
 
 Foyer does **not** start Relay’s **relay-kiosk**. Relay still owns devices and `:8081` ([`FOYER-RELAY.md`](FOYER-RELAY.md)). The door plate tablet on AV-LAN (`:8082`) is unchanged.
 
-Typical hardware: **Dell Wyse 5070 / Ubuntu Server**, often one Intel GPU with two DisplayPort outputs.
+Typical hardware: **Dell Wyse 5070 / Ubuntu Server**, often one Intel GPU with two DisplayPort outputs. Concrete lab bring-up: **§7c**.
 
 Rules:
 
@@ -408,6 +408,93 @@ Rules:
 2. **One display:** Welcome **or** Room panel for that single head.
 3. **Multi-display:** roles on **different** scanned outputs. Same output for both → **reject**.
 4. When Foyer drives the Room panel head on this host, Relay’s own **relay-kiosk** is **optional / off**.
+
+### 7c. Ubuntu Server lab checklist (Wyse 5070 dual DP)
+
+Software-side bring-up for **Dell Wyse 5070 + Ubuntu Server** (typically one Intel GPU / one DRM card, two DisplayPorts). No physical smoke required for F4 review — run these checks when hardware is attached.
+
+#### Packages
+
+```bash
+sudo apt-get install -y seatd sway wlr-randr curl \
+  mesa-vulkan-drivers libgl1-mesa-dri \
+  fonts-liberation fonts-noto-core
+# Prefer distro Chromium (apt), not snap:
+sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser
+which chromium chromium-browser
+# Snap Chromium under a headless/server kiosk often hits sandbox / namespace errors —
+# prefer apt; if stuck on snap, set FOYER_CHROMIUM_NO_SANDBOX=1 in data/foyer-kiosk.env
+# (dedicated kiosk user only; see KNOWN_ISSUES).
+```
+
+Intel DRM should show card connectors under `/sys/class/drm` (e.g. `card0-DP-1`, `card0-DP-2`).
+
+#### Seat / tty1 / linger / kiosk user
+
+1. `sudo systemctl enable --now seatd`
+2. `sudo usermod -aG video,render,input,tty "$USER"` then re-login
+3. `sudo loginctl enable-linger "$USER"` so `/run/user/$(id -u)` exists without a GUI login
+4. Confirm `echo $XDG_RUNTIME_DIR` → `/run/user/$(id -u)`
+5. Install `foyer-kiosk.service` as the **same dedicated user** (§7a); unit uses `PAMName=login`, takes **tty1** (`Conflicts=getty@tty1`), `EnvironmentFile=…/data/foyer-kiosk.env`
+
+#### DRM scan + Setup picks
+
+```bash
+ls /sys/class/drm/*/status 2>/dev/null | while read f; do
+  echo "$(basename "$(dirname "$f")") $(cat "$f")"
+done
+```
+
+In Setup → **This PC**:
+
+- **Welcome HDMI** and **Room panel HDMI** must be **different** connectors (same-output → rejected, no kiosk restart).
+- Changing **or clearing** either picker rewrites `data/foyer-kiosk.env` and restarts `foyer-kiosk` when the save succeeds.
+
+#### Relay URL (Room panel)
+
+- Site **Relay URL** must be an AV-LAN HTTP base (`http://host[:port]/`). Persist writes it as `FOYER_ROOM_PANEL_URL`.
+- Room-panel Chromium soft-fails (exit 0) if the URL is empty or unsafe — sway stays up; that head stays blank until URL + restart.
+- Confirm reachability: `curl -sf -o /dev/null -w "%{http_code}\n" "$FOYER_ROOM_PANEL_URL"` (or the Setup value).
+
+#### When Foyer paints Room panel
+
+Leave Relay’s own **`relay-kiosk` disabled/off** on this host (Foyer owns the head). Pointer for Relay-side docs: Path B **R1** on Relay will spell the unit off/disable steps; Foyer still must not start `relay-kiosk`.
+
+#### Verify modes
+
+| Mode | Setup | Expect |
+| --- | --- | --- |
+| Welcome-only | Welcome set, Room panel Not set | One head: Foyer `http://127.0.0.1:8080/` |
+| Room-panel-only | Welcome Not set, Room panel set + Relay URL | One head: Relay control UI |
+| Both | Different connectors + Relay URL | Two Chromiums under one sway seat |
+| Same output | Both pickers same connector | Save rejected; kiosk not restarted |
+
+#### Logs / generated config
+
+```bash
+sudo journalctl -u foyer-kiosk -e --no-pager
+# Generated sway conf (unit sets XDG_RUNTIME_DIR=/run/user/%U):
+ls -l "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/foyer-sway.conf"
+cat "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/foyer-sway.conf"
+# Env written by Setup persist:
+cat ~/Foyer-Room-Signage/data/foyer-kiosk.env
+```
+
+Confirm sway config keeps **both** `app_id=` and `class=` assign/fullscreen rules for `foyer-welcome` / `foyer-room-panel` (Chromium `--class` maps to Wayland `app_id` or XWayland `class` depending on packaging).
+
+#### Common failures
+
+| Symptom | Likely cause |
+| --- | --- |
+| Setup error, no restart | Both roles same output (reject UX) |
+| Room panel head blank | Empty / unsafe `FOYER_ROOM_PANEL_URL`; check env + `curl` |
+| Both Chromiums on one head / wrong head | `--class` not applied or sway matchers missing `app_id`/`class` |
+| Second DP stays blank | Role unset, connector unsafe, or cable/DRM `disconnected` |
+| Chromium crash / namespace | Snap Chromium sandbox — switch to apt or `FOYER_CHROMIUM_NO_SANDBOX=1` |
+| Black seat, Foyer healthy on loopback | GPU/mesa, wrong tty, or outputs disabled in generated conf |
+| Cleared Welcome but old wall still paints | Fixed in F4: clear/change Welcome also restarts the unit |
+
+---
 
 ---
 
@@ -482,7 +569,7 @@ Copy both off the disk before a re-image. A failed write keeps last-good (`.good
 
 ## Checks before you leave the room
 
-1. Welcome shows the session on the local video output you chose (today: one head — §7).
+1. Welcome and/or Room panel show on the local outputs you chose (§7 / §7b / §7c).
 2. Room plate on AV-LAN shows the same room.
 3. Unplug Relay: meetings still show.
 4. Unplug LAN (internet) NIC: last calendar remains; welcome still paints.
