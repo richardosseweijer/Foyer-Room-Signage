@@ -1,3 +1,4 @@
+import { resolveAvLan } from "./net.ts";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { OccupancySnapshot, Site } from "./types.ts";
 import { LIVE_OCCUPANCIES } from "./types.ts";
@@ -31,6 +32,34 @@ export function isLoopbackHostname(host: string) {
 export function isLoopbackUrl(raw: string) {
   try {
     return isLoopbackHostname(new URL(raw).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Default Foyer→Relay URL from live AV-LAN IPv4. Soft-fails when AV has no IPv4 (no loopback bait). */
+export function defaultRelayBaseUrl(avIpv4: string | null | undefined, port = 8081):
+  | { ok: true; url: string }
+  | { ok: false; reason: string } {
+  const ip = String(avIpv4 ?? "").trim();
+  if (!ip) {
+    return {
+      ok: false,
+      reason: "AV-LAN has no IPv4 — set AV-LAN before enabling Relay occupancy (lab: http://127.0.0.1:8081 with RELAY_LISTEN_HOST=127.0.0.1).",
+    };
+  }
+  const p = Number(port);
+  const portNum = Number.isFinite(p) && p > 0 ? Math.floor(p) : 8081;
+  return { ok: true, url: `http://${ip}:${portNum}` };
+}
+
+/** Loopback or this PC's AV-LAN IPv4 (Relay listen host). Other hosts fail closed. */
+export function isAllowedRelayUrl(raw: string, avIpv4?: string | null) {
+  if (isLoopbackUrl(raw)) return true;
+  try {
+    const host = hostnameOf(new URL(raw).hostname);
+    const av = String(avIpv4 ?? "").trim();
+    return Boolean(av && host === av);
   } catch {
     return false;
   }
@@ -180,7 +209,8 @@ export async function fetchRelayOccupancy(opts: {
   if (!opts.site.relayEnabled || !url) return opts.lastGood ?? null;
   const endpoint = peerEndpoint(url);
   if (!endpoint) return opts.lastGood ?? null;
-  if (!isLoopbackUrl(endpoint.toString())) return opts.lastGood ?? null;
+  const avIpv4 = resolveAvLan(opts.site)?.ipv4 ?? null;
+  if (!isAllowedRelayUrl(endpoint.toString(), avIpv4)) return opts.lastGood ?? null;
   // Loopback GET is unsigned so a pasted secret that does not match Relay cannot
   // 401 occupancy. HMAC still required for POST macros; verify if headers are sent.
   const controller = new AbortController();

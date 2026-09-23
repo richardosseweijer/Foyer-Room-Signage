@@ -508,7 +508,7 @@ export function ConfigApp() {
               className={inputClass}
               value={site.relayUrl ?? ""}
               onChange={(e) => setSite({ ...site, relayUrl: e.target.value })}
-              placeholder="http://127.0.0.1:8081"
+              placeholder="http://<av-lan-ipv4>:8081"
               autoComplete="off"
               spellCheck={false}
             />

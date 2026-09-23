@@ -1,6 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { occupancyFromPeer, occupancyFromValue, peerEndpoint, signPeer, isLoopbackHostname, isLoopbackRequest, isTcpLoopback, tcpPeerAddress, authorizePeerGet, buildFoyerPeerGet } from "./relay.ts";
+import {
+  occupancyFromPeer,
+  occupancyFromValue,
+  peerEndpoint,
+  signPeer,
+  isLoopbackHostname,
+  isLoopbackRequest,
+  isTcpLoopback,
+  tcpPeerAddress,
+  authorizePeerGet,
+  buildFoyerPeerGet,
+  isAllowedRelayUrl,
+  defaultRelayBaseUrl,
+} from "./relay.ts";
 import { demoSite } from "./seed.ts";
 
 test("Relay HMAC matches the documented peer formula", () => {
@@ -144,4 +157,16 @@ test("foyer peer GET body is session only", () => {
   assert.equal(body.session?.kind, "next");
   assert.equal(body.session?.title, "Board lunch");
   assert.equal(buildFoyerPeerGet({ session: null }).session, null);
+});
+
+
+test("allowed Relay URL is loopback or AV-LAN IPv4", () => {
+  assert.equal(isAllowedRelayUrl("http://127.0.0.1:8081"), true);
+  assert.equal(isAllowedRelayUrl("http://10.0.25.10:8081", "10.0.25.10"), true);
+  assert.equal(isAllowedRelayUrl("http://10.0.25.10:8081", "10.0.25.11"), false);
+  assert.equal(isAllowedRelayUrl("http://192.168.1.9:8081", "10.0.25.10"), false);
+  const def = defaultRelayBaseUrl("10.0.25.10");
+  assert.equal(def.ok, true);
+  if (def.ok) assert.equal(def.url, "http://10.0.25.10:8081");
+  assert.equal(defaultRelayBaseUrl(null).ok, false);
 });

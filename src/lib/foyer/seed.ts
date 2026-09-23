@@ -1,3 +1,5 @@
+import { resolveAvLan } from "./net.ts";
+import { defaultRelayBaseUrl, isAllowedRelayUrl, isLoopbackUrl } from "./relay.ts";
 import { defaultLook } from "./look.ts";
 import { DEFAULT_TIMEZONE, emptySite } from "./site.ts";
 import type { Arrow, Display, Look, Room, Site } from "./types.ts";
@@ -59,6 +61,20 @@ export function needsBoardPlates(site: Site) {
   return needsRoomAppliance(site);
 }
 
+
+function relayDefaults(site: Site) {
+  const av = resolveAvLan(site);
+  const def = defaultRelayBaseUrl(av?.ipv4);
+  const current = site.relayUrl?.trim() || "";
+  let relayUrl: string | null = current || null;
+  if (!relayUrl && def.ok) relayUrl = def.url;
+  else if (relayUrl && isLoopbackUrl(relayUrl) && def.ok) relayUrl = def.url;
+  const relayEnabled = Boolean(
+    site.relayEnabled || (relayUrl ? isAllowedRelayUrl(relayUrl, av?.ipv4) : false),
+  );
+  return { relayUrl, relayEnabled };
+}
+
 export function migrateToRoomAppliance(site: Site): Site {
   return {
     ...site,
@@ -83,18 +99,8 @@ export function migrateToRoomAppliance(site: Site): Site {
     avLanNicName: site.avLanNicName ?? null,
     videoOutputIndex: site.videoOutputIndex ?? null,
     videoOutputName: site.videoOutputName ?? null,
-    relayUrl: site.relayUrl ?? "http://127.0.0.1:8081",
-    relayEnabled: site.relayEnabled || isLoopbackRelay(site.relayUrl ?? "http://127.0.0.1:8081"),
+    ...relayDefaults(site),
   };
-}
-
-function isLoopbackRelay(url: string) {
-  try {
-    const host = new URL(url).hostname.toLowerCase();
-    return host === "127.0.0.1" || host === "localhost" || host === "::1";
-  } catch {
-    return false;
-  }
 }
 
 export function migrateToBoardPlates(site: Site): Site {
@@ -111,8 +117,9 @@ export function demoSite(): Site {
   site.floors = [{ id: "f1", label: "Ground" }];
   site.calendars = [{ id: "shared", label: "Room calendar" }];
   site.sharedCalendarId = "shared";
-  site.relayUrl = "http://127.0.0.1:8081";
-  site.relayEnabled = true;
+  const seeded = relayDefaults(site);
+  site.relayUrl = seeded.relayUrl;
+  site.relayEnabled = seeded.relayEnabled || true;
   site.rooms = [
     {
       id: "cedar",
