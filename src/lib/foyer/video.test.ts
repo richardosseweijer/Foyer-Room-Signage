@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  envRelayUrl,
   kioskEnvBody,
   listVideoOutputs,
   resolvePickedVideoOutput,
@@ -82,6 +83,14 @@ test("same output conflict when both roles resolve to one connector", () => {
   );
 });
 
+test("envRelayUrl keeps plain http Relay base URLs", () => {
+  assert.equal(envRelayUrl("http://10.0.25.10:8081"), "http://10.0.25.10:8081/");
+  assert.equal(envRelayUrl("http://127.0.0.1:8081/"), "http://127.0.0.1:8081/");
+  assert.equal(envRelayUrl("https://10.0.25.10:8081"), "");
+  assert.equal(envRelayUrl("http://evil.example/path"), "");
+  assert.equal(envRelayUrl(null), "");
+});
+
 test("kiosk env names welcome and room panel connectors", () => {
   const outputs = listVideoOutputs();
   const body = kioskEnvBody({
@@ -89,19 +98,22 @@ test("kiosk env names welcome and room panel connectors", () => {
     videoOutputIndex: 0,
     roomPanelVideoOutputName: null,
     roomPanelVideoOutputIndex: null,
+    relayUrl: null,
   });
   assert.match(body, /^FOYER_VIDEO_OUTPUT=/m);
   assert.match(body, /^FOYER_ROOM_PANEL_VIDEO_OUTPUT=$/m);
+  assert.match(body, /^FOYER_ROOM_PANEL_URL=$/m);
 
   const dual = kioskEnvBody({
     videoOutputName: "DP-1",
     videoOutputIndex: 0,
     roomPanelVideoOutputName: "DP-2",
     roomPanelVideoOutputIndex: 1,
+    relayUrl: "http://10.0.25.10:8081",
   });
-  // Names only appear when they exist in the live scan (or stay empty for unknown).
   assert.match(dual, /^FOYER_VIDEO_OUTPUT=/m);
   assert.match(dual, /^FOYER_ROOM_PANEL_VIDEO_OUTPUT=/m);
+  assert.match(dual, /^FOYER_ROOM_PANEL_URL=http:\/\/10\.0\.25\.10:8081\/$/m);
 });
 
 test("kiosk env writes room panel empty when unset", () => {
@@ -110,9 +122,24 @@ test("kiosk env writes room panel empty when unset", () => {
     videoOutputIndex: null,
     roomPanelVideoOutputName: null,
     roomPanelVideoOutputIndex: null,
+    relayUrl: null,
   });
   const lines = body.trim().split("\n");
-  assert.equal(lines.length, 2);
+  assert.equal(lines.length, 3);
   assert.match(lines[0]!, /^FOYER_VIDEO_OUTPUT=/);
   assert.equal(lines[1], "FOYER_ROOM_PANEL_VIDEO_OUTPUT=");
+  assert.equal(lines[2], "FOYER_ROOM_PANEL_URL=");
+});
+
+test("kiosk env room-panel-only leaves welcome empty", () => {
+  const body = kioskEnvBody({
+    videoOutputName: null,
+    videoOutputIndex: null,
+    roomPanelVideoOutputName: "DP-2",
+    roomPanelVideoOutputIndex: 1,
+    relayUrl: "http://10.0.25.10:8081",
+  });
+  // Live DRM may or may not include DP-2; welcome must stay empty when unset.
+  assert.match(body, /^FOYER_VIDEO_OUTPUT=$/m);
+  assert.match(body, /^FOYER_ROOM_PANEL_URL=http:\/\/10\.0\.25\.10:8081\/$/m);
 });

@@ -101,18 +101,48 @@ function envConnectorName(row: VideoRow | null) {
   return row && row.name !== "local" ? row.name : "";
 }
 
+/** Plain http://host[:port]/ for systemd EnvironmentFile + Chromium. Empty when unset/unsafe. */
+export function envRelayUrl(raw: string | null | undefined): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  try {
+    const u = new URL(s);
+    if (u.protocol !== "http:") return "";
+    if (u.username || u.password) return "";
+    if (u.search || u.hash) return "";
+    if (u.pathname !== "/" && u.pathname !== "") return "";
+    const host = u.host;
+    if (!host || /[^A-Za-z0-9._~:\[\]-]/.test(host)) return "";
+    return `http://${host}/`;
+  } catch {
+    return "";
+  }
+}
+
 export function kioskEnvBody(site: {
   videoOutputName: string | null;
   videoOutputIndex: number | null;
   roomPanelVideoOutputName?: string | null;
   roomPanelVideoOutputIndex?: number | null;
+  relayUrl?: string | null;
 }) {
-  const welcomeName = envConnectorName(resolveVideoOutput(site));
-  const roomName = envConnectorName(
-    resolvePickedVideoOutput({
-      name: site.roomPanelVideoOutputName ?? null,
-      index: site.roomPanelVideoOutputIndex ?? null,
-    }),
+  const welcomePick = resolvePickedVideoOutput({
+    name: site.videoOutputName,
+    index: site.videoOutputIndex,
+  });
+  const roomRow = resolvePickedVideoOutput({
+    name: site.roomPanelVideoOutputName ?? null,
+    index: site.roomPanelVideoOutputIndex ?? null,
+  });
+  // F1 fallback: when neither role is explicitly picked, Welcome uses first connected.
+  // Room-panel-only (Welcome unset, Room set) must leave FOYER_VIDEO_OUTPUT empty.
+  const welcomeRow = welcomePick ?? (roomRow ? null : resolveVideoOutput(site));
+  const welcomeName = envConnectorName(welcomeRow);
+  const roomName = envConnectorName(roomRow);
+  const roomUrl = envRelayUrl(site.relayUrl);
+  return (
+    `FOYER_VIDEO_OUTPUT=${welcomeName}\n` +
+    `FOYER_ROOM_PANEL_VIDEO_OUTPUT=${roomName}\n` +
+    `FOYER_ROOM_PANEL_URL=${roomUrl}\n`
   );
-  return `FOYER_VIDEO_OUTPUT=${welcomeName}\nFOYER_ROOM_PANEL_VIDEO_OUTPUT=${roomName}\n`;
 }
