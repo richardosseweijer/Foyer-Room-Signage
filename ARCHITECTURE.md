@@ -72,18 +72,18 @@ Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on th
 Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktree, then switches the live checkout. `data/` is never copied. Log: `data/foyer-update.log`. A zip-only copy cannot use the button.
 
 
-## 4a. Local displays (today vs planned)
+## 4a. Local displays (F1 vs planned F2/F3)
 
-**Today:** one local Welcome head. `src/lib/foyer/video.ts` lists physical DRM connectors under `/sys/class/drm` (scan-based indexed dropdown). Setup stores one Welcome output; `src/lib/foyer/kiosk.ts` restarts fixed unit `foyer-kiosk.service`. Cage + `wlr-randr` pin that connector and blank the others. The Room plate is **not** a second local head — it is the AV-LAN tablet on `:8082`.
+**F1 (current):** one local Welcome head under **sway** (wlroots multi-output compositor on tty1). `src/lib/foyer/video.ts` lists physical DRM connectors under `/sys/class/drm` (scan-based indexed dropdown). Setup stores one Welcome output; `src/lib/foyer/kiosk.ts` restarts fixed unit `foyer-kiosk.service`. At unit start `scripts/foyer-kiosk-sway.sh` generates a sway config from `FOYER_VIDEO_OUTPUT` (enable pick, disable others) and execs Welcome Chromium (`scripts/foyer-kiosk.sh`, profile `data/chromium-welcome`). The Room plate is **not** a second local head — it is the AV-LAN tablet on `:8082`.
 
-**Planned (Path B — not implemented in this tree):** Foyer owns local displays via **one** multi-output compositor. Two roles with **independent** scan-based pickers (still `/sys/class/drm`, options follow what is plugged in — **not** a hard-coded HDMI-1/2 list; support 1–4 connected heads):
+**Planned (Path B remainder — F2/F3):** keep the **same** compositor. Two roles with **independent** scan-based pickers (still `/sys/class/drm`, options follow what is plugged in — **not** a hard-coded HDMI-1/2 list; support 1–4 connected heads):
 
 | Role | Surface |
 |---|---|
 | Welcome | Foyer Welcome URL on the chosen local head |
 | Room panel | Relay control UI at `http://AV-LAN-IPv4:port/` on a different local head |
 
-One-display: Welcome **or** Room panel on that single head. Multi-display: different outputs per role; same output for both → reject. When Foyer drives the Room panel head, Relay’s own relay-kiosk on this host is optional/off. Peer wire stays [`FOYER-RELAY.md`](FOYER-RELAY.md) (identical copy also in Relay).
+One-display: Welcome **or** Room panel on that single head. Multi-display: different outputs per role; same output for both → reject. Second Chromium uses a separate user-data-dir under the same sway seat (no second DRM master). When Foyer drives the Room panel head, Relay’s own relay-kiosk on this host is optional/off. Peer wire stays [`FOYER-RELAY.md`](FOYER-RELAY.md) (identical copy also in Relay).
 
 ## 5. Persistence
 

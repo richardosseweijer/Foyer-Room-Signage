@@ -22,3 +22,5 @@ screenshots/*.png
 screenshots/*.json
 .project_id
 attachments/
+
+data/chromium-welcome/

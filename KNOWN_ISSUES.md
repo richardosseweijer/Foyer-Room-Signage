@@ -3,7 +3,7 @@
 Beta. Not audited.
 
 - Welcome kiosk replaces the tty1 login console (`Conflicts=getty@tty1`). SSH is unchanged. A missing GPU driver or the wrong HDMI leaves a black seat; Foyer itself can still be healthy on loopback.
-- Snap Chromium under cage may need `--no-sandbox` on this dedicated PC.
+- Snap Chromium under sway may need `--no-sandbox` on this dedicated PC.
 - Outfit is loaded from Google Fonts. Offline kiosk falls back to system fonts (`fonts-liberation` / `fonts-noto-core`).
 - Welcome/Setup bind `0.0.0.0:8080`. Firewall 8080 on **AV-LAN** only — never the internet NIC. The kiosk still loads `http://127.0.0.1:8080/`.
 - Calendar source-bind uses the LAN (internet) NIC. If that NIC is picked but has no IPv4, ingest does **not** pull (last-good stays). No AV-LAN fallback.
@@ -13,6 +13,6 @@ Beta. Not audited.
 - Sessions (Setup / tech unlock) are in memory. A restart logs you out.
 - Sites created before 0.2.0 may still have room hours `07:00–23:00` (status Closed overnight). New first-boot sites are all-day. Occupancy Closed is the only override that used to blank sessions; 0.2.0 never blanks them.
 - Wayfinding is not in this app. Leftover `wayfinding` / `split` templates in old JSON are migrated away on load.
-- Ubuntu Server has no compositor until you install cage + seatd (INSTALL.md §7).
-- Welcome kiosk is **one** cage seat and **one** Welcome video output (DRM scan). Multi-display Path B (Welcome + local Room panel heads, independent pickers) is **docs-only / planned** — see INSTALL.md §7b. Until then the door plate stays AV-LAN `:8082`.
+- Ubuntu Server has no compositor until you install sway + seatd (INSTALL.md §7).
+- Welcome kiosk is **one** sway seat and **one** Welcome video output (DRM scan). Dual-role Path B remainder (Welcome + local Room panel heads, independent pickers) is **planned F2/F3** — see INSTALL.md §7b. Until then the door plate stays AV-LAN `:8082`.
 - Update-from-GitHub before 0.2.0 did not copy `dist/`; run `npm run build` once after this upgrade.

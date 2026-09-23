@@ -1,6 +1,7 @@
-# Takes tty1 from the Ubuntu Server console so cage paints over the login TTY.
+# Takes tty1 from the Ubuntu Server console so sway paints over the login TTY.
 # HDMI must be connected before this unit starts.
 # Setup writes data/foyer-kiosk.env (FOYER_VIDEO_OUTPUT) then restarts this unit.
+# F1: multi-output compositor foundation; still one Welcome Chromium on the pick.
 [Unit]
 Description=Foyer welcome kiosk (local video)
 After=foyer.service systemd-user-sessions.service plymouth-quit-wait.service
@@ -28,7 +29,7 @@ Environment=XDG_RUNTIME_DIR=/run/user/%U
 Environment=WLR_LIBINPUT_NO_DEVICES=1
 EnvironmentFile=-/home/USER/Foyer-Room-Signage/data/foyer-kiosk.env
 ExecStartPre=+/bin/chvt 1
-ExecStart=/usr/bin/cage -d -- /home/USER/Foyer-Room-Signage/scripts/foyer-kiosk.sh
+ExecStart=/home/USER/Foyer-Room-Signage/scripts/foyer-kiosk-sway.sh
 Restart=always
 RestartSec=5
 
