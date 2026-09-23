@@ -7,3 +7,5 @@ Follow [`ARCHITECTURE.md`](ARCHITECTURE.md), [`SECURITY.md`](SECURITY.md), and [
 Auth (Better Auth) stays off. PINs are scrypt hashes in `data/foyer-secrets.json`. No Postgres.
 
 Default timezone `Europe/Amsterdam`. Building and room names are user-editable. Welcome is `/` on the local video output. Room panel listens on `:8082` bound to the Setup **AV-LAN** NIC. **LAN (internet)** is a second indexed dropdown; calendar fetch binds to that address. Foyer ↔ Relay occupancy is HTTP to this PC’s AV-LAN `:8081` (loopback lab escape) — [`FOYER-RELAY.md`](FOYER-RELAY.md). Foyer does not read Relay’s NIC picks. Occupancy stays Auto for Relay to set the plate.
+
+Local displays: today one Welcome DRM pick under cage. Multi-display Path B is planned only — do not implement compositor code until that train; see INSTALL.md §7b / ARCHITECTURE.md §4a.

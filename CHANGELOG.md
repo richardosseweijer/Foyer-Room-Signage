@@ -7,6 +7,7 @@
 - [`FOYER-RELAY.md`](FOYER-RELAY.md) matches Relay 0.9.6.
 
 ## Unreleased
+- Docs (F0): multi-display kiosk **target** wording (Path B planned; today remains single cage Welcome head) — INSTALL §7b, ARCHITECTURE §4a, README, SECURITY, KNOWN_ISSUES.
 - Relay URL: on every load, rewrite empty or loopback → `http://<AV-IPv4>:8081` when AV is set (not only on room-appliance migrate). Deliberate non-loopback URLs stay. `isAllowedRelayUrl` requires `http:` (reject `https://`).
 - Docs: Foyer↔Relay occupancy is AV HTTP, not loopback-only; [`FOYER-RELAY.md`](FOYER-RELAY.md) pair table toward Relay 0.9.47+.
 - Setup **AV-LAN** and **LAN (internet)** indexed NIC pickers (Foyer does not read Relay’s)

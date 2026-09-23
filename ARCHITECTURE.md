@@ -27,7 +27,7 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC, occupancy snapshot, Foyer `GET /api/peer` session body | UI, compose internals, ICS |
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, AV-LAN bind, LAN (internet) calendar bind | compose, PINs, calendar parse |
-| **video** | `src/lib/foyer/video.ts` | Indexed local video outputs | compose, calendar, listen |
+| **video** | `src/lib/foyer/video.ts` | Indexed local video outputs (DRM scan `/sys/class/drm`; today: one Welcome pick) | compose, calendar, listen |
 | **listen** | `src/lib/foyer/listen.ts` | Welcome host/port, panel port, path allowlist | compose, calendar, secrets |
 | **panel** | `src/lib/foyer/panel.ts` | Restart `foyer-panel.service` after AV-LAN bind changes | compose, calendar, secrets |
 | **update** | `src/lib/foyer/update.ts` | Git identity, spawn updater | compose, calendar, secrets, PINs |
@@ -70,6 +70,20 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
 
 Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktree, then switches the live checkout. `data/` is never copied. Log: `data/foyer-update.log`. A zip-only copy cannot use the button.
+
+
+## 4a. Local displays (today vs planned)
+
+**Today:** one local Welcome head. `src/lib/foyer/video.ts` lists physical DRM connectors under `/sys/class/drm` (scan-based indexed dropdown). Setup stores one Welcome output; `src/lib/foyer/kiosk.ts` restarts fixed unit `foyer-kiosk.service`. Cage + `wlr-randr` pin that connector and blank the others. The Room plate is **not** a second local head — it is the AV-LAN tablet on `:8082`.
+
+**Planned (Path B — not implemented in this tree):** Foyer owns local displays via **one** multi-output compositor. Two roles with **independent** scan-based pickers (still `/sys/class/drm`, options follow what is plugged in — **not** a hard-coded HDMI-1/2 list; support 1–4 connected heads):
+
+| Role | Surface |
+|---|---|
+| Welcome | Foyer Welcome URL on the chosen local head |
+| Room panel | Relay control UI at `http://AV-LAN-IPv4:port/` on a different local head |
+
+One-display: Welcome **or** Room panel on that single head. Multi-display: different outputs per role; same output for both → reject. When Foyer drives the Room panel head, Relay’s own relay-kiosk on this host is optional/off. Peer wire stays [`FOYER-RELAY.md`](FOYER-RELAY.md) (identical copy also in Relay).
 
 ## 5. Persistence
 

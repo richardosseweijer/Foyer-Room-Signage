@@ -14,4 +14,5 @@ Beta. Not audited.
 - Sites created before 0.2.0 may still have room hours `07:00–23:00` (status Closed overnight). New first-boot sites are all-day. Occupancy Closed is the only override that used to blank sessions; 0.2.0 never blanks them.
 - Wayfinding is not in this app. Leftover `wayfinding` / `split` templates in old JSON are migrated away on load.
 - Ubuntu Server has no compositor until you install cage + seatd (INSTALL.md §7).
+- Welcome kiosk is **one** cage seat and **one** Welcome video output (DRM scan). Multi-display Path B (Welcome + local Room panel heads, independent pickers) is **docs-only / planned** — see INSTALL.md §7b. Until then the door plate stays AV-LAN `:8082`.
 - Update-from-GitHub before 0.2.0 did not copy `dist/`; run `npm run build` once after this upgrade.
