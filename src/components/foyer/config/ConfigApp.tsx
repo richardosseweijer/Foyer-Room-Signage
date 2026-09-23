@@ -183,7 +183,9 @@ export function ConfigApp() {
         setKioskNote(
           result.reason === "auth"
             ? "Session expired. Unlock again."
-            : "HDMI kiosk did not start. Check foyer-kiosk.service (INSTALL.md).",
+            : "detail" in result && result.detail
+              ? String(result.detail)
+              : "HDMI kiosk did not start. Check foyer-kiosk.service (INSTALL.md).",
         );
         return;
       }

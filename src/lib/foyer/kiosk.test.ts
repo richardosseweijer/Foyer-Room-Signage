@@ -1,16 +1,86 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { KIOSK_UNIT, kioskRestartCommands } from "./kiosk.ts";
+import {
+  KIOSK_UNIT,
+  KIOSK_SUDOERS,
+  KIOSK_UNIT_MISSING,
+  classifyKioskRestartFailure,
+  enableLocalOutput,
+  kioskRestartCommands,
+} from "./kiosk.ts";
 
 test("kiosk restart argv is a fixed unit name", () => {
   const steps = kioskRestartCommands();
-  assert.ok(steps.length >= 1);
+  assert.ok(steps.length >= 2);
   for (const step of steps) {
     assert.ok(step.args.includes("restart"));
     assert.ok(step.args.includes(KIOSK_UNIT));
     assert.equal(step.args.some((arg) => arg.includes(" ") || arg.includes(";") || arg.includes("|")), false);
   }
+  assert.equal(steps[1].args[0], "-n");
+});
+
+test("enableLocalOutput: tries systemctl then sudo -n", () => {
+  const calls: { bin: string; args: string[] }[] = [];
+  const res = enableLocalOutput({
+    spawnSync: (bin, args) => {
+      calls.push({ bin, args: [...args] });
+      if (calls.length === 1) return { status: 1, stderr: "Access denied", stdout: "" };
+      return { status: 0, stderr: "", stdout: "" };
+    },
+  });
+  assert.equal(res.ok, true);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0].args, ["restart", KIOSK_UNIT]);
+  assert.equal(calls[1].args[0], "-n");
+  assert.ok(calls[1].args.includes("restart"));
+  assert.ok(calls[1].args.includes(KIOSK_UNIT));
+});
+
+test("enableLocalOutput: polkit / missing sudoers → clear INSTALL.md hint", () => {
+  const polkit =
+    "Failed to restart foyer-kiosk.service: Access denied as the requested operation requires interactive authentication. However, interactive authentication has not been enabled by the calling program.";
+  const sudoPw = "sudo: a password is required";
+  const res = enableLocalOutput({
+    spawnSync: (_bin, args) => {
+      const viaSudo = args[0] === "-n";
+      return { status: 1, stderr: viaSudo ? sudoPw : polkit, stdout: "" };
+    },
+  });
+  assert.equal(res.ok, false);
+  assert.equal(res.reason, "sudoers");
+  assert.equal(res.detail, KIOSK_SUDOERS);
+  assert.match(res.detail, /INSTALL\.md/);
+  assert.match(res.detail, /sudoers\.foyer-kiosk/);
+  assert.match(res.detail, /\/etc\/sudoers\.d\/foyer-kiosk/);
+});
+
+test("classifyKioskRestartFailure: unit missing vs sudoers", () => {
+  assert.equal(
+    classifyKioskRestartFailure(["Unit foyer-kiosk.service could not be found."]).kind,
+    "missing",
+  );
+  assert.equal(
+    classifyKioskRestartFailure(["Unit foyer-kiosk.service could not be found."]).message,
+    KIOSK_UNIT_MISSING,
+  );
+  assert.equal(
+    classifyKioskRestartFailure([
+      "Access denied as the requested operation requires interactive authentication",
+      "sudo: a password is required",
+    ]).kind,
+    "sudo",
+  );
+});
+
+test("Setup runKiosk surfaces classified detail (not only generic INSTALL blurb)", () => {
+  const ui = readFileSync(
+    new URL("../../../src/components/foyer/config/ConfigApp.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(ui, /"detail" in result && result\.detail/);
+  assert.match(ui, /String\(result\.detail\)/);
 });
 
 test("kiosk unit takes tty1 from the Ubuntu console", () => {
