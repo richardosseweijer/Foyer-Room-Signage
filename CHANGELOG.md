@@ -7,7 +7,8 @@
 - [`FOYER-RELAY.md`](FOYER-RELAY.md) matches Relay 0.9.6.
 
 ## Unreleased
-- [`FOYER-RELAY.md`](FOYER-RELAY.md) pair table lists Relay 0.9.7 (wire unchanged).
+- Relay URL: on every load, rewrite empty or loopback → `http://<AV-IPv4>:8081` when AV is set (not only on room-appliance migrate). Deliberate non-loopback URLs stay. `isAllowedRelayUrl` requires `http:` (reject `https://`).
+- Docs: Foyer↔Relay occupancy is AV HTTP, not loopback-only; [`FOYER-RELAY.md`](FOYER-RELAY.md) pair table toward Relay 0.9.47+.
 - Setup **AV-LAN** and **LAN (internet)** indexed NIC pickers (Foyer does not read Relay’s)
 - Door plate `:8082` binds the AV-LAN IPv4; LAN NIC has no IPv4 → calendar is not pulled
 - Optional welcome footer line from Setup (blank hides it)

@@ -491,8 +491,9 @@ export function ConfigApp() {
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
           <h2 className="text-xl font-semibold tracking-tight">Relay</h2>
           <p className="text-sm text-muted">
-            Occupancy from Relay, calendar back to Relay, on loopback. This Foyer is this Relay’s room — names do
-            not have to match. Device control stays in Relay. Relay reads the current (or next) session from{" "}
+            Occupancy from Relay over HTTP on this PC’s AV-LAN (:8081); calendar session back to Relay on
+            loopback. This Foyer is this Relay’s room — names do not have to match. Device control stays in
+            Relay. Relay reads the current (or next) session from{" "}
             <code className="text-fg">GET http://127.0.0.1:8080/api/peer</code>.
           </p>
           <label className="flex items-center gap-3 text-sm">
@@ -503,7 +504,7 @@ export function ConfigApp() {
             />
             Read occupancy from Relay on this PC
           </label>
-          <Field label="Relay URL" hint="This PC, production port 8081.">
+          <Field label="Relay URL" hint="http://&lt;AV-IPv4&gt;:8081 on this PC (http only).">
             <input
               className={inputClass}
               value={site.relayUrl ?? ""}

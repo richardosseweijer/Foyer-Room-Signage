@@ -186,7 +186,7 @@ sudo ufw status
 
 Replace `<AV-IFACE>` (`ip -br addr`). Nothing inbound on the internet NIC.
 
-Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080 or 8082. Foyer ↔ Relay stays on loopback ([`FOYER-RELAY.md`](FOYER-RELAY.md)). HMAC on Relay `:8081` from AV-LAN stays required because the tablet is on the same LAN as the DSP.
+Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080, 8081, or 8082. Foyer occupancy pulls Relay on this PC’s **AV-LAN `:8081`** ([`FOYER-RELAY.md`](FOYER-RELAY.md)); calendar session stays loopback to Foyer `:8080`. HMAC on Relay `:8081` from other AV-LAN peers stays required because the tablet is on the same LAN as the DSP.
 
 A copy-paste sketch lives in `deploy/ufw.example.sh`.
 
@@ -398,7 +398,7 @@ curl -s  -o /dev/null -w "%{http_code}\n" http://AV-LAN-IP:8082/play/door
 | --- | --- | --- | --- |
 | AV-LAN | DSP, door tablet, config laptop | no | **8082** (and Setup **8080** via firewall) |
 | LAN (internet) | Calendar, apt, GitHub, Relay telemetry | yes | none inbound |
-| loopback | Foyer ↔ Relay ([`FOYER-RELAY.md`](FOYER-RELAY.md)) | — | **8081** / **8080** |
+| AV-LAN / loopback | Foyer ↔ Relay ([`FOYER-RELAY.md`](FOYER-RELAY.md)): occupancy on AV `:8081`, session on loopback `:8080` | — | **8081** / **8080** |
 
 Setup → **LAN (internet)** must be the guest/WAN NIC. If that NIC is selected but has no IPv4, Foyer keeps the last calendar snapshot (fail closed). Setup → **AV-LAN** is the door bind. Foyer does not read Relay’s NIC picks — set the same interfaces in both apps.
 

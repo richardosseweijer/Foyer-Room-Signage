@@ -65,7 +65,7 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 | Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop on AV-LAN |
 | Room panel | AV-LAN IPv4 `:8082` (all interfaces until that NIC is picked) | `/play/door` and `/config` (site PIN). Other `/play/*` ids are 404. `/` redirects to the door. |
 | LAN (internet) NIC | no Foyer socket | Calendar fetch source address. GitHub update uses the default route on this NIC. |
-| Foyer ↔ Relay | `127.0.0.1` | Occupancy GET to Relay `:8081/api/peer`. Calendar session GET on Foyer `:8080/api/peer`. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). Not either NIC. |
+| Foyer ↔ Relay | Occupancy: this PC’s **AV-LAN IPv4** (or loopback lab); session: `127.0.0.1` | Occupancy GET to Relay `http://<AV-IPv4>:8081/api/peer`. Calendar session GET on Foyer `:8080/api/peer` (loopback). Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). |
 
 Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
 

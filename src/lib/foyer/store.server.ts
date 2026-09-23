@@ -5,7 +5,7 @@ import { buildCalendarSnapshot, emptyCalendarSnapshot } from "./calendar.ts";
 import { normalizeLook } from "./look.ts";
 import { resolveOutbound } from "./net.ts";
 import { fetchRelayOccupancy } from "./relay.ts";
-import { demoSite, migrateToRoomAppliance, needsRoomAppliance } from "./seed.ts";
+import { applyRelayDefaults, demoSite, migrateToRoomAppliance, needsRoomAppliance } from "./seed.ts";
 import { emptySecrets } from "./secrets.ts";
 import { bindDoorOrWelcome, bindWayfinding } from "./site.ts";
 import { kioskEnvBody } from "./video.ts";
@@ -51,6 +51,8 @@ function migrateDemo(site: Site): Site {
     };
   }
   if (needsRoomAppliance(next)) next = migrateToRoomAppliance(next);
+  // Always rewrite empty/loopback Relay URL → AV when AV is set (sticky 127.0.0.1 after demoRev is current).
+  else next = applyRelayDefaults(next);
   return next;
 }
 

@@ -41,7 +41,7 @@ export async function frameForDisplay(opts: { displayId: string; token?: string 
     frame.message = null;
     frame.roomId = null;
     frame.status = "available";
-    frame.identity = { siteName: mem.site.name, roomName: mem.site.name, floorLabel: "", logoUrl: null };
+    frame.identity = { siteName: mem.site.name, roomName: mem.site.name, floorLabel: "", logoUrl: null, footer: "" };
     return { ok: false, status: 401, frame };
   }
 
