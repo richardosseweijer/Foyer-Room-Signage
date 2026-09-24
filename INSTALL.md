@@ -73,7 +73,9 @@ node -v
 npm -v
 ```
 
-`node -v` must print `v22` or newer.
+`node -v` must print `v22` or newer. The repo pins this via `.nvmrc` (`22`) and `package.json` `"engines": { "node": ">=22" }` (npm warns on older Node; we do not set `engine-strict`). If the NodeSource script fails (no outbound HTTPS), install Node 22 from [https://nodejs.org](https://nodejs.org) instead and ensure `node` and `npm` are on `PATH`.
+
+On a machine where you prefer [nvm](https://github.com/nvm-sh/nvm) (`nvm use` / `.nvmrc`), the systemd unit PATH in §6 still only sees `/usr/bin:/usr/local/bin` — nvm under `~/.nvm` is invisible there (see §6a preflight). Prefer NodeSource on the appliance, or put Node 22 on `/usr/bin`.
 
 ---
 
