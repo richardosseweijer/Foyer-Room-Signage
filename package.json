@@ -2,6 +2,9 @@
   "name": "foyer",
   "private": true,
   "version": "0.2.4",
+  "engines": {
+    "node": ">=22"
+  },
   "sideEffects": false,
   "type": "module",
   "overrides": {
