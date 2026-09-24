@@ -7,7 +7,7 @@
 #
 # Usage:
 #   sudo bash scripts/install-host.sh
-#   sudo FOYER_USER=pi bash scripts/install-host.sh
+#   sudo FOYER_USER=ubuntu bash scripts/install-host.sh
 #   sudo bash scripts/install-host.sh --skip-kiosk-enable   # units+sudoers; leave kiosk enable alone
 #
 # Requires root. Update / pull / reboot do NOT run this.
