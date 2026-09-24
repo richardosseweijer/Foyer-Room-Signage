@@ -148,14 +148,29 @@ render_unit() {
     -e "s|^User=pi$|User=${USER_ESC}|" \
     "${template}" > "${tmp}"
 
+  # Literal template token USER must not remain. `pi` is a valid appliance
+  # account; User=pi after sub is success when FOYER_SVC_USER=pi (Relay #154 parity).
+  if grep -qE '^User=USER$' "${tmp}"; then
+    die "${dest_name}: User= placeholder not substituted"
+  fi
+  if [ "${FOYER_SVC_USER}" != "pi" ] && grep -qE '^User=pi$' "${tmp}"; then
+    die "${dest_name}: User=pi placeholder not substituted"
+  fi
   if ! grep -qE "^User=${FOYER_SVC_USER}$" "${tmp}"; then
     die "${dest_name}: rendered unit missing User=${FOYER_SVC_USER} (check template placeholders)"
   fi
-  if grep -qE '^User=(USER|pi)$' "${tmp}"; then
-    die "${dest_name}: User= placeholder not substituted"
-  fi
-  if grep -qE '/home/(USER|pi)/Foyer-Room-Signage' "${tmp}"; then
+  # Fail only on literal /home/USER/... template token.
+  if grep -qE '/home/USER/Foyer-Room-Signage' "${tmp}"; then
     die "${dest_name}: path placeholder not substituted"
+  fi
+  # Legacy /home/pi/... is fine when REPO_ROOT is that tree.
+  if grep -qE '/home/pi/Foyer-Room-Signage' "${tmp}"; then
+    case "${REPO_ROOT}" in
+      /home/pi/Foyer-Room-Signage|/home/pi/Foyer-Room-Signage/*) ;;
+      *)
+        die "${dest_name}: path placeholder not substituted"
+        ;;
+    esac
   fi
 
   out="${SYSTEMD_DIR}/${dest_name}"
