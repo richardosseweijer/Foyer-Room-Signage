@@ -9,8 +9,10 @@
 #   sudo bash scripts/install-host.sh
 #   sudo FOYER_USER=ubuntu bash scripts/install-host.sh
 #   sudo bash scripts/install-host.sh --skip-kiosk-enable   # units+sudoers; leave kiosk enable alone
+#   sudo bash scripts/install-host.sh --skip-preflight      # unusual layouts only (INSTALL.md §6a)
 #
 # Requires root. Update / pull / reboot do NOT run this.
+# Forwards flags to install-host-units.sh (preflight + units + sudoers).
 
 set -euo pipefail
 

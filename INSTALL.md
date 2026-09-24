@@ -218,6 +218,8 @@ Stop the test servers from §4 first (Ctrl+C) so ports 8080 and 8082 are free. F
 
 **One-time host step** — `git pull`, in-app **Update from GitHub**, and reboot do **not** install or refresh these units (or the sudoers drop-in). Re-run if `User=` or the checkout path changes. Re-running **replaces** `/etc/systemd/system/foyer.service`, `foyer-panel.service`, and `foyer-kiosk.service` from `deploy/` (re-apply any local unit customizations afterward).
 
+**Preflight (before any write):** the installer checks that `/usr/bin/npm` exists, that `node` on the unit PATH (`/usr/bin:/usr/local/bin`, same as [`deploy/foyer.service`](deploy/foyer.service) / [`deploy/foyer-panel.service`](deploy/foyer-panel.service)) is **major ≥ 22**, and that `.vercel/output/nitro.json` exists from §4 `npm run build`. Failures leave the host untouched and point at §2 / §4. nvm under `~/.nvm` is invisible to that PATH — use NodeSource (or put Node 22 on `/usr/bin`). Escape hatch for unusual layouts: `--skip-preflight` (also on `install-host.sh`).
+
 ```bash
 # From the repo checkout — User= from FOYER_USER / SUDO_USER / invoking account.
 # WorkingDirectory = this checkout (not a hardcoded ~/… assumption).
@@ -229,6 +231,9 @@ sudo bash scripts/install-host.sh --skip-kiosk-enable
 #
 # Day-one when §7 packages are already installed (FOYER-RELAY checklist order):
 #   sudo bash scripts/install-host.sh          # enables foyer + foyer-panel + foyer-kiosk
+#
+# Unusual layouts only (skips Node/build checks — host left untouched on normal failure):
+#   sudo bash scripts/install-host.sh --skip-preflight
 ```
 
 Templates: [`deploy/foyer.service`](deploy/foyer.service), [`deploy/foyer-panel.service`](deploy/foyer-panel.service), [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service). `install-host.sh` also runs [`scripts/install-host-sudoers.sh`](scripts/install-host-sudoers.sh) (§7). The installer still **defaults** to enabling the kiosk when you omit `--skip-kiosk-enable` — that is intentional for appliances that already have §7 ready; this guide’s first-boot path keeps the skip until then.
@@ -254,7 +259,7 @@ sudo journalctl -u foyer -e --no-pager
 sudo journalctl -u foyer-panel -e --no-pager
 ```
 
-Typical causes: the test server from §4 is still running, `WorkingDirectory` is wrong, or Relay `npm run dev` still owns 8080.
+Typical causes: the test server from §4 is still running, `WorkingDirectory` is wrong, Relay `npm run dev` still owns 8080, or preflight was skipped and Node on the unit PATH is too old / the build marker is missing (re-run without `--skip-preflight` after §2 / §4).
 
 Later:
 
