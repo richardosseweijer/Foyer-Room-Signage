@@ -149,7 +149,7 @@ You want:
 | Setup `/config` | `200` |
 | Panel `/` | `302` to `/play/door` |
 | Panel `/play/door` | `200` |
-| Panel `/config` | `404` (Setup is not on the room plate) |
+| Panel `/config` | `200` (Setup PIN gate; allowed on the plate) |
 
 On this PC, Setup listens on **all interfaces**. From the config laptop open `http://FOYER-IP:8080/config` — PIN `1234`. (`ip -br addr` for the address on the outbound NIC.)
 
@@ -225,7 +225,7 @@ Stop the test servers from §4 first (Ctrl+C) so ports 8080 and 8082 are free. F
 # until §7 packages / seat / groups / linger are done — then enable in §7a.
 sudo bash scripts/install-host.sh --skip-kiosk-enable
 # Units only (same skip):  sudo bash scripts/install-host-units.sh --skip-kiosk-enable
-# Or: sudo FOYER_USER=pi bash scripts/install-host.sh --skip-kiosk-enable
+# Or: sudo FOYER_USER=ubuntu bash scripts/install-host.sh --skip-kiosk-enable
 #
 # Day-one when §7 packages are already installed (FOYER-RELAY checklist order):
 #   sudo bash scripts/install-host.sh          # enables foyer + foyer-panel + foyer-kiosk
@@ -462,7 +462,7 @@ Prefer the host installer (§6a) which chains sudoers, or the sudoers script alo
 sudo bash scripts/install-host.sh
 # Sudoers only (if units already installed):
 sudo bash scripts/install-host-sudoers.sh
-# Or: sudo FOYER_USER=pi bash scripts/install-host-sudoers.sh
+# Or: sudo FOYER_USER=ubuntu bash scripts/install-host-sudoers.sh
 # Smoke-check (must NOT ask for a password):
 sudo -u "$(whoami)" sudo -n /usr/bin/systemctl is-active foyer-kiosk.service || true
 ```
@@ -688,6 +688,30 @@ Copy both off the disk before a re-image. A failed write keeps last-good (`.good
 
 ---
 
+## 12. Uninstall / teardown (host units + sudoers)
+
+The installers are **safe to re-run** (they overwrite units/sudoers from `deploy/`). To remove the host pieces only:
+
+```bash
+sudo systemctl disable --now foyer-kiosk.service foyer-panel.service foyer.service 2>/dev/null || true
+sudo rm -f /etc/systemd/system/foyer.service \
+  /etc/systemd/system/foyer-panel.service \
+  /etc/systemd/system/foyer-kiosk.service
+sudo systemctl daemon-reload
+sudo rm -f /etc/sudoers.d/foyer-kiosk
+```
+
+`data/` in the checkout holds site config + secrets (`foyer-site.json`, `foyer-secrets.json`, kiosk env, Chromium profiles). **Back it up before deleting the checkout.** Removing units does not delete `data/`. To wipe site state as well (optional, operator choice):
+
+```bash
+# Destructive — only if you intend to erase this room's config:
+# rm -rf ~/Foyer-Room-Signage/data
+```
+
+Update stays **§10**. This section is teardown only.
+
+---
+
 ## Checks before you leave the room
 
 1. Welcome and/or Room panel show on the local outputs you chose (§7 / §7b / §7c).
@@ -706,7 +730,7 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
 - Local-video kiosk is **sway** (§7a) with F2 dual Setup pickers and **F3** dual Chromium (§7b).
-- Relay production is **8081** on loopback for Foyer. Foyer welcome/Setup is **8080** (`0.0.0.0`). Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
+- Relay production occupancy is **AV-LAN HTTP** `http://<av-lan-ipv4>:8081` (not the internet NIC). Loopback `http://127.0.0.1:8081` is a **lab escape** only when Relay is forced to listen there. Foyer welcome/Setup is **8080** (`0.0.0.0`); calendar session pull stays loopback to Foyer `:8080`. Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Setup occupancy: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.
 - Tests: `npm test` (Foyer cases live under `src/lib/foyer/*.test.ts`).

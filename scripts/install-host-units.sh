@@ -14,7 +14,7 @@
 #
 # Usage (from repo root or any cwd):
 #   sudo bash scripts/install-host-units.sh
-#   sudo FOYER_USER=pi bash scripts/install-host-units.sh
+#   sudo FOYER_USER=ubuntu bash scripts/install-host-units.sh
 #   sudo bash scripts/install-host-units.sh --skip-kiosk-enable
 #   sudo bash scripts/install-host-units.sh --with-sudoers
 #   sudo bash scripts/install-host.sh          # thin wrapper: units + sudoers

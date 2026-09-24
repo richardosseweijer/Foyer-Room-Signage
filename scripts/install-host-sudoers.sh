@@ -6,7 +6,7 @@
 #
 # Usage (from repo root or any cwd):
 #   sudo bash scripts/install-host-sudoers.sh
-#   sudo FOYER_USER=pi bash scripts/install-host-sudoers.sh
+#   sudo FOYER_USER=ubuntu bash scripts/install-host-sudoers.sh
 #
 # Username (service account = systemd User= on foyer.service / foyer-panel /
 # foyer-kiosk.service):

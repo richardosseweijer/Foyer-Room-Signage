@@ -10,4 +10,4 @@ printf "setup    /config      %s\n" "$(curl -s -o /dev/null -w "%{http_code}" --
 printf "panel    /            %s\n" "$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://127.0.0.1:8082/ || echo down)"
 printf "panel    /play/door   %s\n" "$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://127.0.0.1:8082/play/door || echo down)"
 printf "panel    /config      %s\n" "$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://127.0.0.1:8082/config || echo down)"
-echo "expect: 200, 200, 302, 200, 404"
+echo "expect: 200, 200, 302, 200, 200"
