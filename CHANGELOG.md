@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4
+
+- Tag `v0.2.4`.
+- Ops (I4): [`scripts/install-host-preflight.sh`](scripts/install-host-preflight.sh) — before any `/etc` write, require Node major ≥ 22 on the unit PATH (`/usr/bin:/usr/local/bin`, same as `deploy/foyer.service` / `foyer-panel.service`) and `.vercel/output/nitro.json` from `npm run build`. Clear failure points at INSTALL.md §2 / §4 (nvm caveat). `--skip-preflight` escape hatch on `install-host-units.sh` / `install-host.sh`. Tests: [`scripts/install-host-preflight.test.mjs`](scripts/install-host-preflight.test.mjs). Docs: [`INSTALL.md`](INSTALL.md) §6a.
+
 ## 0.2.3
 
 - Tag `v0.2.3`.
