@@ -80,7 +80,7 @@ Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktre
 - `FOYER_ROOM_PANEL_VIDEO_OUTPUT` — Room panel (explicit; empty when unset)
 - `FOYER_ROOM_PANEL_URL` — site `relayUrl` as `http://host[:port]/` (Relay control UI; empty when unset)
 
-At unit start `scripts/foyer-kiosk-sway.sh` enables the picked head(s), assigns workspaces per role (`app_id=` **and** `class=` matchers for Chromium `--class`), and execs:
+At unit start `scripts/foyer-kiosk-sway.sh` enables the picked head(s), assigns workspaces per role (`app_id=` **and** `class=` matchers for Chromium `--class`), maps `input type:touch` to the Room panel head when set (else Welcome; omit if neither), and execs:
 
 | Role | Script | Profile | URL |
 |---|---|---|---|

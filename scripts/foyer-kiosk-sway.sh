@@ -73,6 +73,19 @@ fi
     printf '%s\n' 'assign [class="foyer-room-panel"] workspace foyer-room'
   fi
 
+  # Map USB HID touchscreens to the interactive head (generic type:touch — no vendor IDs).
+  # Prefer Room panel when set; else Welcome. Omit when neither is set (single-head fallback).
+  # Without map_to_output, touch spans the whole desktop across dual-head.
+  TOUCH_OUT=""
+  if [ -n "$ROOM_OUT" ]; then
+    TOUCH_OUT="$ROOM_OUT"
+  elif [ -n "$WELCOME_OUT" ]; then
+    TOUCH_OUT="$WELCOME_OUT"
+  fi
+  if [ -n "$TOUCH_OUT" ]; then
+    printf 'input type:touch map_to_output %s\n' "$TOUCH_OUT"
+  fi
+
   # Welcome Chromium when Welcome pick is set, or when neither role is set (F1 fallback).
   # Room-panel-only skips Welcome.
   if [ -n "$WELCOME_OUT" ] || [ -z "$ROOM_OUT" ]; then
