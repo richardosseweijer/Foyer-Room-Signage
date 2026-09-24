@@ -3,7 +3,7 @@
 Beta. Not audited.
 
 - Welcome kiosk replaces the tty1 login console (`Conflicts=getty@tty1`). SSH is unchanged. A missing GPU driver or the wrong HDMI leaves a black seat; Foyer itself can still be healthy on loopback.
-- Prefer apt `chromium` / `chromium-browser` over snap. Snap Chromium under sway may need `FOYER_CHROMIUM_NO_SANDBOX=1` in `data/foyer-kiosk.env` on this dedicated PC (INSTALL §7c).
+- On Ubuntu 24.04 (noble), `apt install chromium` / `chromium-browser` installs the Chromium **snap** (transitional package). Under sway on this dedicated PC, set `FOYER_CHROMIUM_NO_SANDBOX=1` in `data/foyer-kiosk.env` when `journalctl -u foyer-kiosk` shows namespace/sandbox errors (INSTALL §7 / §7c). Do not enable NO_SANDBOX on shared desktops.
 - Outfit is loaded from Google Fonts. Offline kiosk falls back to system fonts (`fonts-liberation` / `fonts-noto-core`).
 - Welcome/Setup bind `0.0.0.0:8080`. Firewall 8080 on **AV-LAN** only — never the internet NIC. The kiosk still loads `http://127.0.0.1:8080/`.
 - Calendar source-bind uses the LAN (internet) NIC. If that NIC is picked but has no IPv4, ingest does **not** pull (last-good stays). No AV-LAN fallback.
