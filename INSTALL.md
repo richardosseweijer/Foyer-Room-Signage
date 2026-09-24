@@ -513,6 +513,8 @@ Modes:
 2. **Room-panel-only** — enable Room panel head; one Chromium loading Relay (single-head panel).
 3. **Both** — enable both heads; two Chromiums under the same sway seat (separate `--class` / workspace assign).
 
+**Touch:** `scripts/foyer-kiosk-sway.sh` emits `input type:touch map_to_output <output>` for USB HID touchscreens (machine-generic; no vendor/product IDs). Target is the **Room panel** head when set, otherwise **Welcome**. If neither role is set, the line is omitted. Without this, touch spans the whole dual-head desktop.
+
 Foyer does **not** start Relay’s **relay-kiosk**. Relay still owns devices and `:8081` ([`FOYER-RELAY.md`](FOYER-RELAY.md)). The door plate tablet on AV-LAN (`:8082`) is unchanged.
 
 Typical hardware: **Dell Wyse 5070 / Ubuntu Server**, often one Intel GPU with two DisplayPort outputs. Concrete lab bring-up: **§7c**.
@@ -617,6 +619,7 @@ Confirm sway config keeps **both** `app_id=` and `class=` assign/fullscreen rule
 | Setup error, no restart | Both roles same output (reject UX) |
 | Room panel head blank | Empty / unsafe `FOYER_ROOM_PANEL_URL`; check env + `curl` |
 | Both Chromiums on one head / wrong head | `--class` not applied or sway matchers missing `app_id`/`class` |
+| Touch spans both heads / wrong panel | Missing `input type:touch map_to_output` in generated sway conf; expect Room panel (or Welcome if room-only) |
 | Second DP stays blank | Role unset, connector unsafe, or cable/DRM `disconnected` |
 | Chromium crash / namespace | Snap Chromium sandbox (noble default) — set `FOYER_CHROMIUM_NO_SANDBOX=1` in `data/foyer-kiosk.env` |
 | Black seat, Foyer healthy on loopback | GPU/mesa, wrong tty, or outputs disabled in generated conf |
