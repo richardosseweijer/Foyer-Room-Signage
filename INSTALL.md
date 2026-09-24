@@ -81,9 +81,18 @@ npm -v
 
 Do **not** use a zip. systemd and this guide track **`origin/main`**.
 
+**Do not `rm -rf` an existing checkout.** That deletes `data/` (site config + secrets). If `~/Foyer-Room-Signage` already exists — especially if `data/` is present — stop and use **Update from GitHub** / §10 instead of recloning.
+
 ```bash
 cd ~
-rm -rf ~/Foyer-Room-Signage
+if [ -d ~/Foyer-Room-Signage ]; then
+  echo "Checkout already exists at ~/Foyer-Room-Signage."
+  echo "If this room is live (see data/), use Update (§10) — do not delete the tree."
+  echo "Fresh reinstall only after backup, e.g.:"
+  echo "  tar -C ~ -czf foyer-data-backup.tgz Foyer-Room-Signage/data"
+  echo "Then remove the tree deliberately and re-run this section."
+  exit 1
+fi
 git clone --branch main --single-branch https://github.com/richardosseweijer/Foyer-Room-Signage.git
 cd ~/Foyer-Room-Signage
 git fetch origin
@@ -166,11 +175,18 @@ If a page never loads, check binds:
 ss -lptn | grep -E '8080|8081|8082'
 ```
 
+**First-run bind (dual-NIC):** until Setup picks **AV-LAN**, Welcome/Setup (`:8080`) and the room plate (`:8082`) listen on **`0.0.0.0`** (all interfaces). Do **§5 Firewall** before you leave the rack so the internet NIC is not exposing those ports. After you save the AV-LAN pick (§8), confirm the plate rebinds:
+
+```bash
+ss -lptn | grep -E '8080|8082'
+# Expect :8082 on the AV-LAN IPv4 (not *:8082) once AV-LAN is set and the panel unit has restarted.
+```
+
 ---
 
 ## 5. Firewall
 
-Welcome/Setup is on **8080** (`0.0.0.0`, kiosk uses loopback). The room plate is **8082** on **AV-LAN** only. Do not open either port on the internet NIC.
+Welcome/Setup is on **8080** (`0.0.0.0`, kiosk uses loopback). The room plate is **8082** on **AV-LAN** only once that NIC is picked — until then it also binds `0.0.0.0` (see §4 first-run callout). Do not open either port on the internet NIC. Finish this section before leaving a dual-NIC PC on the venue network.
 
 ```bash
 sudo apt-get install -y ufw
@@ -194,9 +210,9 @@ A copy-paste sketch lives in `deploy/ufw.example.sh`.
 
 ## 6. Start on boot (systemd)
 
-Linux starts background programs from **unit files**. Prefer the host installer (substitutes `User=` + checkout path from `deploy/`, `daemon-reload`, enables **foyer**, **foyer-panel**, and **foyer-kiosk**). Unlike Relay, **kiosk ON is the default** — Foyer owns the displays on a normal dual-head appliance ([`FOYER-RELAY.md`](FOYER-RELAY.md) day-one).
+Linux starts background programs from **unit files**. Prefer the host installer (substitutes `User=` + checkout path from `deploy/`, `daemon-reload`, enables **foyer** + **foyer-panel**, and installs **foyer-kiosk**). Unlike Relay, the installer **defaults to enabling the kiosk** (Foyer owns the displays on a dual-head appliance — [`FOYER-RELAY.md`](FOYER-RELAY.md) day-one). **First boot following this guide:** use `--skip-kiosk-enable` here, finish §7 packages / groups / linger, then enable the kiosk (§7a). Day-one dual-head (packages already installed) may run `install-host.sh` without the skip.
 
-Stop the test servers from §4 first (Ctrl+C) so ports 8080 and 8082 are free. Finish `npm ci` + `npm run build` (§4) before enabling. For `foyer-kiosk` to paint cleanly on first enable, install §7 packages / groups / linger **before** (or re-run the installer after).
+Stop the test servers from §4 first (Ctrl+C) so ports 8080 and 8082 are free. Finish `npm ci` + `npm run build` (§4) before enabling units.
 
 ### 6a. Prefer the host installer (idempotent)
 
@@ -205,30 +221,31 @@ Stop the test servers from §4 first (Ctrl+C) so ports 8080 and 8082 are free. F
 ```bash
 # From the repo checkout — User= from FOYER_USER / SUDO_USER / invoking account.
 # WorkingDirectory = this checkout (not a hardcoded ~/… assumption).
-sudo bash scripts/install-host.sh
-# Units only:  sudo bash scripts/install-host-units.sh
-# Units+sudoers is what install-host.sh does (same as --with-sudoers).
-# Or: sudo FOYER_USER=pi bash scripts/install-host.sh
+# Golden first-boot (this guide): install units+sudoers, leave foyer-kiosk disabled
+# until §7 packages / seat / groups / linger are done — then enable in §7a.
+sudo bash scripts/install-host.sh --skip-kiosk-enable
+# Units only (same skip):  sudo bash scripts/install-host-units.sh --skip-kiosk-enable
+# Or: sudo FOYER_USER=pi bash scripts/install-host.sh --skip-kiosk-enable
 #
-# Install units but leave foyer-kiosk enablement alone (packages not ready yet):
-#   sudo bash scripts/install-host-units.sh --skip-kiosk-enable
+# Day-one when §7 packages are already installed (FOYER-RELAY checklist order):
+#   sudo bash scripts/install-host.sh          # enables foyer + foyer-panel + foyer-kiosk
 ```
 
-Templates: [`deploy/foyer.service`](deploy/foyer.service), [`deploy/foyer-panel.service`](deploy/foyer-panel.service), [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service). `install-host.sh` also runs [`scripts/install-host-sudoers.sh`](scripts/install-host-sudoers.sh) (§7).
+Templates: [`deploy/foyer.service`](deploy/foyer.service), [`deploy/foyer-panel.service`](deploy/foyer-panel.service), [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service). `install-host.sh` also runs [`scripts/install-host-sudoers.sh`](scripts/install-host-sudoers.sh) (§7). The installer still **defaults** to enabling the kiosk when you omit `--skip-kiosk-enable` — that is intentional for appliances that already have §7 ready; this guide’s first-boot path keeps the skip until then.
 
 Check:
 
 ```bash
 systemctl status foyer --no-pager
 systemctl status foyer-panel --no-pager
-systemctl status foyer-kiosk --no-pager
+systemctl status foyer-kiosk --no-pager   # installed; left disabled until §7a if you used --skip-kiosk-enable
 cat /etc/systemd/system/foyer.service
 # User= must be your login; WorkingDirectory= this checkout.
 cd ~/Foyer-Room-Signage
 bash scripts/foyer-status.sh
 ```
 
-You want `Active: active (running)` on foyer and foyer-panel. `foyer-kiosk` is enabled by default; it may stay inactive/failed until §7 packages and DRM heads are ready — that is expected.
+You want `Active: active (running)` on foyer and foyer-panel. With `--skip-kiosk-enable`, `foyer-kiosk` stays disabled until §7a — that is expected.
 
 If foyer/panel failed:
 
@@ -371,13 +388,14 @@ Sway needs a real HDMI/DP connected **before** start. This unit **takes tty1** f
 
 At start, `scripts/foyer-kiosk-sway.sh` writes a minimal sway config from `data/foyer-kiosk.env`: disable every output, enable Welcome and/or Room panel connectors, assign workspaces, then `exec` the matching Chromium script(s).
 
-**Prefer the host installer** (§6a) — it already installs and enables `foyer-kiosk.service` from [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service) (User= + checkout path substituted). After packages / groups / linger above:
+**Enable the kiosk after packages / groups / linger above.** §6a’s golden path left `foyer-kiosk` installed but disabled (`--skip-kiosk-enable`). The unit template is [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service) (User= + checkout path already substituted when you ran the installer).
 
 ```bash
-# Re-run if you used --skip-kiosk-enable earlier, or unit is missing/stale:
-sudo bash scripts/install-host-units.sh
-# Or full units+sudoers:
-sudo bash scripts/install-host.sh
+# Preferred after §7 packages — enable the unit §6a already installed:
+sudo systemctl enable --now foyer-kiosk
+# Or re-run the installer *without* --skip-kiosk-enable (enables foyer + foyer-panel + foyer-kiosk):
+#   sudo bash scripts/install-host-units.sh
+#   sudo bash scripts/install-host.sh
 sudo systemctl status foyer-kiosk --no-pager
 ```
 
