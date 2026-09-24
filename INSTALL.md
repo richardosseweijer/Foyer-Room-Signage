@@ -330,8 +330,21 @@ Install the kiosk unit with §7a (or prefer re-running `sudo bash scripts/instal
 
 Skip this until §4 and §6 answer `200` on welcome. Ubuntu Server has no desktop until you add a seat.
 
+`seatd`, `sway`, and `wlr-randr` are in Ubuntu **universe** (noble). On a minimal Server image, if `apt-cache policy sway` shows no candidate, enable universe then update:
+
+```bash
+sudo apt-get install -y software-properties-common
+sudo add-apt-repository -y universe
+sudo apt-get update
+```
+
 ```bash
 sudo apt-get install -y seatd sway wlr-randr fonts-liberation fonts-noto-core mesa-vulkan-drivers libgl1-mesa-dri
+# Ubuntu 24.04 (noble): apt chromium / chromium-browser installs the Chromium *snap*
+# (transitional package). Under sway on a dedicated room PC, expect sandbox/namespace
+# errors — set FOYER_CHROMIUM_NO_SANDBOX=1 in data/foyer-kiosk.env (appliance only).
+# Other distros (e.g. Debian) may ship a real Chromium .deb; use that when
+# `which chromium` is a non-snap binary. Do not enable NO_SANDBOX on shared desktops.
 sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser
 sudo systemctl enable --now seatd
 sudo usermod -aG video,render,input,tty "$USER"
@@ -340,7 +353,7 @@ sudo loginctl enable-linger "$USER"
 
 Log out and back in (or reboot) so the `video` / `render` groups apply. `echo $XDG_RUNTIME_DIR` should print `/run/user/$(id -u)`.
 
-Prefer **apt** `chromium` or `chromium-browser` (not snap). `which chromium chromium-browser` — scripts resolve that path at start. Snap Chromium under a Wayland kiosk seat often needs `--no-sandbox` on this dedicated PC; set `FOYER_CHROMIUM_NO_SANDBOX=1` in `data/foyer-kiosk.env` only if `journalctl -u foyer-kiosk` shows namespace/sandbox errors (see §7c).
+**Ubuntu 24.04 Chromium = snap.** After install, `which chromium` / `chromium-browser` usually resolves into `/snap/bin/…`. On this appliance set `FOYER_CHROMIUM_NO_SANDBOX=1` in `data/foyer-kiosk.env` when `journalctl -u foyer-kiosk` shows namespace / sandbox errors (typical under sway). Leave it unset until then. Optional non-Ubuntu path: a distro `.deb` Chromium when available — not the noble default.
 
 `unclutter` is X11 and does nothing under Wayland. Skip it.
 
@@ -494,15 +507,26 @@ Software-side bring-up for **Dell Wyse 5070 + Ubuntu Server** (typically one Int
 
 #### Packages
 
+`seatd`, `sway`, and `wlr-randr` are in Ubuntu **universe** (noble). On a minimal Server image, if `apt-cache policy sway` shows no candidate:
+
+```bash
+sudo apt-get install -y software-properties-common
+sudo add-apt-repository -y universe
+sudo apt-get update
+```
+
 ```bash
 sudo apt-get install -y seatd sway wlr-randr curl \
   mesa-vulkan-drivers libgl1-mesa-dri \
   fonts-liberation fonts-noto-core
-# Prefer distro Chromium (apt), not snap:
+# Ubuntu 24.04 (noble): apt chromium / chromium-browser installs the Chromium *snap*
+# (transitional package). Under sway on this dedicated PC, expect sandbox/namespace
+# errors — set FOYER_CHROMIUM_NO_SANDBOX=1 in data/foyer-kiosk.env (appliance only).
+# Other distros may ship a real Chromium .deb when `which chromium` is non-snap.
 sudo apt-get install -y chromium || sudo apt-get install -y chromium-browser
 which chromium chromium-browser
-# Snap Chromium under a headless/server kiosk often hits sandbox / namespace errors —
-# prefer apt; if stuck on snap, set FOYER_CHROMIUM_NO_SANDBOX=1 in data/foyer-kiosk.env
+# Noble default is snap under /snap/bin/…. If journalctl -u foyer-kiosk shows
+# namespace/sandbox errors, set FOYER_CHROMIUM_NO_SANDBOX=1 in data/foyer-kiosk.env
 # (dedicated kiosk user only; see KNOWN_ISSUES).
 ```
 
@@ -569,7 +593,7 @@ Confirm sway config keeps **both** `app_id=` and `class=` assign/fullscreen rule
 | Room panel head blank | Empty / unsafe `FOYER_ROOM_PANEL_URL`; check env + `curl` |
 | Both Chromiums on one head / wrong head | `--class` not applied or sway matchers missing `app_id`/`class` |
 | Second DP stays blank | Role unset, connector unsafe, or cable/DRM `disconnected` |
-| Chromium crash / namespace | Snap Chromium sandbox — switch to apt or `FOYER_CHROMIUM_NO_SANDBOX=1` |
+| Chromium crash / namespace | Snap Chromium sandbox (noble default) — set `FOYER_CHROMIUM_NO_SANDBOX=1` in `data/foyer-kiosk.env` |
 | Black seat, Foyer healthy on loopback | GPU/mesa, wrong tty, or outputs disabled in generated conf |
 | Cleared Welcome but old wall still paints | Fixed in F4: clear/change Welcome also restarts the unit |
 
