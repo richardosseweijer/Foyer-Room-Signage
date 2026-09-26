@@ -191,44 +191,6 @@ export function snapshotFromEvents(opts: {
   return { atIso: opts.now.toISOString(), rooms };
 }
 
-export function fixtureEvents(now: Date): ParsedEvent[] {
-  const startNow = new Date(now.getTime() - 20 * 60_000);
-  const endNow = new Date(now.getTime() + 40 * 60_000);
-  const nextStart = new Date(now.getTime() + 2 * 60 * 60_000);
-  const nextEnd = new Date(now.getTime() + 3 * 60 * 60_000);
-  const mapleStart = new Date(now.getTime() + 15 * 60_000);
-  const mapleEnd = new Date(now.getTime() + 75 * 60_000);
-  return [
-    {
-      title: "{Cedar} Design review",
-      host: "Ada",
-      description: "{Cedar} Walk through the north wall finishes and AV plate.",
-      startIso: startNow.toISOString(),
-      endIso: endNow.toISOString(),
-      busy: false,
-      tokens: ["Cedar"],
-    },
-    {
-      title: "{Cedar} Board lunch",
-      host: "",
-      description: "Private dining. Allergens on the sideboard.",
-      startIso: nextStart.toISOString(),
-      endIso: nextEnd.toISOString(),
-      busy: false,
-      tokens: ["Cedar"],
-    },
-    {
-      title: "{Maple} Client workshop",
-      host: "Jo",
-      description: "{Maple} Whiteboard is live. Tea at the back.",
-      startIso: mapleStart.toISOString(),
-      endIso: mapleEnd.toISOString(),
-      busy: false,
-      tokens: ["Maple"],
-    },
-  ];
-}
-
 export async function fetchIcs(url: string, localAddress?: string | null): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ICS_TIMEOUT_MS);
@@ -268,12 +230,10 @@ export async function buildCalendarSnapshot(opts: {
     return opts.lastGood ?? emptyCalendarSnapshot(now);
   }
   const eventsByFeed: Record<string, ParsedEvent[]> = {};
-  let usedNetwork = false;
   let failed = false;
   for (const feed of opts.site.calendars) {
     const url = opts.icsUrls[feed.id]?.trim();
     if (!url) continue;
-    usedNetwork = true;
     try {
       const ics = await fetchIcs(url, opts.localAddress);
       eventsByFeed[feed.id] = parseIcsEvents(ics);
@@ -281,10 +241,8 @@ export async function buildCalendarSnapshot(opts: {
       failed = true;
     }
   }
-  if (!usedNetwork) {
-    const shared = opts.site.sharedCalendarId ?? "shared";
-    eventsByFeed[shared] = fixtureEvents(now);
-  } else if (failed && opts.lastGood) {
+  // No ICS URL linked → empty rooms (never fabricate demo meetings).
+  if (failed && opts.lastGood) {
     return opts.lastGood;
   } else if (failed && !Object.keys(eventsByFeed).length && opts.lastGood) {
     return opts.lastGood;

@@ -11,6 +11,7 @@
 - Ops (K7b): [`scripts/install-host-units.sh`](scripts/install-host-units.sh) + thin [`scripts/install-host.sh`](scripts/install-host.sh) install `foyer` / `foyer-panel` / `foyer-kiosk` from `deploy/` (`FOYER_USER`/`UNIT_USER`/`SUDO_USER`, checkout path substitute, `daemon-reload`, **enable --now all three** by default — Foyer owns displays). `--skip-kiosk-enable` / `--with-sudoers`; `install-host.sh` chains existing [`scripts/install-host-sudoers.sh`](scripts/install-host-sudoers.sh). [`INSTALL.md`](INSTALL.md) §6 prefers the script (manual tee = §6b fallback); §7a points at the installer. Update/pull/reboot still do **not** install `/etc` units. [`FOYER-RELAY.md`](FOYER-RELAY.md) day-one checklist mentions `install-host.sh` (byte-identical with Relay).
 
 ## Unreleased
+- Calendar: when no iCal URL is linked, room/welcome screens show empty/idle — no fabricated demo meetings (`fixtureEvents` removed from runtime).
 - Meta (I5): `package.json` `"engines": { "node": ">=22" }` + `.nvmrc` (`22`); INSTALL.md §2 note. No `engine-strict`. Remove empty tracked `.node_modules.lock`. No version bump.
 - Ops (K8): `package-lock.json` root / `packages[""].version` stamped **0.2.3** to match `package.json` (was stale **0.1.1**). No dep churn; no version bump.
 - Docs (K5): single **Day-one dual-head (same host)** checklist in [`FOYER-RELAY.md`](FOYER-RELAY.md) (byte-identical with Relay); [`INSTALL.md`](INSTALL.md) §7c points “start here”. Docs-only; no version bump.
