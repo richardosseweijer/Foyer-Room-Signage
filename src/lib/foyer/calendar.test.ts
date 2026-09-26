@@ -189,3 +189,22 @@ test("sessionFromCalendar prefers the live meeting, else the next one", () => {
   assert.equal(empty, null);
 });
 
+test("unlinked calendar yields no events", async () => {
+  const site = demoSite();
+  const now = new Date("2026-09-11T10:30:00Z");
+  const snap = await buildCalendarSnapshot({
+    site,
+    icsUrls: {},
+    now,
+  });
+  assert.equal(snap.rooms.cedar?.now, null);
+  assert.equal(snap.rooms.cedar?.next, null);
+  assert.deepEqual(snap.rooms.cedar?.later ?? [], []);
+  const emptyUrls = await buildCalendarSnapshot({
+    site,
+    icsUrls: { shared: "   " },
+    now,
+  });
+  assert.equal(emptyUrls.rooms.cedar?.now, null);
+  assert.equal(emptyUrls.rooms.cedar?.next, null);
+});

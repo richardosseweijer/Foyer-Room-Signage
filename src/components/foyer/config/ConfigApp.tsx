@@ -503,7 +503,7 @@ export function ConfigApp() {
             hint={
               icsOn || icsHost
                 ? `Stored${icsHost ? ` (${icsHost})` : ""}. Paste a new secret iCal link to replace it. Tablets never see this.`
-                : "Secret Google iCal link. Demo meetings show until you paste one. Tablets never see this."
+                : "Secret Google iCal link. Screens stay empty until you paste one. Tablets never see this."
             }
           >
             <input
