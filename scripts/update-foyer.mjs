@@ -88,12 +88,11 @@ if (!fs.existsSync(path.join(root, ".git"))) {
   log("not a git checkout");
   process.exit(2);
 }
-if (
+const dirty =
   !run("git", ["diff", "--quiet", "--", ".", ":(exclude)data", ":(exclude)data/foyer-update.log"]) ||
-  !run("git", ["diff", "--cached", "--quiet", "--", ".", ":(exclude)data", ":(exclude)data/foyer-update.log"])
-) {
-  log("tracked edits present; refusing update");
-  process.exit(1);
+  !run("git", ["diff", "--cached", "--quiet", "--", ".", ":(exclude)data", ":(exclude)data/foyer-update.log"]);
+if (dirty) {
+  log("local source edits present; will discard on checkout to origin/main (data/ left alone)");
 }
 
 if (!run("git", ["fetch", "--prune", "--force", "--tags", "origin"])) process.exit(1);

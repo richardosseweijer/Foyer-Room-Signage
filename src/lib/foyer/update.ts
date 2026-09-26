@@ -72,7 +72,6 @@ export function gitIdentity(root = foyerRoot()) {
 export function startGithubUpdate(root = foyerRoot()) {
   const identity = gitIdentity(root);
   if (!identity.clone) return { ok: false as const, reason: "not-git" as const };
-  if (identity.dirty) return { ok: false as const, reason: "dirty" as const };
   const script = join(root, "scripts/update-foyer.mjs");
   if (!existsSync(script)) return { ok: false as const, reason: "missing" as const };
   const check = spawnSync(process.execPath, ["--check", script], { encoding: "utf8" });

@@ -162,9 +162,7 @@ export function ConfigApp() {
         setUpdateNote(
           result.reason === "not-git"
             ? "This copy is not a git clone. Install from GitHub."
-            : result.reason === "dirty"
-              ? "Uncommitted edits in the source tree. Commit or discard them first."
-              : "Could not start the updater.",
+            : "Could not start the updater.",
         );
         return;
       }
@@ -589,7 +587,7 @@ export function ConfigApp() {
           </p>
           <p className="text-sm text-muted">
             Pulls GitHub main, builds, then restarts. Room data in data/ stays.
-            {!gitClone ? " This copy is not a git clone." : gitDirty ? " Source has uncommitted edits — update will refuse." : ""}
+            {!gitClone ? " This copy is not a git clone." : gitDirty ? " Source has uncommitted edits — they will be discarded on update." : ""}
           </p>
           <button
             type="button"

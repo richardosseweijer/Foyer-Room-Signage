@@ -681,7 +681,7 @@ sudo systemctl start foyer foyer-panel foyer-kiosk
 bash scripts/foyer-status.sh
 ```
 
-Uncommitted source edits block the button. `data/foyer-*.json` is not in git and is left alone.
+The updater resets the source tree to `origin/main` (local source edits are discarded). `data/foyer-*.json` is not in git and is left alone.
 
 The updater then copies `dist/` from the staged build and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the units + `/etc/sudoers.d/foyer-kiosk` from §6a / §7 (`scripts/install-host.sh` / `scripts/install-host-sudoers.sh`). Update / pull / reboot do **not** install those host files.
 
