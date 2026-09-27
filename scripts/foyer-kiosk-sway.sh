@@ -1,6 +1,7 @@
 #!/bin/sh
 # Launch sway as the Foyer multi-output compositor (F3 dual Chromium).
 # Generates a minimal config from FOYER_VIDEO_OUTPUT / FOYER_ROOM_PANEL_VIDEO_OUTPUT.
+# Picked heads are enabled at 1920x1080@60Hz (sway refuses the mode if the panel does not list it).
 # Welcome → loopback Foyer; Room panel → Relay URL (FOYER_ROOM_PANEL_URL).
 # Keep BOTH app_id= and class= matchers for foyer-welcome / foyer-room-panel:
 # Chromium --class sets Wayland app_id and XWayland WM_CLASS depending on packaging.
@@ -52,13 +53,13 @@ fi
     'for_window [class="Chromium-browser"] fullscreen enable'
 
   if [ -n "$WELCOME_OUT" ] || [ -n "$ROOM_OUT" ]; then
-    # Blank every head, then enable only the role picks (Welcome-only, Room-only, or both).
+    # Blank every head, then enable only the role picks at 1080p60.
     printf '%s\n' 'output * disable'
     if [ -n "$WELCOME_OUT" ]; then
-      printf 'output %s enable\n' "$WELCOME_OUT"
+      printf 'output %s mode 1920x1080@60Hz enable\n' "$WELCOME_OUT"
     fi
     if [ -n "$ROOM_OUT" ]; then
-      printf 'output %s enable\n' "$ROOM_OUT"
+      printf 'output %s mode 1920x1080@60Hz enable\n' "$ROOM_OUT"
     fi
   fi
 

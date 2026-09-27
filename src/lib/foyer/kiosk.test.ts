@@ -96,6 +96,7 @@ test("kiosk unit takes tty1 from the Ubuntu console", () => {
 test("sway launcher enables welcome and/or room panel outputs", () => {
   const launch = readFileSync(new URL("../../../scripts/foyer-kiosk-sway.sh", import.meta.url), "utf8");
   assert.match(launch, /output \* disable/);
+  assert.match(launch, /mode 1920x1080@60Hz enable/);
   assert.match(launch, /FOYER_VIDEO_OUTPUT/);
   assert.match(launch, /FOYER_ROOM_PANEL_VIDEO_OUTPUT/);
   assert.match(launch, /\/usr\/bin\/sway -c/);
