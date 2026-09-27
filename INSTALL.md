@@ -393,7 +393,7 @@ sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.ta
 
 Sway needs a real HDMI/DP connected **before** start. This unit **takes tty1** from the Ubuntu login prompt so Chromium covers that console. SSH is unchanged.
 
-At start, `scripts/foyer-kiosk-sway.sh` writes a minimal sway config from `data/foyer-kiosk.env`: disable every output, enable Welcome and/or Room panel connectors, assign workspaces, then `exec` the matching Chromium script(s).
+At start, `scripts/foyer-kiosk-sway.sh` writes a minimal sway config from `data/foyer-kiosk.env`: disable every output, enable Welcome and/or Room panel connectors at **1920x1080@60Hz**, assign workspaces, then `exec` the matching Chromium script(s). If a panel does not list that mode, sway refuses it (head stays off or on the previous mode).
 
 **Enable the kiosk after packages / groups / linger above.** §6a’s golden path left `foyer-kiosk` installed but disabled (`--skip-kiosk-enable`). The unit template is [`deploy/foyer-kiosk.service`](deploy/foyer-kiosk.service) (User= + checkout path already substituted when you ran the installer).
 
