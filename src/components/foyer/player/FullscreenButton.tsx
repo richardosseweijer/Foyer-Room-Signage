@@ -20,7 +20,7 @@ function canFullscreen(node: HTMLElement | null) {
 }
 
 export function FullscreenButton({ target }: { target: React.RefObject<HTMLElement | null> }) {
-  const [full, setFull] = useState(false);
+  const [full, setFull] = useState(() => typeof document !== "undefined" && activeFullscreen());
   const [supported, setSupported] = useState(true);
 
   useEffect(() => {
