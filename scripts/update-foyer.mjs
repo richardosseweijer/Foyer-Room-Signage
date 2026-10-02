@@ -43,29 +43,18 @@ function removeTree(target) {
   }
 }
 
-function copyBuiltAssets() {
-  let copied = false;
-  for (const name of ["dist", ".output", ".vinxi"]) {
-    const from = path.join(stage, name);
-    const to = path.join(root, name);
-    if (!fs.existsSync(from)) continue;
-    removeTree(to);
-    fs.cpSync(from, to, { recursive: true });
-    log(`copied ${name}`);
-    copied = true;
-  }
-  if (!copied || !fs.existsSync(path.join(root, "dist"))) {
-    throw new Error("staged build produced no dist/");
-  }
+function copyIfPresent(source, target) {
+  if (fs.existsSync(source)) fs.cpSync(source, target, { recursive: true });
 }
 
 function restore(oldHead) {
   log(`rolling back to ${oldHead}`);
   run("git", ["reset", "--hard", oldHead]);
-  const saved = path.join(rollback, "node_modules");
-  if (fs.existsSync(saved)) {
-    removeTree(path.join(root, "node_modules"));
-    fs.renameSync(saved, path.join(root, "node_modules"));
+  for (const name of [".vercel", "node_modules"]) {
+    const saved = path.join(rollback, name);
+    if (!fs.existsSync(saved)) continue;
+    removeTree(path.join(root, name));
+    fs.renameSync(saved, path.join(root, name));
   }
 }
 
@@ -104,16 +93,24 @@ if (!oldHead || !sha || !run("git", ["worktree", "add", "--detach", stage, sha])
 let switched = false;
 try {
   if (!run(npm, ["ci", "--include=dev"], stage)) throw new Error("staged npm ci failed");
+  // TanStack Start / Nitro vercel preset writes `.vercel/output` (not `dist/`).
+  // Same marker install-host-preflight checks (`.vercel/output/nitro.json`).
+  removeTree(path.join(stage, ".vercel"));
   if (!run(npm, ["run", "build"], stage)) throw new Error("staged build failed");
+  if (!fs.existsSync(path.join(stage, ".vercel", "output", "nitro.json"))) {
+    throw new Error("staged build produced no deployable output (.vercel/output)");
+  }
   fs.mkdirSync(rollback, { recursive: true });
+  copyIfPresent(path.join(root, ".vercel"), path.join(rollback, ".vercel"));
   if (!run("git", ["checkout", "-f", "-B", "main", sha])) throw new Error("release checkout failed");
-  const current = path.join(root, "node_modules");
-  const saved = path.join(rollback, "node_modules");
-  if (fs.existsSync(current) && !fs.existsSync(saved)) fs.renameSync(current, saved);
-  else removeTree(current);
-  const built = path.join(stage, "node_modules");
-  if (fs.existsSync(built)) fs.renameSync(built, current);
-  copyBuiltAssets();
+  for (const name of ["node_modules", ".vercel"]) {
+    const current = path.join(root, name);
+    const saved = path.join(rollback, name);
+    if (fs.existsSync(current) && !fs.existsSync(saved)) fs.renameSync(current, saved);
+    else removeTree(current);
+    const built = path.join(stage, name);
+    if (fs.existsSync(built)) fs.renameSync(built, current);
+  }
   switched = true;
   log(`release ${gitText(["rev-parse", "HEAD"])} ready`);
 } catch (err) {

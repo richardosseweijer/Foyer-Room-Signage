@@ -665,7 +665,9 @@ A netplan sketch is in `deploy/netplan.example.yaml`. Do not copy it blindly —
 
 ## 10. Update from GitHub
 
-Setup → **Update from GitHub** (after Save). Same as Relay: fetch `origin/main`, build in a side tree, switch if the build works. Site files in `data/` stay. Log: `data/foyer-update.log`. A zip cannot use the button.
+Setup → **Update from GitHub** (after Save). Same as Relay: fetch `origin/main`, build in a side tree, switch if the build works (requires `.vercel/output`, not a Vite `dist/` folder). Site files in `data/` stay. Log: `data/foyer-update.log`. A zip cannot use the button.
+
+If the log shows `staged build produced no dist/` on an older tip: that tip still looked for legacy `dist/`. Soft-fail left the running release alone. After this fix is on `main`, either Update again once the host has the new `scripts/update-foyer.mjs`, or land once over SSH (`git fetch && git checkout -f -B main origin/main && npm ci --include=dev && npm run build && sudo systemctl try-restart foyer foyer-panel foyer-kiosk`).
 
 Manual equivalent if the button failed:
 
@@ -683,7 +685,7 @@ bash scripts/foyer-status.sh
 
 The updater resets the source tree to `origin/main` (local source edits are discarded). `data/foyer-*.json` is not in git and is left alone.
 
-The updater then copies `dist/` from the staged build and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the units + `/etc/sudoers.d/foyer-kiosk` from §6a / §7 (`scripts/install-host.sh` / `scripts/install-host-sudoers.sh`). Update / pull / reboot do **not** install those host files.
+The updater then moves staged `node_modules` + `.vercel` (Nitro/`vite preview` output; marker `.vercel/output/nitro.json`) into the live checkout and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the units + `/etc/sudoers.d/foyer-kiosk` from §6a / §7 (`scripts/install-host.sh` / `scripts/install-host-sudoers.sh`). Update / pull / reboot do **not** install those host files.
 
 ---
 
