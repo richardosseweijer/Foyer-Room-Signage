@@ -3,7 +3,6 @@ import { bindThisGlass, getGlassFrame } from "@/lib/foyer/glass";
 import type { Frame } from "@/lib/foyer/types";
 import { TechSheet } from "@/components/foyer/tech/TechSheet";
 import { DoorSign } from "./DoorSign";
-import { FullscreenButton } from "./FullscreenButton";
 import { PairingScreen } from "./PairingScreen";
 import { SignShell } from "./SignShell";
 import { WelcomeSign } from "./WelcomeSign";
@@ -25,7 +24,6 @@ export function Player({ displayId }: { displayId: string }) {
   const [tech, setTech] = useState(false);
   const [hint, setHint] = useState("");
   const gen = useRef(0);
-  const root = useRef<HTMLDivElement>(null);
 
   async function load() {
     const n = ++gen.current;
@@ -80,7 +78,7 @@ export function Player({ displayId }: { displayId: string }) {
   }
 
   return (
-    <div ref={root} className={`plate-root relative h-dvh min-h-dvh${frame.template === "welcome" ? " overflow-hidden" : ""}${tech ? " is-tech" : ""}`}>
+    <div className={`plate-root relative h-dvh min-h-dvh${frame.template === "welcome" ? " overflow-hidden" : ""}${tech ? " is-tech" : ""}`}>
       {!frame.pairing.bound ? (
         <PairingScreen frame={frame} />
       ) : (
@@ -99,7 +97,6 @@ export function Player({ displayId }: { displayId: string }) {
           }}
         />
       ) : null}
-      {frame.template !== "welcome" ? <FullscreenButton target={root} /> : null}
     </div>
   );
 }
