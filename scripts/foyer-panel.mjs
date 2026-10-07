@@ -1,22 +1,12 @@
 import { createServer, request as proxyRequest } from "node:http";
-import { PANEL_PORT, panelDecision, panelUpstreamHeaders } from "../src/lib/foyer/listen.ts";
-import { panelListenHost } from "../src/lib/foyer/net.ts";
-import { defaultDataPaths, loadPair } from "../src/lib/foyer/persist.ts";
+import { PANEL_PORT, WELCOME_PORT, panelDecision, panelUpstreamHeaders } from "../src/lib/foyer/listen.ts";
+import { LOOPBACK_HOST, serveLoopbackAndAv } from "../src/lib/foyer/listeners.ts";
 
-const TARGET_PORT = 8080;
-const TARGET_HOST = "127.0.0.1";
+/** Door front (:8082): proxies the room plate to the welcome app on loopback. Bound on loopback + the AV-side address. */
+const TARGET_PORT = WELCOME_PORT;
+const TARGET_HOST = LOOPBACK_HOST;
 
-function bindHost() {
-  try {
-    const paths = defaultDataPaths();
-    const loaded = loadPair(paths.secretPath, paths.sitePath);
-    return panelListenHost(loaded.site);
-  } catch {
-    return "0.0.0.0";
-  }
-}
-
-const server = createServer((req, res) => {
+function handle(req, res) {
   const pathOnly = (req.url ?? "/").split("?")[0] ?? "/";
   const decision = panelDecision(pathOnly);
   if (decision === "deny") {
@@ -58,9 +48,9 @@ const server = createServer((req, res) => {
     }
   });
   req.pipe(up);
-});
+}
 
-server.on("upgrade", (req, socket, head) => {
+function upgrade(req, socket, head) {
   const publicHost = String(req.headers.host ?? `127.0.0.1:${PANEL_PORT}`);
   const up = proxyRequest({
     hostname: TARGET_HOST,
@@ -82,9 +72,14 @@ server.on("upgrade", (req, socket, head) => {
   });
   up.on("error", () => socket.destroy());
   up.end();
-});
+}
 
-const host = bindHost();
-server.listen(PANEL_PORT, host, () => {
-  console.info(`[foyer] room panel on ${host}:${PANEL_PORT}`);
+serveLoopbackAndAv({
+  port: PANEL_PORT,
+  label: "room panel",
+  create: () => {
+    const server = createServer(handle);
+    server.on("upgrade", upgrade);
+    return server;
+  },
 });

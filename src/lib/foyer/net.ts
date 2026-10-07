@@ -122,10 +122,3 @@ export function resolveAvLan(
   const master = row.ipv4 ? null : nicMaster(row.name, sysRoot);
   return followBridge(row, master, master ? ipv4Of(master) : null);
 }
-
-/** Door plate bind. Unset → all interfaces (first boot). Set with IPv4 → that address. Set without IPv4 → loopback so the plate does not leak onto the other NIC. */
-export function panelListenHost(site: { avLanNicName: string | null; avLanNicIndex: number | null }): string {
-  const nic = resolveAvLan(site);
-  if (!nic) return "0.0.0.0";
-  return nic.ipv4 ?? "127.0.0.1";
-}

@@ -21,8 +21,8 @@ npm ci --include=dev
 | Script | Command | Bind | Use |
 | --- | --- | --- | --- |
 | Dev / kiosk | `npm run dev` | welcome `0.0.0.0:8080` | Local edit |
-| Room panel | `npm run start:panel` | AV-LAN `:8082` (all interfaces until picked) | Door tablet |
-| Production | `npm run build` then `npm start` | welcome `0.0.0.0:8080` | 24/7 next to Relay (`:8081`) |
+| Room panel | `npm run start:panel` | `127.0.0.1:8082` + AV-LAN `:8082` | Door tablet |
+| Production | `npm run build` then `npm start` | welcome `127.0.0.1:8080` + AV-LAN `:8080` | 24/7 next to Relay (`:8081`) |
 
 | Surface | Where |
 | --- | --- |

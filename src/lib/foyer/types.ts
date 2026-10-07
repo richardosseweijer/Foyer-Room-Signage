@@ -17,6 +17,7 @@ export const FOYER_MODULES = [
   { id: "net", path: "src/lib/foyer/net.ts" },
   { id: "video", path: "src/lib/foyer/video.ts" },
   { id: "listen", path: "src/lib/foyer/listen.ts" },
+  { id: "listeners", path: "src/lib/foyer/listeners.ts" },
   { id: "panel", path: "src/lib/foyer/panel.ts" },
   { id: "update", path: "src/lib/foyer/update.ts" },
   { id: "kiosk", path: "src/lib/foyer/kiosk.ts" },
