@@ -94,7 +94,7 @@ Welcome-only / Room-panel-only / both. Setup **change or clear** of either role 
 | Welcome | Foyer Welcome URL on the chosen local head | Live |
 | Room panel | Relay control UI on a local head | Live (F3) |
 
-One-display: Welcome **or** Room panel on that single head. Multi-display: different outputs per role; same output for both → reject (F2). When Foyer drives the Room panel head, Relay’s own relay-kiosk on this host is optional/off. Peer wire stays [`FOYER-RELAY.md`](FOYER-RELAY.md) (identical copy also in Relay).
+One-display: Welcome **or** Room panel on that single head. Multi-display: different outputs per role; same output for both → reject (F2). When Foyer drives the Room panel head, Relay’s own relay-kiosk on this host is optional/off. Peer wire: [`FOYER-RELAY.md`](FOYER-RELAY.md) (pointer; master copy in Relay).
 
 ## 5. Persistence
 

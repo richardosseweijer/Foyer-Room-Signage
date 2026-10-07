@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Docs: [`FOYER-RELAY.md`](FOYER-RELAY.md) is now a pointer to the master contract v2 in Relay (Foyer as a signed Relay device; Relay owns network/firewall; Foyer owns its WAN data and NIC picks). Day-one checklist link in [`INSTALL.md`](INSTALL.md) §7c follows it. No code change.
+
 ## 0.2.4
 
 - Tag `v0.2.4`.

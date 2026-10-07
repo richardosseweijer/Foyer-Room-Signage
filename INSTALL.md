@@ -528,7 +528,7 @@ Rules:
 
 ### 7c. Ubuntu Server lab checklist (Wyse 5070 dual DP)
 
-**Start here for same-host dual-head:** the ordered day-one checklist lives in [`FOYER-RELAY.md`](FOYER-RELAY.md) → **Day-one dual-head (same host)** (identical copy in the Relay repo). Use that first; this section keeps the lab detail.
+**Start here for same-host dual-head:** the ordered day-one checklist lives in Relay [`FOYER-RELAY.md`](https://github.com/richardosseweijer/Relay-AV-Room-Control-/blob/main/FOYER-RELAY.md) → **Appendix A.1 Day-one dual-head (same host)** (Foyer’s [`FOYER-RELAY.md`](FOYER-RELAY.md) is a pointer). Use that first; this section keeps the lab detail.
 
 Software-side bring-up for **Dell Wyse 5070 + Ubuntu Server** (typically one Intel GPU / one DRM card, two DisplayPorts). No physical smoke required for F4 review — run these checks when hardware is attached.
 
