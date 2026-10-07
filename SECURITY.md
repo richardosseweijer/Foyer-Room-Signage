@@ -13,7 +13,7 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 - A stolen disk has `data/`.
 - Google event titles are untrusted input (XSS).
 - The outbound NIC must not accept inbound Foyer.
-- The door tablet sits on **AV-LAN** with the DSP. HMAC on Relay stays required for tablet/LAN peers. Foyer ↔ Relay occupancy uses **HTTP** to this PC’s **AV-LAN IPv4 `:8081`** (or loopback in lab); same-PC allowlist only.
+- The door tablet sits on **AV-LAN** with the DSP. HMAC on Relay stays required for tablet/LAN peers. Foyer ↔ Relay is signed (shared device secret, HMAC): Relay → Foyer on loopback `:8080` only (`/api/peer*` refuses non-loopback peers); Foyer → Relay session report to this PC’s **AV-LAN IPv4 `:8081`**.
 
 ## Baseline
 
