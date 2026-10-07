@@ -3,13 +3,11 @@ import { test } from "node:test";
 import {
   authorizePeer,
   buildFoyerPeerGet,
-  defaultRelayBaseUrl,
-  isAllowedRelayUrl,
-  isLoopbackHostname,
   isRelayDeviceId,
   isTcpLoopback,
   occupancyFromStatus,
   parsePeerStatus,
+  relayBaseUrl,
   relayEndpoint,
   reportTarget,
   signPeer,
@@ -36,14 +34,6 @@ test("Relay HMAC matches the documented peer formula", () => {
   assert.match(sig, /^[0-9a-f]+$/);
 });
 
-test("loopback hostnames are the only peer GET surface", () => {
-  assert.equal(isLoopbackHostname("127.0.0.1"), true);
-  assert.equal(isLoopbackHostname("127.0.0.1:8080"), true);
-  assert.equal(isLoopbackHostname("localhost"), true);
-  assert.equal(isLoopbackHostname("10.0.25.10"), false);
-  assert.equal(isLoopbackHostname("10.0.25.10:8082"), false);
-});
-
 test("foyer peer GET body is session only", () => {
   const body = buildFoyerPeerGet({
     session: { kind: "next", title: "Board lunch", startIso: "2026-09-11T12:00:00Z", endIso: "2026-09-11T13:00:00Z" },
@@ -55,21 +45,6 @@ test("foyer peer GET body is session only", () => {
   assert.equal(buildFoyerPeerGet({ session: null }).session, null);
 });
 
-
-test("allowed Relay URL is http loopback or AV-LAN IPv4", () => {
-  assert.equal(isAllowedRelayUrl("http://127.0.0.1:8081"), true);
-  assert.equal(isAllowedRelayUrl("http://localhost:8081"), true);
-  assert.equal(isAllowedRelayUrl("http://10.0.25.10:8081", "10.0.25.10"), true);
-  assert.equal(isAllowedRelayUrl("http://10.0.25.10:8081", "10.0.25.11"), false);
-  assert.equal(isAllowedRelayUrl("http://192.168.1.9:8081", "10.0.25.10"), false);
-  assert.equal(isAllowedRelayUrl("https://127.0.0.1:8081"), false);
-  assert.equal(isAllowedRelayUrl("https://10.0.25.10:8081", "10.0.25.10"), false);
-  assert.equal(isAllowedRelayUrl("ftp://127.0.0.1:8081"), false);
-  const def = defaultRelayBaseUrl("10.0.25.10");
-  assert.equal(def.ok, true);
-  if (def.ok) assert.equal(def.url, "http://10.0.25.10:8081");
-  assert.equal(defaultRelayBaseUrl(null).ok, false);
-});
 
 test("relayEndpoint does not throw on a hostname without a scheme", () => {
   assert.equal(relayEndpoint("relay.local", "/api/peer")?.pathname, "/api/peer");
@@ -132,17 +107,24 @@ test("pushed status applies to this PC's room without a name match", () => {
   assert.equal(snap.atIso, "2026-09-11T12:00:00.000Z");
 });
 
-test("report-back target needs device id, secret, and a loopback or AV-LAN http URL", () => {
-  const base = { relayUrl: "http://10.0.25.10:8081", deviceId: "foyer", key: "secret", avIpv4: "10.0.25.10" };
+test("Relay URL is derived from the AV-LAN IPv4", () => {
+  assert.equal(relayBaseUrl("10.0.10.10"), "http://10.0.10.10:8081");
+  assert.equal(relayBaseUrl(null), null);
+  assert.equal(relayBaseUrl(""), null);
+  assert.equal(relayBaseUrl("relay.local"), null);
+});
+
+test("report-back target needs device id, secret, and an AV-LAN IPv4", () => {
+  const base = { deviceId: "foyer", key: "secret", avIpv4: "10.0.25.10" };
   const ok = reportTarget(base);
   assert.equal(ok.ok, true);
   if (ok.ok) assert.equal(ok.target.url.toString(), "http://10.0.25.10:8081/api/device/foyer/in");
   assert.equal(reportTarget({ ...base, deviceId: "" }).ok, false);
   assert.equal(reportTarget({ ...base, deviceId: "../peer" }).ok, false);
   assert.equal(reportTarget({ ...base, key: "" }).ok, false);
-  assert.equal(reportTarget({ ...base, relayUrl: "http://192.168.1.9:8081" }).ok, false);
-  assert.equal(reportTarget({ ...base, relayUrl: "https://10.0.25.10:8081" }).ok, false);
-  assert.equal(reportTarget({ ...base, relayUrl: "http://127.0.0.1:8081", avIpv4: null }).ok, true);
+  const noAv = reportTarget({ ...base, avIpv4: null });
+  assert.equal(noAv.ok, false);
+  if (!noAv.ok) assert.match(noAv.reason, /AV-LAN/);
   assert.equal(isRelayDeviceId("foyer-1_a"), true);
   assert.equal(isRelayDeviceId("a/b"), false);
 });

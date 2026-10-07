@@ -29,6 +29,7 @@ export const getSetup = createServerFn({ method: "POST" })
     const { gitIdentity } = await import("./update.ts");
     const { icsHostHint } = await import("./calendar.ts");
     const { resolveAvLan, resolveOutbound } = await import("./net.ts");
+    const { relayBaseUrl } = await import("./relay.ts");
     if (!readSession(data.session, "site")) return { ok: false as const, reason: "auth" as const };
     await ensureLoaded();
     const mem = memory();
@@ -44,6 +45,7 @@ export const getSetup = createServerFn({ method: "POST" })
       icsConfigured: Object.fromEntries(mem.site.calendars.map((feed) => [feed.id, Boolean(mem.secrets.icsUrls[feed.id])])),
       icsHost: icsHostHint(mem.secrets.icsUrls[shared]),
       hasRelaySecret: Boolean(mem.secrets.relaySecret),
+      relayUrl: relayBaseUrl(av?.ipv4 ?? null),
       hasTechPin: Boolean(mem.secrets.techPinHash),
       mustChange: mem.secrets.sitePinMustChange,
       nics: listNics(),
@@ -80,7 +82,6 @@ export const saveSetup = createServerFn({ method: "POST" })
         }),
       ),
       icsUrl: z.string().optional(),
-      relayUrl: z.string().optional(),
       relaySecret: z.string().optional(),
       relayDeviceId: z.string().max(64).optional(),
       openGlass: z.boolean().optional(),
@@ -158,7 +159,6 @@ export const saveSetup = createServerFn({ method: "POST" })
       ...mem.site,
       name: data.name.trim() || mem.site.name,
       timezone: data.timezone.trim() || mem.site.timezone,
-      relayUrl: data.relayUrl?.trim() || null,
       relayDeviceId: data.relayDeviceId !== undefined ? data.relayDeviceId.trim() || null : mem.site.relayDeviceId,
       openGlass: data.openGlass ?? mem.site.openGlass,
       outboundNicIndex: nic.index,

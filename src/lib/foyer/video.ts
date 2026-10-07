@@ -124,8 +124,7 @@ export function kioskEnvBody(site: {
   videoOutputIndex: number | null;
   roomPanelVideoOutputName?: string | null;
   roomPanelVideoOutputIndex?: number | null;
-  relayUrl?: string | null;
-}) {
+}, relayUrl: string | null = null) {
   const welcomePick = resolvePickedVideoOutput({
     name: site.videoOutputName,
     index: site.videoOutputIndex,
@@ -139,7 +138,7 @@ export function kioskEnvBody(site: {
   const welcomeRow = welcomePick ?? (roomRow ? null : resolveVideoOutput(site));
   const welcomeName = envConnectorName(welcomeRow);
   const roomName = envConnectorName(roomRow);
-  const roomUrl = envRelayUrl(site.relayUrl);
+  const roomUrl = envRelayUrl(relayUrl);
   return (
     `FOYER_VIDEO_OUTPUT=${welcomeName}\n` +
     `FOYER_ROOM_PANEL_VIDEO_OUTPUT=${roomName}\n` +

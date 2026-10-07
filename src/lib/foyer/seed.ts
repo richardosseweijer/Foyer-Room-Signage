@@ -1,5 +1,3 @@
-import { resolveAvLan } from "./net.ts";
-import { defaultRelayBaseUrl, isLoopbackUrl } from "./relay.ts";
 import { defaultLook } from "./look.ts";
 import { DEFAULT_TIMEZONE, emptySite } from "./site.ts";
 import type { Arrow, Display, Look, Room, Site } from "./types.ts";
@@ -62,27 +60,6 @@ export function needsBoardPlates(site: Site) {
 }
 
 
-/** Empty or loopback → `http://<AV-IPv4>:8081` when AV is set. Non-loopback URLs stay. */
-export function relayUrlDefaults(site: Pick<Site, "relayUrl">, avIpv4: string | null | undefined) {
-  const def = defaultRelayBaseUrl(avIpv4);
-  const current = site.relayUrl?.trim() || "";
-  let relayUrl: string | null = current || null;
-  if (!relayUrl && def.ok) relayUrl = def.url;
-  else if (relayUrl && isLoopbackUrl(relayUrl) && def.ok) relayUrl = def.url;
-  return { relayUrl };
-}
-
-/** Apply `relayUrlDefaults` using live AV-LAN. Same site reference when unchanged. */
-export function applyRelayDefaults(site: Site): Site {
-  const next = relayUrlDefaults(site, resolveAvLan(site)?.ipv4 ?? null);
-  if (next.relayUrl === (site.relayUrl ?? null)) return site;
-  return { ...site, ...next };
-}
-
-function relayDefaults(site: Site) {
-  return relayUrlDefaults(site, resolveAvLan(site)?.ipv4 ?? null);
-}
-
 export function migrateToRoomAppliance(site: Site): Site {
   return {
     ...site,
@@ -109,7 +86,6 @@ export function migrateToRoomAppliance(site: Site): Site {
     videoOutputName: site.videoOutputName ?? null,
     roomPanelVideoOutputIndex: site.roomPanelVideoOutputIndex ?? null,
     roomPanelVideoOutputName: site.roomPanelVideoOutputName ?? null,
-    ...relayDefaults(site),
   };
 }
 
@@ -127,8 +103,6 @@ export function demoSite(): Site {
   site.floors = [{ id: "f1", label: "Ground" }];
   site.calendars = [{ id: "shared", label: "Room calendar" }];
   site.sharedCalendarId = "shared";
-  const seeded = relayDefaults(site);
-  site.relayUrl = seeded.relayUrl;
   site.rooms = [
     {
       id: "cedar",

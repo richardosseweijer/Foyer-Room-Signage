@@ -124,3 +124,15 @@ test("site without nic or video fields still parses", () => {
   }
 });
 
+
+test("retired Relay site keys are dropped on load, not a parse failure", () => {
+  const raw = JSON.parse(JSON.stringify(sampleSite())) as Record<string, unknown>;
+  raw.relayUrl = "http://127.0.0.1:8081";
+  raw.relayEnabled = true;
+  raw.relayRoomMap = {};
+  const parsed = parseSite(raw);
+  assert.equal(parsed.success, true);
+  if (parsed.success) assert.equal("relayUrl" in parsed.data, false);
+  raw.somethingNew = 1;
+  assert.equal(parseSite(raw).success, false);
+});

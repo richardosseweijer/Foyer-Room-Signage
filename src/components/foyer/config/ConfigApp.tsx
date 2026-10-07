@@ -30,6 +30,7 @@ export function ConfigApp() {
   const [relaySecret, setRelaySecret] = useState("");
   const [hasRelaySecret, setHasRelaySecret] = useState(false);
   const [relayReport, setRelayReport] = useState("");
+  const [relayUrl, setRelayUrl] = useState<string | null>(null);
   const [sitePin, setSitePin] = useState("");
   const [techPin, setTechPin] = useState("");
   const [saved, setSaved] = useState(false);
@@ -59,6 +60,7 @@ export function ConfigApp() {
     setSite(result.site);
     setIcsOn(Boolean(result.icsConfigured[result.site.sharedCalendarId ?? "shared"]));
     setHasRelaySecret(result.hasRelaySecret);
+    setRelayUrl(result.relayUrl);
     setMustChange(result.mustChange);
     setNics(result.nics);
     setOutputs(result.outputs);
@@ -107,7 +109,6 @@ export function ConfigApp() {
           timezone: current.timezone,
           rooms: current.rooms.map((room) => ({ id: room.id, name: room.name, occupancy: room.occupancy })),
           icsUrl: icsUrl.trim() || undefined,
-          relayUrl: current.relayUrl ?? "",
           relaySecret: relaySecret || undefined,
           relayDeviceId: current.relayDeviceId ?? "",
           openGlass: current.openGlass,
@@ -527,16 +528,11 @@ export function ConfigApp() {
             here and reads the current (or next) session; Foyer reports session changes back to that device. All
             calls are signed with the secret. This Foyer is this Relay’s room — names do not have to match.
           </p>
-          <Field label="Relay URL" hint="http://&lt;AV-IPv4&gt;:8081 on this PC (http only).">
-            <input
-              className={inputClass}
-              value={site.relayUrl ?? ""}
-              onChange={(e) => setSite({ ...site, relayUrl: e.target.value })}
-              placeholder="http://<av-lan-ipv4>:8081"
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </Field>
+          <p className="text-sm text-muted">
+            Relay on this PC:{" "}
+            {relayUrl ? <code className="text-fg">{relayUrl}</code> : "pick the AV-LAN NIC under This PC (no IPv4 yet)"}. Follows the
+            AV-LAN pick, including Relay’s AV bridge.
+          </p>
           <Field label="Relay device id" hint="The Foyer device’s id in Relay (shown on the device). Session reports go there.">
             <input
               className={inputClass}

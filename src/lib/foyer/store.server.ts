@@ -5,8 +5,8 @@ import { buildCalendarSnapshot, emptyCalendarSnapshot } from "./calendar.ts";
 import { normalizeLook } from "./look.ts";
 import { sessionFromCalendar } from "./calendar.ts";
 import { resolveAvLan, resolveOutbound } from "./net.ts";
-import { occupancyFromStatus, postSession, reportTarget, type PeerStatus } from "./relay.ts";
-import { applyRelayDefaults, demoSite, migrateToRoomAppliance, needsRoomAppliance } from "./seed.ts";
+import { occupancyFromStatus, postSession, relayBaseUrl, reportTarget, type PeerStatus } from "./relay.ts";
+import { demoSite, migrateToRoomAppliance, needsRoomAppliance } from "./seed.ts";
 import { emptySecrets } from "./secrets.ts";
 import { bindDoorOrWelcome, bindWayfinding } from "./site.ts";
 import { kioskEnvBody } from "./video.ts";
@@ -59,8 +59,6 @@ function migrateDemo(site: Site): Site {
     };
   }
   if (needsRoomAppliance(next)) next = migrateToRoomAppliance(next);
-  // Always rewrite empty/loopback Relay URL → AV when AV is set (sticky 127.0.0.1 after demoRev is current).
-  else next = applyRelayDefaults(next);
   return next;
 }
 
@@ -105,11 +103,30 @@ export async function ensureLoaded() {
 export async function persistNow() {
   const paths = defaultDataPaths();
   persistPair(paths.secretPath, paths.sitePath, JSON.stringify(mem.secrets, null, 2), JSON.stringify(mem.site, null, 2));
+  writeKioskEnv();
+}
+
+/** Relay on this PC, from the live AV-LAN pick (follows Relay's bridge). Null until AV has an IPv4. */
+export function currentRelayUrl(): string | null {
+  return relayBaseUrl(resolveAvLan(mem.site)?.ipv4 ?? null);
+}
+
+let kioskEnvWritten: string | null = null;
+
+/** Kiosk env (video outputs + room-panel URL). Rewritten when the derived Relay URL moves. */
+function writeKioskEnv() {
+  const body = kioskEnvBody(mem.site, currentRelayUrl());
   try {
-    writeFileSync(join(paths.dir, "foyer-kiosk.env"), kioskEnvBody(mem.site));
+    writeFileSync(join(defaultDataPaths().dir, "foyer-kiosk.env"), body);
+    kioskEnvWritten = body;
   } catch {
     /* kiosk env is best-effort */
   }
+}
+
+/** AV address can move under us (Relay enslaves the AV NIC into br-av); keep the kiosk env in step. */
+function followAvLan() {
+  if (kioskEnvBody(mem.site, currentRelayUrl()) !== kioskEnvWritten) writeKioskEnv();
 }
 
 /** Relay pushed the room status (POST /api/peer/status). Kept until the next push. */
@@ -126,8 +143,8 @@ export function relayOccupancy(): OccupancySnapshot | null {
 /** Report-back: tell Relay the room's session when it changes; retry every tick until Relay accepts it. */
 export async function reportSession() {
   if (reporting) return;
+  followAvLan();
   const target = reportTarget({
-    relayUrl: mem.site.relayUrl,
     deviceId: mem.site.relayDeviceId,
     key: mem.secrets.relaySecret ?? "",
     avIpv4: resolveAvLan(mem.site)?.ipv4 ?? null,
