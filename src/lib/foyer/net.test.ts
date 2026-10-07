@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { mkdtempSync, mkdirSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { followBridge, listNics, nicMaster, panelListenHost, resolveAvLan, resolveOutbound } from "./net.ts";
+import { followBridge, listNics, nicMaster, resolveAvLan, resolveOutbound } from "./net.ts";
 
 /** Fake /sys/class/net: enp9s9 and wlx9 are ports of br-test; enp8s8 is a plain NIC. */
 function fakeSys() {
@@ -48,19 +48,6 @@ test("AV-LAN resolve is independent of the LAN picker", () => {
   assert.equal(av?.name, first.name);
   const lan = resolveOutbound({ outboundNicName: "missing-nic", outboundNicIndex: first.index });
   assert.equal(lan?.name, first.name);
-});
-
-test("panel bind is all interfaces until AV-LAN is set", () => {
-  assert.equal(panelListenHost({ avLanNicName: null, avLanNicIndex: null }), "0.0.0.0");
-  const nics = listNics();
-  if (!nics.length) {
-    assert.equal(panelListenHost({ avLanNicName: "ghost", avLanNicIndex: 0 }), "0.0.0.0");
-    return;
-  }
-  const first = nics[0]!;
-  const host = panelListenHost({ avLanNicName: first.name, avLanNicIndex: first.index });
-  if (first.ipv4) assert.equal(host, first.ipv4);
-  else assert.equal(host, "127.0.0.1");
 });
 
 test("bridge ports are found from sysfs", () => {

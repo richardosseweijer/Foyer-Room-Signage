@@ -28,7 +28,8 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, AV-LAN bind, LAN (internet) calendar bind | compose, PINs, calendar parse |
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs (DRM scan `/sys/class/drm`; Welcome + Room panel picks + env body) | compose, calendar, listen |
-| **listen** | `src/lib/foyer/listen.ts` | Welcome host/port, panel port, path allowlist | compose, calendar, secrets |
+| **listen** | `src/lib/foyer/listen.ts` | Welcome/panel ports, door path allowlist | compose, calendar, secrets |
+| **listeners** | `src/lib/foyer/listeners.ts` | Loopback + AV-side listener pair for `:8080` / `:8082`; follows the AV address; never a wildcard bind | compose, calendar, secrets |
 | **panel** | `src/lib/foyer/panel.ts` | Restart `foyer-panel.service` after AV-LAN bind changes | compose, calendar, secrets |
 | **update** | `src/lib/foyer/update.ts` | Git identity, spawn updater | compose, calendar, secrets, PINs |
 | **kiosk** | `src/lib/foyer/kiosk.ts` | Restart `foyer-kiosk.service` | compose, calendar, secrets |
@@ -62,12 +63,12 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 
 | Listener | Bind | Serves |
 |---|---|---|
-| Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop on AV-LAN |
-| Room panel | AV-LAN IPv4 `:8082` (all interfaces until that NIC is picked) | `/play/door` only (plus assets and server functions). `/config`, `/api/*` and other `/play/*` ids are 404 (Setup is on `:8080`; the tech sheet links there). `/` redirects to the door. |
+| Welcome kiosk | `127.0.0.1:8080` + AV-LAN IPv4 `:8080` (`scripts/foyer-welcome.mjs`) | `/` and `/play/welcome` — local video; Setup from a config laptop on AV-LAN or the AP |
+| Room panel | `127.0.0.1:8082` + AV-LAN IPv4 `:8082` (`scripts/foyer-panel.mjs`) | `/play/door` only (plus assets and server functions). `/config`, `/api/*` and other `/play/*` ids are 404 (Setup is on `:8080`; the tech sheet links there). `/` redirects to the door. |
 | LAN (internet) NIC | no Foyer socket | Calendar fetch source address. GitHub update uses the default route on this NIC. |
 | Foyer ↔ Relay | Relay → Foyer on `127.0.0.1:8080`; Foyer → Relay on this PC’s **AV-LAN IPv4** `:8081` (or loopback lab) | Relay (Foyer driver) GETs `/api/peer` for the session and POSTs `/api/peer/status` with the room status; Foyer POSTs session changes to Relay `/api/device/<Relay device id>/in`. All signed with the shared secret. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). |
 
-Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
+Both ports always have a loopback listener (HDMI kiosk, Relay's loopback Foyer driver) and, once Setup has an AV-LAN pick, a second listener on that IPv4 — following Relay's `br-av` bridge, which also carries the Wi-Fi AP. No AV pick → loopback only. Never `0.0.0.0`. Each listener sees the real TCP peer, so loopback-only routes refuse AV clients. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
 
 Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktree, then switches the live checkout. `data/` is never copied. Log: `data/foyer-update.log`. A zip-only copy cannot use the button.
 

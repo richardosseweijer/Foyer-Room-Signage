@@ -57,7 +57,7 @@ export const getSetup = createServerFn({ method: "POST" })
         note: mem.ingestNote,
         relayReport: mem.reportNote,
         nic: nic ? nic.label : "Any (not bound)",
-        avLan: av ? av.label : "Not set (panel listens on all interfaces)",
+        avLan: av ? av.label : "Not set (Foyer listens on this PC only)",
         nowTitle: cal?.now?.title ?? "",
         nextTitle: cal?.next?.title ?? "",
         nowStart: cal?.now?.startIso ?? "",

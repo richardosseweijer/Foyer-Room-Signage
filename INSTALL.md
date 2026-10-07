@@ -115,8 +115,8 @@ The clone has no site file and no secrets file. Those appear under `data/` after
 | Script | Command | Bind | Use |
 | --- | --- | --- | --- |
 | Dev | `npm run dev` | welcome `:8080` | First check |
-| Production | `npm run build` then `npm start` | welcome `0.0.0.0:8080` | 24/7 |
-| Panel | `npm run start:panel` | AV-LAN `:8082` (all interfaces until picked) | Door tablet |
+| Production | `npm run build` then `npm start` | welcome `127.0.0.1:8080` + AV-LAN `:8080` | 24/7 |
+| Panel | `npm run start:panel` | `127.0.0.1:8082` + AV-LAN `:8082` | Door tablet |
 
 Relay (if installed) stays on **8081**. Do not run Relay `npm run dev` (8080) at the same time as Foyer.
 
@@ -153,9 +153,7 @@ You want:
 | Panel `/play/door` | `200` |
 | Panel `/config` | `404` (Setup is on `:8080`) |
 
-On this PC, Setup listens on **all interfaces**. From the config laptop open `http://FOYER-IP:8080/config` — PIN `1234`. (`ip -br addr` for the address on the outbound NIC.)
-
-If that NIC is firewalled, SSH still works:
+Until Setup has an **AV-LAN** pick, Foyer listens on **loopback only** (`127.0.0.1:8080` / `:8082`; never all interfaces). Do first Setup on this PC's screen (`http://127.0.0.1:8080/config`, PIN `1234`) or over SSH:
 
 ```bash
 ssh -L 18080:127.0.0.1:8080 USER@FOYER-PC
@@ -177,18 +175,18 @@ If a page never loads, check binds:
 ss -lptn | grep -E '8080|8081|8082'
 ```
 
-**First-run bind (dual-NIC):** until Setup picks **AV-LAN**, Welcome/Setup (`:8080`) and the room plate (`:8082`) listen on **`0.0.0.0`** (all interfaces). Do **§5 Firewall** before you leave the rack so the internet NIC is not exposing those ports. After you save the AV-LAN pick (§8), confirm the plate rebinds:
+**Binds:** each port has two listeners: `127.0.0.1` (welcome Chromium, Relay's loopback Foyer driver) and the **AV-LAN** IPv4 from the Setup pick (Setup and plates for AV-LAN clients). No wildcard bind. When Relay puts the AV NIC into its `br-av` bridge, Foyer follows the bridge address (the Wi-Fi AP is bridged there too, so AP clients reach the same address); listeners move within ~5 s, no restart. After you save the AV-LAN pick (§8), confirm:
 
 ```bash
 ss -lptn | grep -E '8080|8082'
-# Expect :8082 on the AV-LAN IPv4 (not *:8082) once AV-LAN is set and the panel unit has restarted.
+# Expect 127.0.0.1:8080, <AV-IPv4>:8080, 127.0.0.1:8082, <AV-IPv4>:8082 — never *:8080 / 0.0.0.0.
 ```
 
 ---
 
 ## 5. Firewall
 
-Welcome/Setup is on **8080** (`0.0.0.0`, kiosk uses loopback). The room plate is **8082** on **AV-LAN** only once that NIC is picked — until then it also binds `0.0.0.0` (see §4 first-run callout). Do not open either port on the internet NIC. Finish this section before leaving a dual-NIC PC on the venue network.
+Welcome/Setup is on **8080** and the room plate on **8082**, each on loopback + the AV-LAN address only (see §4). Do not open either port on the internet NIC; on a Relay box Relay's firewall owns this. Finish this section before leaving a dual-NIC PC on the venue network.
 
 ```bash
 sudo apt-get install -y ufw
@@ -742,7 +740,7 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
 - Local-video kiosk is **sway** (§7a) with F2 dual Setup pickers and **F3** dual Chromium (§7b).
-- Relay production occupancy is **AV-LAN HTTP** `http://<av-lan-ipv4>:8081` (not the internet NIC). Loopback `http://127.0.0.1:8081` is a **lab escape** only when Relay is forced to listen there. Foyer welcome/Setup is **8080** (`0.0.0.0`); calendar session pull stays loopback to Foyer `:8080`. Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
+- Relay production occupancy is **AV-LAN HTTP** `http://<av-lan-ipv4>:8081` (not the internet NIC). Loopback `http://127.0.0.1:8081` is a **lab escape** only when Relay is forced to listen there. Foyer welcome/Setup is **8080** on loopback + AV-LAN; Relay's Foyer driver stays on loopback `:8080`. Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Setup occupancy: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.
 - Tests: `npm test` (Foyer cases live under `src/lib/foyer/*.test.ts`).

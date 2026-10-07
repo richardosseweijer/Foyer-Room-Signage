@@ -2,7 +2,7 @@
 
 The contract (**v2**) and the Foyer split plan live in **one master copy**: Relay [`FOYER-RELAY.md`](https://github.com/richardosseweijer/Relay-AV-Room-Control-/blob/main/FOYER-RELAY.md). Relay also owns the Foyer driver spec (`data/library/foyer.json`). Do not keep a second copy here; change the master in the Relay repo and edit this pointer only when Foyer’s obligations below change.
 
-**Status:** Foyer speaks the **v2 wire** (F1): signed loopback `GET /api/peer` and `POST /api/peer/status`, signed report-back to Relay `POST /api/device/<deviceId>/in`; Foyer no longer polls Relay. F2: the Relay URL and kiosk env come from Foyer's own AV-LAN pick and follow Relay's `br-av` bridge (no stored URL). The AV-side binds (F3) follow in the master’s §12. The v1 day-one dual-head checklist and operator setup now live in the master’s **Appendix (A.1 / A.2)**.
+**Status:** Foyer speaks the **v2 wire** (F1): signed loopback `GET /api/peer` and `POST /api/peer/status`, signed report-back to Relay `POST /api/device/<deviceId>/in`; Foyer no longer polls Relay. F2: the Relay URL and kiosk env come from Foyer's own AV-LAN pick and follow Relay's `br-av` bridge (no stored URL). F3: `:8080` and `:8082` each bind `127.0.0.1` plus the AV-LAN address (bridge-followed; covers wired AV-LAN and the bridged AP), never `0.0.0.0`. The v1 day-one dual-head checklist and operator setup now live in the master’s **Appendix (A.1 / A.2)**.
 
 ## What v2 asks of Foyer (summary — master wins)
 

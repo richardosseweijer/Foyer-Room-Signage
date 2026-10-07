@@ -19,7 +19,7 @@ Contact the maintainer privately. Do not file a public issue with exploit detail
 
 | Control | Rule |
 |---|---|
-| Listen | Welcome on `0.0.0.0:8080` so the HDMI kiosk and Setup work (`src/lib/foyer/listen.ts`). Room panel (`src/lib/foyer/panel.ts`) binds the Setup-selected **AV-LAN** IPv4 on `:8082` (all interfaces until that NIC is picked). Firewall: 8080/8082 on AV-LAN only — never the internet NIC. |
+| Listen | Welcome `:8080` and room panel `:8082` each bind `127.0.0.1` plus the Setup-selected **AV-LAN** IPv4 (bridge-followed), never a wildcard (`src/lib/foyer/listeners.ts`, ports in `src/lib/foyer/listen.ts`). No AV pick → loopback only. The listeners keep the real TCP peer (no proxying the AV side through loopback), so `/api/peer*` stays loopback-only. Firewall: 8080/8082 on AV-LAN only — never the internet NIC (Relay owns UFW on a Relay box). |
 | Calendar bind | ICS fetch uses the Setup-selected **LAN (internet)** NIC (`src/lib/foyer/net.ts`). If that NIC is picked but has no IPv4, calendar is **not** pulled (last-good stays). No fallback onto AV-LAN. |
 | Two PINs | **Site** PIN unlocks `/config`. **Tech** PIN unlocks the endpoint sheet. Cross-gate: site PIN is rejected on tech, tech PIN is rejected on config. |
 | First PIN | `1234` then force a stronger one. Weak list in `src/lib/foyer/pins.ts`. |
