@@ -1,100 +1,39 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  occupancyFromPeer,
-  occupancyFromValue,
-  peerEndpoint,
-  signPeer,
-  isLoopbackHostname,
-  isLoopbackRequest,
-  isTcpLoopback,
-  tcpPeerAddress,
-  authorizePeerGet,
+  authorizePeer,
   buildFoyerPeerGet,
-  isAllowedRelayUrl,
   defaultRelayBaseUrl,
+  isAllowedRelayUrl,
+  isLoopbackHostname,
+  isRelayDeviceId,
+  isTcpLoopback,
+  occupancyFromStatus,
+  parsePeerStatus,
+  relayEndpoint,
+  reportTarget,
+  signPeer,
+  tcpPeerAddress,
 } from "./relay.ts";
 import { demoSite } from "./seed.ts";
+
+function peerRequest(opts: { path: string; method?: string; ip: string; key?: string; body?: string; headers?: Record<string, string> }) {
+  const method = opts.method ?? "GET";
+  const headers: Record<string, string> = { ...(opts.headers ?? {}) };
+  if (opts.key) {
+    const ts = String(Date.now());
+    headers["x-relay-ts"] = ts;
+    headers["x-relay-auth"] = signPeer(opts.key, method, opts.path, ts, opts.body ?? "");
+  }
+  const request = new Request(`http://127.0.0.1:8080${opts.path}`, { method, headers, body: opts.body });
+  Object.assign(request, { runtime: { node: { req: { socket: { remoteAddress: opts.ip } } } } });
+  return request;
+}
 
 test("Relay HMAC matches the documented peer formula", () => {
   const sig = signPeer("secret", "GET", "/api/peer", "1000", "");
   assert.equal(sig.length, 64);
   assert.match(sig, /^[0-9a-f]+$/);
-});
-
-test("first-class occupancy applies to this PC's room without a name match", () => {
-  const site = demoSite();
-  const id = site.rooms[0]!.id;
-  const snap = occupancyFromPeer({
-    site,
-    payload: { occupancy: "closed", room: { id: "other", name: "Not Cedar" } },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(snap.rooms[id], "closed");
-});
-
-test("occupancy still applies when room is a string or missing", () => {
-  const site = demoSite();
-  const id = site.rooms[0]!.id;
-  const asString = occupancyFromPeer({
-    site,
-    payload: { occupancy: "busy", room: "whatever" },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(asString.rooms[id], "busy");
-  const missing = occupancyFromPeer({
-    site,
-    payload: { occupancy: "do-not-disturb" },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(missing.rooms[id], "do-not-disturb");
-});
-
-test("dnd aliases map", () => {
-  assert.equal(occupancyFromValue("dnd"), "do-not-disturb");
-  assert.equal(occupancyFromValue("do not disturb"), "do-not-disturb");
-});
-
-test("host.locked fills in-session only when occupancy is missing", () => {
-  const site = demoSite();
-  const id = site.rooms[0]!.id;
-  const locked = occupancyFromPeer({
-    site,
-    payload: { host: { locked: true } },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(locked.rooms[id], "in-session");
-  const preferred = occupancyFromPeer({
-    site,
-    payload: { occupancy: "available", host: { locked: true } },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(preferred.rooms[id], "available");
-});
-
-test("unknown occupancy string is ignored", () => {
-  const site = demoSite();
-  const snap = occupancyFromPeer({
-    site,
-    payload: { occupancy: "maybe", room: { name: "Cedar" } },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(snap.rooms[site.rooms[0]!.id], undefined);
-});
-
-test("vars are not used to bind occupancy", () => {
-  const site = demoSite();
-  const snap = occupancyFromPeer({
-    site,
-    payload: { vars: { v1: { name: "Cedar", value: "busy" } } },
-    now: new Date("2026-09-11T12:00:00Z"),
-  });
-  assert.equal(snap.rooms[site.rooms[0]!.id], undefined);
-});
-
-test("peerEndpoint does not throw on a hostname without a scheme", () => {
-  assert.equal(peerEndpoint("relay.local")?.pathname, "/api/peer");
-  assert.equal(peerEndpoint("not a url"), null);
 });
 
 test("loopback hostnames are the only peer GET surface", () => {
@@ -103,49 +42,6 @@ test("loopback hostnames are the only peer GET surface", () => {
   assert.equal(isLoopbackHostname("localhost"), true);
   assert.equal(isLoopbackHostname("10.0.25.10"), false);
   assert.equal(isLoopbackHostname("10.0.25.10:8082"), false);
-});
-
-test("unsigned loopback GET is allowed; AV-LAN is not", () => {
-  const loop = new Request("http://10.0.25.10:8080/api/peer", { method: "GET" });
-  const lan = new Request("http://127.0.0.1:8082/api/peer", {
-    method: "GET",
-    headers: { host: "127.0.0.1:8080", "x-forwarded-for": "127.0.0.1" },
-  });
-  Object.assign(loop, { runtime: { node: { req: { socket: { remoteAddress: "127.0.0.1" } } } } });
-  Object.assign(lan, { runtime: { node: { req: { socket: { remoteAddress: "10.0.25.10" } } } } });
-  assert.equal(isLoopbackRequest(loop), true);
-  assert.equal(isLoopbackRequest(lan), false);
-  assert.equal(authorizePeerGet({ key: "", request: loop }), true);
-  assert.equal(authorizePeerGet({ key: "secret", request: loop }), true);
-  assert.equal(authorizePeerGet({ key: "secret", request: lan }), false);
-  const bad = new Request("http://127.0.0.1:8080/api/peer", {
-    method: "GET",
-    headers: { "x-relay-auth": "ab", "x-relay-ts": String(Date.now()) },
-  });
-  Object.assign(bad, { runtime: { node: { req: { socket: { remoteAddress: "127.0.0.1" } } } } });
-  assert.equal(authorizePeerGet({ key: "secret", request: bad }), false);
-});
-
-test("Host/XFF and a missing TCP peer are not loopback", () => {
-  const spoof = new Request("http://127.0.0.1:8080/api/peer", {
-    method: "GET",
-    headers: { host: "127.0.0.1:8080", "x-forwarded-for": "127.0.0.1", "x-forwarded-host": "localhost" },
-  });
-  Object.assign(spoof, { runtime: { node: { req: { socket: { remoteAddress: "10.0.25.10" } } } } });
-  assert.equal(tcpPeerAddress(spoof), "10.0.25.10");
-  assert.equal(isTcpLoopback(spoof), false);
-  assert.equal(authorizePeerGet({ key: "secret", request: spoof }), false);
-  const none = new Request("http://127.0.0.1:8080/api/peer");
-  assert.equal(tcpPeerAddress(none), null);
-  assert.equal(isTcpLoopback(none), false);
-  assert.equal(authorizePeerGet({ key: "secret", request: none }), false);
-  const lanTs = String(Date.now());
-  const lanHmac = new Request("http://10.0.25.10:8080/api/peer", {
-    method: "GET",
-    headers: { "x-relay-ts": lanTs, "x-relay-auth": signPeer("secret", "GET", "/api/peer", lanTs, "") },
-  });
-  Object.assign(lanHmac, { runtime: { node: { req: { socket: { remoteAddress: "10.0.25.10" } } } } });
-  assert.equal(authorizePeerGet({ key: "secret", request: lanHmac }), false);
 });
 
 test("foyer peer GET body is session only", () => {
@@ -173,4 +69,80 @@ test("allowed Relay URL is http loopback or AV-LAN IPv4", () => {
   assert.equal(def.ok, true);
   if (def.ok) assert.equal(def.url, "http://10.0.25.10:8081");
   assert.equal(defaultRelayBaseUrl(null).ok, false);
+});
+
+test("relayEndpoint does not throw on a hostname without a scheme", () => {
+  assert.equal(relayEndpoint("relay.local", "/api/peer")?.pathname, "/api/peer");
+  assert.equal(relayEndpoint("http://10.0.25.10:8081", "/api/device/foyer/in")?.toString(), "http://10.0.25.10:8081/api/device/foyer/in");
+  assert.equal(relayEndpoint("not a url", "/api/peer"), null);
+});
+
+test("peer calls need loopback AND a valid HMAC; nothing unsigned", () => {
+  assert.equal(authorizePeer({ key: "secret", request: peerRequest({ path: "/api/peer", ip: "127.0.0.1", key: "secret" }), path: "/api/peer" }).ok, true);
+  const unsigned = authorizePeer({ key: "secret", request: peerRequest({ path: "/api/peer", ip: "127.0.0.1" }), path: "/api/peer" });
+  assert.deepEqual(unsigned, { ok: false, status: 401, message: "Auth failed" });
+  const noKey = authorizePeer({ key: "  ", request: peerRequest({ path: "/api/peer", ip: "127.0.0.1", key: "secret" }), path: "/api/peer" });
+  assert.equal(noKey.ok, false);
+  if (!noKey.ok) assert.equal(noKey.status, 401);
+  const wrong = authorizePeer({ key: "secret", request: peerRequest({ path: "/api/peer", ip: "127.0.0.1", key: "other" }), path: "/api/peer" });
+  assert.equal(wrong.ok, false);
+  const lan = authorizePeer({ key: "secret", request: peerRequest({ path: "/api/peer", ip: "10.0.25.10", key: "secret" }), path: "/api/peer" });
+  assert.equal(lan.ok, false);
+  if (!lan.ok) assert.equal(lan.status, 403);
+});
+
+test("signed POST covers the body and the path", () => {
+  const body = JSON.stringify({ status: "in-session" });
+  const good = peerRequest({ path: "/api/peer/status", method: "POST", ip: "::1", key: "secret", body });
+  assert.equal(authorizePeer({ key: "secret", request: good, path: "/api/peer/status", body }).ok, true);
+  const tampered = peerRequest({ path: "/api/peer/status", method: "POST", ip: "127.0.0.1", key: "secret", body });
+  assert.equal(authorizePeer({ key: "secret", request: tampered, path: "/api/peer/status", body: JSON.stringify({ status: "closed" }) }).ok, false);
+  const otherPath = peerRequest({ path: "/api/peer", method: "POST", ip: "127.0.0.1", key: "secret", body });
+  assert.equal(authorizePeer({ key: "secret", request: otherPath, path: "/api/peer/status", body }).ok, false);
+});
+
+test("Host/XFF and a missing TCP peer are not loopback", () => {
+  const spoof = peerRequest({
+    path: "/api/peer",
+    ip: "10.0.25.10",
+    key: "secret",
+    headers: { host: "127.0.0.1:8080", "x-forwarded-for": "127.0.0.1", "x-forwarded-host": "localhost" },
+  });
+  assert.equal(tcpPeerAddress(spoof), "10.0.25.10");
+  assert.equal(isTcpLoopback(spoof), false);
+  assert.equal(authorizePeer({ key: "secret", request: spoof, path: "/api/peer" }).ok, false);
+  const none = new Request("http://127.0.0.1:8080/api/peer");
+  assert.equal(tcpPeerAddress(none), null);
+  assert.equal(authorizePeer({ key: "secret", request: none, path: "/api/peer" }).ok, false);
+});
+
+test("pushed status is text from the fixed set; codes and aliases are refused", () => {
+  for (const status of ["available", "in-session", "do-not-disturb", "closed"]) {
+    assert.equal(parsePeerStatus(JSON.stringify({ status })), status);
+  }
+  for (const bad of ["1", "0", "busy", "dnd", "In-Session", ""]) assert.equal(parsePeerStatus(JSON.stringify({ status: bad })), null);
+  assert.equal(parsePeerStatus(JSON.stringify({ status: 2 })), null);
+  assert.equal(parsePeerStatus("not json"), null);
+});
+
+test("pushed status applies to this PC's room without a name match", () => {
+  const site = demoSite();
+  const snap = occupancyFromStatus(site, "do-not-disturb", new Date("2026-09-11T12:00:00Z"));
+  assert.equal(snap.rooms[site.rooms[0]!.id], "do-not-disturb");
+  assert.equal(snap.atIso, "2026-09-11T12:00:00.000Z");
+});
+
+test("report-back target needs device id, secret, and a loopback or AV-LAN http URL", () => {
+  const base = { relayUrl: "http://10.0.25.10:8081", deviceId: "foyer", key: "secret", avIpv4: "10.0.25.10" };
+  const ok = reportTarget(base);
+  assert.equal(ok.ok, true);
+  if (ok.ok) assert.equal(ok.target.url.toString(), "http://10.0.25.10:8081/api/device/foyer/in");
+  assert.equal(reportTarget({ ...base, deviceId: "" }).ok, false);
+  assert.equal(reportTarget({ ...base, deviceId: "../peer" }).ok, false);
+  assert.equal(reportTarget({ ...base, key: "" }).ok, false);
+  assert.equal(reportTarget({ ...base, relayUrl: "http://192.168.1.9:8081" }).ok, false);
+  assert.equal(reportTarget({ ...base, relayUrl: "https://10.0.25.10:8081" }).ok, false);
+  assert.equal(reportTarget({ ...base, relayUrl: "http://127.0.0.1:8081", avIpv4: null }).ok, true);
+  assert.equal(isRelayDeviceId("foyer-1_a"), true);
+  assert.equal(isRelayDeviceId("a/b"), false);
 });

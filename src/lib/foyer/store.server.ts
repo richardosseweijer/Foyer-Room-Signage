@@ -3,8 +3,9 @@ import { join } from "node:path";
 import { defaultDataPaths, firstBootSecrets, loadPair, persistPair, secretsAfterLoad } from "./persist.ts";
 import { buildCalendarSnapshot, emptyCalendarSnapshot } from "./calendar.ts";
 import { normalizeLook } from "./look.ts";
-import { resolveOutbound } from "./net.ts";
-import { fetchRelayOccupancy } from "./relay.ts";
+import { sessionFromCalendar } from "./calendar.ts";
+import { resolveAvLan, resolveOutbound } from "./net.ts";
+import { occupancyFromStatus, postSession, reportTarget, type PeerStatus } from "./relay.ts";
 import { applyRelayDefaults, demoSite, migrateToRoomAppliance, needsRoomAppliance } from "./seed.ts";
 import { emptySecrets } from "./secrets.ts";
 import { bindDoorOrWelcome, bindWayfinding } from "./site.ts";
@@ -15,7 +16,8 @@ type Memory = {
   site: Site;
   secrets: Secrets;
   calendar: CalendarSnapshot;
-  occupancy: OccupancySnapshot | null;
+  relayStatus: { status: PeerStatus; atIso: string } | null;
+  reportNote: string;
   ingestNote: string;
   seq: Record<string, number>;
   loaded: boolean;
@@ -25,14 +27,20 @@ const mem: Memory = {
   site: demoSite(),
   secrets: emptySecrets(),
   calendar: emptyCalendarSnapshot(),
-  occupancy: null,
+  relayStatus: null,
+  reportNote: "",
   ingestNote: "",
   seq: {},
   loaded: false,
 };
 
 let ingestTimer: ReturnType<typeof setInterval> | null = null;
-let occupancyTimer: ReturnType<typeof setInterval> | null = null;
+let reportTimer: ReturnType<typeof setInterval> | null = null;
+/** Last session body Relay accepted; null = nothing accepted yet (send on next tick). */
+let reported: string | null = null;
+let reporting = false;
+
+const REPORT_TICK_MS = 5_000;
 
 export function memory() {
   return mem;
@@ -78,7 +86,7 @@ export async function ensureLoaded() {
       /* last calendar stays; plates still boot */
     }
     if (!ingestTimer) ingestTimer = setInterval(() => void refreshIngest().catch(() => undefined), 30_000);
-    if (!occupancyTimer) occupancyTimer = setInterval(() => void refreshOccupancy().catch(() => undefined), 4_000);
+    if (!reportTimer) reportTimer = setInterval(() => void reportSession().catch(() => undefined), REPORT_TICK_MS);
     return mem;
   }
   const next = migrateDemo(mem.site);
@@ -104,13 +112,42 @@ export async function persistNow() {
   }
 }
 
-export async function refreshOccupancy() {
-  const lastOcc = mem.occupancy;
-  mem.occupancy = await fetchRelayOccupancy({
-    site: mem.site,
-    secret: mem.secrets.relaySecret,
-    lastGood: lastOcc,
+/** Relay pushed the room status (POST /api/peer/status). Kept until the next push. */
+export function setRelayStatus(status: PeerStatus) {
+  mem.relayStatus = { status, atIso: new Date().toISOString() };
+}
+
+/** Relay's last pushed status for the current room(s), or null before the first push. */
+export function relayOccupancy(): OccupancySnapshot | null {
+  if (!mem.relayStatus) return null;
+  return occupancyFromStatus(mem.site, mem.relayStatus.status, new Date(mem.relayStatus.atIso));
+}
+
+/** Report-back: tell Relay the room's session when it changes; retry every tick until Relay accepts it. */
+export async function reportSession() {
+  if (reporting) return;
+  const target = reportTarget({
+    relayUrl: mem.site.relayUrl,
+    deviceId: mem.site.relayDeviceId,
+    key: mem.secrets.relaySecret ?? "",
+    avIpv4: resolveAvLan(mem.site)?.ipv4 ?? null,
   });
+  if (!target.ok) {
+    mem.reportNote = target.reason;
+    reported = null;
+    return;
+  }
+  const session = sessionFromCalendar({ snapshot: mem.calendar, roomId: mem.site.rooms[0]?.id ?? null, now: new Date() });
+  const body = JSON.stringify(session);
+  if (body === reported) return;
+  reporting = true;
+  try {
+    const ok = await postSession(target.target, session);
+    reported = ok ? body : null;
+    mem.reportNote = ok ? "" : "Relay did not accept the session report (check device id and secret)";
+  } finally {
+    reporting = false;
+  }
 }
 
 export async function refreshIngest() {
@@ -122,7 +159,6 @@ export async function refreshIngest() {
   if (wantBind && !localAddress) {
     note = "LAN (internet) NIC has no IPv4 — calendar not pulled.";
     mem.ingestNote = note;
-    await refreshOccupancy();
     return;
   }
   mem.calendar = await buildCalendarSnapshot({
@@ -133,7 +169,7 @@ export async function refreshIngest() {
     requireBind: wantBind && Boolean(localAddress),
   });
   mem.ingestNote = note;
-  await refreshOccupancy();
+  await reportSession();
 }
 
 export function bumpSeq(displayId: string) {

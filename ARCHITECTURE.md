@@ -24,7 +24,7 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **sanitize** | `src/lib/foyer/sanitize.ts` | Title/host/message cleaning | everything else |
 | **compose** | `src/lib/foyer/compose.ts` | Site + look + calendar snapshot + clock → Frame | fs, fetch, ws, secrets, react, net |
 | **transport** | `src/lib/foyer/transport.ts` | Pairing codes, display tokens, snapshot/patch seq | layout, palette, event parsing |
-| **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC, occupancy snapshot, Foyer `GET /api/peer` session body | UI, compose internals, ICS |
+| **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC (loopback + signed only), pushed status, Foyer `GET /api/peer` session body, signed session report-back | UI, compose internals, ICS |
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, AV-LAN bind, LAN (internet) calendar bind | compose, PINs, calendar parse |
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs (DRM scan `/sys/class/drm`; Welcome + Room panel picks + env body) | compose, calendar, listen |
@@ -63,9 +63,9 @@ Extra keys fail parse (strict). Calendar titles are sanitized **before** compose
 | Listener | Bind | Serves |
 |---|---|---|
 | Welcome kiosk | `0.0.0.0:8080` | `/` and `/play/welcome` — local video; Setup from a config laptop on AV-LAN |
-| Room panel | AV-LAN IPv4 `:8082` (all interfaces until that NIC is picked) | `/play/door` and `/config` (site PIN). Other `/play/*` ids are 404. `/` redirects to the door. |
+| Room panel | AV-LAN IPv4 `:8082` (all interfaces until that NIC is picked) | `/play/door` only (plus assets and server functions). `/config`, `/api/*` and other `/play/*` ids are 404 (Setup is on `:8080`; the tech sheet links there). `/` redirects to the door. |
 | LAN (internet) NIC | no Foyer socket | Calendar fetch source address. GitHub update uses the default route on this NIC. |
-| Foyer ↔ Relay | Occupancy: this PC’s **AV-LAN IPv4** (or loopback lab); session: `127.0.0.1` | Occupancy GET to Relay `http://<AV-IPv4>:8081/api/peer`. Calendar session GET on Foyer `:8080/api/peer` (loopback). Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). |
+| Foyer ↔ Relay | Relay → Foyer on `127.0.0.1:8080`; Foyer → Relay on this PC’s **AV-LAN IPv4** `:8081` (or loopback lab) | Relay (Foyer driver) GETs `/api/peer` for the session and POSTs `/api/peer/status` with the room status; Foyer POSTs session changes to Relay `/api/device/<Relay device id>/in`. All signed with the shared secret. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md). |
 
 Welcome is always bound on loopback for the HDMI kiosk. Setup is `/config` on the welcome listener. AV-LAN and LAN are **indexed Setup dropdowns**; Foyer does not read Relay’s NIC picks.
 
@@ -112,7 +112,7 @@ Write a `foyer-site.json.transaction` journal, then secrets, then site (temp + f
 - First site PIN `1234`, then a stronger one is required. Tech PIN unset until Setup sets it (must differ).
 - Palette **names** (`linen`, `orchard`, `ink`, `contrast`) are locked.
 - One room on this PC. Untagged calendar events go to that room. `{RoomName}` still routes when present.
-- Relay occupancy is ingest in `src/lib/foyer/relay.ts` (`GET /api/peer`) over **AV-LAN HTTP** (`http://<AV-IPv4>:8081`). Not loopback (except lab), not guest wifi. Full request/response, occupancy enum, Auto vs override, and session body: [`FOYER-RELAY.md`](FOYER-RELAY.md).
+- Relay pushes the room status to `POST /api/peer/status` (loopback, signed); Foyer keeps the last push in memory. Foyer reports the session to Relay over **AV-LAN HTTP** (`http://<AV-IPv4>:8081`), not guest wifi. Full request/response, occupancy enum, Auto vs override, and session body: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Room occupancy in Setup: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay. Sessions stay on the plate.
 - Wayfinding is **not** this app.
 

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { PALETTE_LABELS, SCALE_LABELS } from "@/lib/foyer/palettes";
 import {
   PALETTES,
@@ -9,6 +8,7 @@ import {
   type TypeScale,
 } from "@/lib/foyer/types";
 import { saveGlassLook, unlockTech } from "@/lib/foyer/glass";
+import { setupHref } from "@/lib/foyer/listen";
 
 function Field({
   label,
@@ -136,12 +136,12 @@ export function TechSheet({
             Close
           </button>
         </div>
-        <Link
-          to="/config"
+        <a
+          href={typeof window === "undefined" ? "/config" : setupHref(window.location)}
           className="flex h-11 items-center justify-center rounded-lg border border-border text-sm font-medium"
         >
           Open Setup
-        </Link>
+        </a>
         <p className="text-sm text-muted">Building, calendar, NICs, and Relay. Site PIN.</p>
         {!unlocked ? (
           <Field label="Technician PIN" hint="Set in Setup. Not the site PIN.">

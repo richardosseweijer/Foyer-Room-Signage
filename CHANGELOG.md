@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Relay v2 wire (Foyer split F1): `GET /api/peer` needs a loopback TCP peer **and** a valid HMAC (no unsigned path). New `POST /api/peer/status` (loopback + HMAC; text status only, 400 otherwise) sets the Relay status for this PC's room; last push kept in memory. Foyer reports the room session to Relay `POST /api/device/<Relay device id>/in` (signed) when it changes, retrying every 5 s until accepted. The Relay occupancy poll and the "Read occupancy from Relay" checkbox are gone; Setup gets **Relay device id** and the shared secret is required. Retired site keys `relayEnabled` / `relayRoomMap` are dropped on load. Door front (`:8082`) now denies `/config` and all of `/api/*` after path normalisation; the tech sheet's **Open Setup** goes to `:8080/config` on the same host.
 - Docs: [`FOYER-RELAY.md`](FOYER-RELAY.md) is now a pointer to the master contract v2 in Relay (Foyer as a signed Relay device; Relay owns network/firewall; Foyer owns its WAN data and NIC picks). Day-one checklist link in [`INSTALL.md`](INSTALL.md) §7c follows it. No code change.
 
 ## 0.2.4

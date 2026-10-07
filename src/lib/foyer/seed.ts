@@ -1,5 +1,5 @@
 import { resolveAvLan } from "./net.ts";
-import { defaultRelayBaseUrl, isAllowedRelayUrl, isLoopbackUrl } from "./relay.ts";
+import { defaultRelayBaseUrl, isLoopbackUrl } from "./relay.ts";
 import { defaultLook } from "./look.ts";
 import { DEFAULT_TIMEZONE, emptySite } from "./site.ts";
 import type { Arrow, Display, Look, Room, Site } from "./types.ts";
@@ -63,27 +63,19 @@ export function needsBoardPlates(site: Site) {
 
 
 /** Empty or loopback → `http://<AV-IPv4>:8081` when AV is set. Non-loopback URLs stay. */
-export function relayUrlDefaults(
-  site: Pick<Site, "relayUrl" | "relayEnabled">,
-  avIpv4: string | null | undefined,
-) {
+export function relayUrlDefaults(site: Pick<Site, "relayUrl">, avIpv4: string | null | undefined) {
   const def = defaultRelayBaseUrl(avIpv4);
   const current = site.relayUrl?.trim() || "";
   let relayUrl: string | null = current || null;
   if (!relayUrl && def.ok) relayUrl = def.url;
   else if (relayUrl && isLoopbackUrl(relayUrl) && def.ok) relayUrl = def.url;
-  const relayEnabled = Boolean(
-    site.relayEnabled || (relayUrl ? isAllowedRelayUrl(relayUrl, avIpv4) : false),
-  );
-  return { relayUrl, relayEnabled };
+  return { relayUrl };
 }
 
 /** Apply `relayUrlDefaults` using live AV-LAN. Same site reference when unchanged. */
 export function applyRelayDefaults(site: Site): Site {
   const next = relayUrlDefaults(site, resolveAvLan(site)?.ipv4 ?? null);
-  if (next.relayUrl === (site.relayUrl ?? null) && next.relayEnabled === Boolean(site.relayEnabled)) {
-    return site;
-  }
+  if (next.relayUrl === (site.relayUrl ?? null)) return site;
   return { ...site, ...next };
 }
 
@@ -137,7 +129,6 @@ export function demoSite(): Site {
   site.sharedCalendarId = "shared";
   const seeded = relayDefaults(site);
   site.relayUrl = seeded.relayUrl;
-  site.relayEnabled = seeded.relayEnabled || true;
   site.rooms = [
     {
       id: "cedar",

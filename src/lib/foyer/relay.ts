@@ -1,7 +1,5 @@
-import { resolveAvLan } from "./net.ts";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { OccupancySnapshot, Site } from "./types.ts";
-import { LIVE_OCCUPANCIES } from "./types.ts";
 import type { PeerSession } from "./calendar.ts";
 
 const TIMEOUT_MS = 4_000;
@@ -95,10 +93,6 @@ export function isTcpLoopback(request: Request) {
   return isLoopbackIp(ip);
 }
 
-export function isLoopbackRequest(request: Request) {
-  return isTcpLoopback(request);
-}
-
 export function verifyPeerRequest(opts: {
   key: string;
   method: string;
@@ -131,63 +125,54 @@ export function verifyPeerRequest(opts: {
   }
 }
 
-/** Unsigned GET only if the TCP peer is loopback. HMAC, if sent, must match. Non-loopback is denied even with HMAC. */
-export function authorizePeerGet(opts: { key: string; request: Request; path?: string }) {
-  if (!isTcpLoopback(opts.request)) return false;
-  const sig = opts.request.headers.get("x-relay-auth") || "";
-  const ts = opts.request.headers.get("x-relay-ts") || "";
-  if (!sig && !ts) return true;
-  if (!opts.key) return false;
-  return verifyPeerRequest({
-    key: opts.key,
-    method: "GET",
-    path: opts.path ?? "/api/peer",
-    ts,
-    body: "",
-    sig,
+export type PeerAuthResult = { ok: true } | { ok: false; status: 401 | 403; message: string };
+
+/** Relay → Foyer peer calls: loopback TCP peer AND a valid HMAC with the shared Relay secret. Nothing unsigned. */
+export function authorizePeer(opts: { key: string; request: Request; path: string; body?: string }): PeerAuthResult {
+  if (!isTcpLoopback(opts.request)) return { ok: false, status: 403, message: "Peer calls are loopback only" };
+  const key = opts.key.trim();
+  if (!key) return { ok: false, status: 401, message: "No Relay secret set in Foyer Setup" };
+  const ok = verifyPeerRequest({
+    key,
+    method: opts.request.method,
+    path: opts.path,
+    ts: opts.request.headers.get("x-relay-ts") || "",
+    body: opts.body ?? "",
+    sig: opts.request.headers.get("x-relay-auth") || "",
   });
+  return ok ? { ok: true } : { ok: false, status: 401, message: "Auth failed" };
 }
 
-export function occupancyFromValue(value: unknown): OccupancySnapshot["rooms"][string] | null {
-  const raw = String(value ?? "").trim().toLowerCase();
-  if (["do-not-disturb", "dnd", "do not disturb"].includes(raw)) return "do-not-disturb";
-  if (raw === "busy") return "busy";
-  if (["in-session", "insession", "occupied", "1", "true", "on"].includes(raw)) return "in-session";
-  if (["closed", "off"].includes(raw)) return "closed";
-  if (["available", "free", "idle", "0", "false"].includes(raw)) return "available";
-  if ((LIVE_OCCUPANCIES as readonly string[]).includes(raw)) return raw as OccupancySnapshot["rooms"][string];
-  return null;
-}
+/** Statuses Relay may push (text, never codes). */
+export const PEER_STATUSES = ["available", "in-session", "do-not-disturb", "closed"] as const;
+export type PeerStatus = (typeof PEER_STATUSES)[number];
 
-export function occupancyFromPeer(opts: {
-  site: Site;
-  payload: {
-    occupancy?: unknown;
-    room?: unknown;
-    host?: { locked?: boolean };
-    vars?: Record<string, { name: string; value: string | number }>;
-  };
-  now?: Date;
-}): OccupancySnapshot {
-  const rooms: OccupancySnapshot["rooms"] = {};
-  const first = occupancyFromValue(opts.payload.occupancy);
-  const locked = Boolean(opts.payload.host?.locked);
-  for (const room of opts.site.rooms) {
-    if (first) rooms[room.id] = first;
-    else if (locked) rooms[room.id] = "in-session";
+export function parsePeerStatus(body: string): PeerStatus | null {
+  try {
+    const parsed = JSON.parse(body) as { status?: unknown };
+    const status = typeof parsed?.status === "string" ? parsed.status : "";
+    return (PEER_STATUSES as readonly string[]).includes(status) ? (status as PeerStatus) : null;
+  } catch {
+    return null;
   }
-  return { atIso: (opts.now ?? new Date()).toISOString(), rooms };
 }
 
-export function peerEndpoint(raw: string): URL | null {
-  const trimmed = raw.trim();
+/** Relay's pushed status applies to this PC's room(s); no name match (one room per appliance). */
+export function occupancyFromStatus(site: Site, status: PeerStatus, now = new Date()): OccupancySnapshot {
+  const rooms: OccupancySnapshot["rooms"] = {};
+  for (const room of site.rooms) rooms[room.id] = status;
+  return { atIso: now.toISOString(), rooms };
+}
+
+export function relayEndpoint(base: string, path: string): URL | null {
+  const trimmed = base.trim();
   if (!trimmed) return null;
   const withSlash = trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
   try {
-    return new URL("/api/peer", withSlash);
+    return new URL(path, withSlash);
   } catch {
     try {
-      return new URL("/api/peer", `http://${withSlash.replace(/^\/+/, "")}`);
+      return new URL(path, `http://${withSlash.replace(/^\/+/, "")}`);
     } catch {
       return null;
     }
@@ -202,38 +187,55 @@ export function buildFoyerPeerGet(opts: { session: PeerSession | null }) {
   };
 }
 
-export async function fetchRelayOccupancy(opts: {
-  site: Site;
-  secret: string;
-  lastGood?: OccupancySnapshot | null;
-}): Promise<OccupancySnapshot | null> {
-  const url = opts.site.relayUrl?.trim();
-  if (!opts.site.relayEnabled || !url) return opts.lastGood ?? null;
-  const endpoint = peerEndpoint(url);
-  if (!endpoint) return opts.lastGood ?? null;
-  const avIpv4 = resolveAvLan(opts.site)?.ipv4 ?? null;
-  if (!isAllowedRelayUrl(endpoint.toString(), avIpv4)) return opts.lastGood ?? null;
-  // Loopback GET is unsigned so a pasted secret that does not match Relay cannot
-  // 401 occupancy. HMAC still required for POST macros; verify if headers are sent.
+/** Relay device ids are Relay's own ids (letters, digits, `-`, `_`). */
+export function isRelayDeviceId(raw: string) {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(raw);
+}
+
+export type ReportTarget = { url: URL; key: string };
+
+/** Where report-back goes, or why it is off. Never leaves loopback / this PC's AV-LAN address. */
+export function reportTarget(opts: {
+  relayUrl: string | null | undefined;
+  deviceId: string | null | undefined;
+  key: string;
+  avIpv4: string | null | undefined;
+}): { ok: true; target: ReportTarget } | { ok: false; reason: string } {
+  const key = opts.key.trim();
+  const deviceId = String(opts.deviceId ?? "").trim();
+  const base = String(opts.relayUrl ?? "").trim();
+  if (!deviceId) return { ok: false, reason: "No Relay device id set" };
+  if (!isRelayDeviceId(deviceId)) return { ok: false, reason: "Relay device id is not valid" };
+  if (!key) return { ok: false, reason: "No Relay secret set" };
+  if (!base) return { ok: false, reason: "No Relay URL" };
+  const url = relayEndpoint(base, `/api/device/${deviceId}/in`);
+  if (!url || !isAllowedRelayUrl(url.toString(), opts.avIpv4)) {
+    return { ok: false, reason: "Relay URL must be http on loopback or this PC's AV-LAN address" };
+  }
+  return { ok: true, target: { url, key } };
+}
+
+/** Signed report-back of the room's session to Relay's device inbound route. */
+export async function postSession(target: ReportTarget, session: PeerSession | null): Promise<boolean> {
+  const body = JSON.stringify({ event: "session", data: session });
+  const ts = String(Date.now());
+  const path = `${target.url.pathname}${target.url.search}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(endpoint, {
-      method: "GET",
+    const res = await fetch(target.url, {
+      method: "POST",
       signal: controller.signal,
+      headers: {
+        "content-type": "application/json",
+        "x-relay-ts": ts,
+        "x-relay-auth": signPeer(target.key, "POST", path, ts, body),
+      },
+      body,
     });
-    if (!res.ok) return opts.lastGood ?? null;
-    const payload = (await res.json()) as {
-      ok?: boolean;
-      occupancy?: unknown;
-      room?: unknown;
-      host?: { locked?: boolean };
-      vars?: Record<string, { name: string; value: string | number }>;
-    };
-    if (!payload?.ok) return opts.lastGood ?? null;
-    return occupancyFromPeer({ site: opts.site, payload });
+    return res.ok;
   } catch {
-    return opts.lastGood ?? null;
+    return false;
   } finally {
     clearTimeout(timer);
   }

@@ -11,8 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfigRouteImport } from './routes/config'
-import { Route as PlayDisplayIdRouteImport } from './routes/play.$displayId'
 import { Route as ApiPeerRouteImport } from './routes/api/peer'
+import { Route as PlayDisplayIdRouteImport } from './routes/play.$displayId'
+import { Route as ApiPeerStatusRouteImport } from './routes/api/peer.status'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,49 +25,64 @@ const ConfigRoute = ConfigRouteImport.update({
   path: '/config',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlayDisplayIdRoute = PlayDisplayIdRouteImport.update({
-  id: '/play/$displayId',
-  path: '/play/$displayId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPeerRoute = ApiPeerRouteImport.update({
   id: '/api/peer',
   path: '/api/peer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayDisplayIdRoute = PlayDisplayIdRouteImport.update({
+  id: '/play/$displayId',
+  path: '/play/$displayId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPeerStatusRoute = ApiPeerStatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => ApiPeerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
+  '/api/peer': typeof ApiPeerRouteWithChildren
   '/play/$displayId': typeof PlayDisplayIdRoute
-  '/api/peer': typeof ApiPeerRoute
+  '/api/peer/status': typeof ApiPeerStatusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
+  '/api/peer': typeof ApiPeerRouteWithChildren
   '/play/$displayId': typeof PlayDisplayIdRoute
-  '/api/peer': typeof ApiPeerRoute
+  '/api/peer/status': typeof ApiPeerStatusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/config': typeof ConfigRoute
+  '/api/peer': typeof ApiPeerRouteWithChildren
   '/play/$displayId': typeof PlayDisplayIdRoute
-  '/api/peer': typeof ApiPeerRoute
+  '/api/peer/status': typeof ApiPeerStatusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/config' | '/play/$displayId' | '/api/peer'
+  fullPaths:
+    '/' | '/config' | '/api/peer' | '/play/$displayId' | '/api/peer/status'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/config' | '/play/$displayId' | '/api/peer'
-  id: '__root__' | '/' | '/config' | '/play/$displayId' | '/api/peer'
+  to: '/' | '/config' | '/api/peer' | '/play/$displayId' | '/api/peer/status'
+  id:
+    | '__root__'
+    | '/'
+    | '/config'
+    | '/api/peer'
+    | '/play/$displayId'
+    | '/api/peer/status'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConfigRoute: typeof ConfigRoute
+  ApiPeerRoute: typeof ApiPeerRouteWithChildren
   PlayDisplayIdRoute: typeof PlayDisplayIdRoute
-  ApiPeerRoute: typeof ApiPeerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -85,13 +101,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/play/$displayId': {
-      id: '/play/$displayId'
-      path: '/play/$displayId'
-      fullPath: '/play/$displayId'
-      preLoaderRoute: typeof PlayDisplayIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/peer': {
       id: '/api/peer'
       path: '/api/peer'
@@ -99,14 +108,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPeerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/play/$displayId': {
+      id: '/play/$displayId'
+      path: '/play/$displayId'
+      fullPath: '/play/$displayId'
+      preLoaderRoute: typeof PlayDisplayIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/peer/status': {
+      id: '/api/peer/status'
+      path: '/status'
+      fullPath: '/api/peer/status'
+      preLoaderRoute: typeof ApiPeerStatusRouteImport
+      parentRoute: typeof ApiPeerRoute
+    }
   }
 }
+
+interface ApiPeerRouteChildren {
+  ApiPeerStatusRoute: typeof ApiPeerStatusRoute
+}
+
+const ApiPeerRouteChildren: ApiPeerRouteChildren = {
+  ApiPeerStatusRoute: ApiPeerStatusRoute,
+}
+
+const ApiPeerRouteWithChildren =
+  ApiPeerRoute._addFileChildren(ApiPeerRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConfigRoute: ConfigRoute,
+  ApiPeerRoute: ApiPeerRouteWithChildren,
   PlayDisplayIdRoute: PlayDisplayIdRoute,
-  ApiPeerRoute: ApiPeerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

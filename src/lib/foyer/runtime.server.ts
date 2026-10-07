@@ -1,6 +1,6 @@
 import { composeFrame } from "./compose.ts";
 import { lookForDisplay } from "./site.ts";
-import { currentSeq, ensureLoaded, memory } from "./store.server.ts";
+import { currentSeq, ensureLoaded, relayOccupancy } from "./store.server.ts";
 import { mintPairingCode, readPairingCode, takePickupToken, verifyDisplayToken } from "./transport.ts";
 import type { Frame } from "./types.ts";
 
@@ -50,7 +50,7 @@ export async function frameForDisplay(opts: { displayId: string; token?: string 
     display,
     look: lookForDisplay(mem.site, display.id),
     calendar: mem.calendar,
-    occupancy: mem.occupancy,
+    occupancy: relayOccupancy(),
     now: new Date(),
     seq: currentSeq(display.id),
     pairing: { bound: true },
