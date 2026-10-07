@@ -498,7 +498,7 @@ If the kiosk stays on the Ubuntu login TTY: the unit is the old one (no `Conflic
 
 - `FOYER_VIDEO_OUTPUT=…` — Welcome (empty when unset; F1 fallback to first connected only if Room panel is also unset)
 - `FOYER_ROOM_PANEL_VIDEO_OUTPUT=…` — Room panel pick (empty when unset)
-- `FOYER_ROOM_PANEL_URL=…` — site Relay URL as `http://<host>[:port]/` (empty when unset)
+- `FOYER_ROOM_PANEL_URL=…` — Relay on this PC, `http://<AV-LAN IPv4>:8081/` (empty until the AV-LAN pick has an IPv4)
 
 Same connector for both roles is **rejected** (Setup error; no save). One display: Welcome **or** Room panel, not both. Either role may stay **Not set**.
 
@@ -582,7 +582,7 @@ In Setup → **This PC**:
 
 #### Relay URL (Room panel)
 
-- Site **Relay URL** must be an AV-LAN HTTP base (`http://host[:port]/`). Persist writes it as `FOYER_ROOM_PANEL_URL`.
+- There is no Relay URL field: Foyer derives `http://<AV-LAN IPv4>:8081/` from the Setup **AV-LAN** pick and writes it as `FOYER_ROOM_PANEL_URL`. When Relay puts that NIC into its AV bridge (`br-av`), Foyer follows the bridge address by itself (Setup shows `enp1s0 via br-av`) and rewrites the env file if the address moves; the room-panel Chromium picks a new URL up at its next start.
 - Room-panel Chromium soft-fails (exit 0) if the URL is empty or unsafe — sway stays up; that head stays blank until URL + restart.
 - Confirm reachability: `curl -sf -o /dev/null -w "%{http_code}\n" "$FOYER_ROOM_PANEL_URL"` (or the Setup value).
 
@@ -595,8 +595,8 @@ Leave Relay’s own **`relay-kiosk` disabled/off** on this host (Foyer owns the 
 | Mode | Setup | Expect |
 | --- | --- | --- |
 | Welcome-only | Welcome set, Room panel Not set | One head: Foyer `http://127.0.0.1:8080/` |
-| Room-panel-only | Welcome Not set, Room panel set + Relay URL | One head: Relay control UI |
-| Both | Different connectors + Relay URL | Two Chromiums under one sway seat |
+| Room-panel-only | Welcome Not set, Room panel set + AV-LAN picked | One head: Relay control UI |
+| Both | Different connectors + AV-LAN picked | Two Chromiums under one sway seat |
 | Same output | Both pickers same connector | Save rejected; kiosk not restarted |
 
 #### Logs / generated config

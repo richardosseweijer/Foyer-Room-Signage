@@ -98,8 +98,7 @@ test("kiosk env names welcome and room panel connectors", () => {
     videoOutputIndex: 0,
     roomPanelVideoOutputName: null,
     roomPanelVideoOutputIndex: null,
-    relayUrl: null,
-  });
+  }, null);
   assert.match(body, /^FOYER_VIDEO_OUTPUT=/m);
   assert.match(body, /^FOYER_ROOM_PANEL_VIDEO_OUTPUT=$/m);
   assert.match(body, /^FOYER_ROOM_PANEL_URL=$/m);
@@ -109,8 +108,7 @@ test("kiosk env names welcome and room panel connectors", () => {
     videoOutputIndex: 0,
     roomPanelVideoOutputName: "DP-2",
     roomPanelVideoOutputIndex: 1,
-    relayUrl: "http://10.0.25.10:8081",
-  });
+  }, "http://10.0.25.10:8081");
   assert.match(dual, /^FOYER_VIDEO_OUTPUT=/m);
   assert.match(dual, /^FOYER_ROOM_PANEL_VIDEO_OUTPUT=/m);
   assert.match(dual, /^FOYER_ROOM_PANEL_URL=http:\/\/10\.0\.25\.10:8081\/$/m);
@@ -122,8 +120,7 @@ test("kiosk env writes room panel empty when unset", () => {
     videoOutputIndex: null,
     roomPanelVideoOutputName: null,
     roomPanelVideoOutputIndex: null,
-    relayUrl: null,
-  });
+  }, null);
   const lines = body.trim().split("\n");
   assert.equal(lines.length, 3);
   assert.match(lines[0]!, /^FOYER_VIDEO_OUTPUT=/);
@@ -137,8 +134,7 @@ test("kiosk env room-panel-only leaves welcome empty", () => {
     videoOutputIndex: null,
     roomPanelVideoOutputName: "DP-2",
     roomPanelVideoOutputIndex: 1,
-    relayUrl: "http://10.0.25.10:8081",
-  });
+  }, "http://10.0.25.10:8081");
   // Live DRM may or may not include DP-2; welcome must stay empty when unset.
   assert.match(body, /^FOYER_VIDEO_OUTPUT=$/m);
   assert.match(body, /^FOYER_ROOM_PANEL_URL=http:\/\/10\.0\.25\.10:8081\/$/m);

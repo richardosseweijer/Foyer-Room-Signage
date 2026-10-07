@@ -1,6 +1,6 @@
 #!/bin/sh
 # Room-panel Chromium under the Foyer compositor (sway) — F3.
-# Loads Relay control UI from FOYER_ROOM_PANEL_URL (site relayUrl / AV-LAN).
+# Loads Relay control UI from FOYER_ROOM_PANEL_URL (derived from the AV-LAN pick).
 # Separate profile so Welcome and Room panel never share Chromium state.
 # --class=foyer-room-panel: sway matches both app_id (Wayland) and class (XWayland).
 # Prefer apt chromium / chromium-browser over snap (INSTALL §7 / §7c).

@@ -24,7 +24,7 @@ A module may do **one** of: persist, ingest, compose a frame, render, authorize,
 | **sanitize** | `src/lib/foyer/sanitize.ts` | Title/host/message cleaning | everything else |
 | **compose** | `src/lib/foyer/compose.ts` | Site + look + calendar snapshot + clock → Frame | fs, fetch, ws, secrets, react, net |
 | **transport** | `src/lib/foyer/transport.ts` | Pairing codes, display tokens, snapshot/patch seq | layout, palette, event parsing |
-| **relay** | `src/lib/foyer/relay.ts` | Relay URL (from site), peer HMAC (loopback + signed only), pushed status, Foyer `GET /api/peer` session body, signed session report-back | UI, compose internals, ICS |
+| **relay** | `src/lib/foyer/relay.ts` | Relay URL (derived from the AV-LAN pick), peer HMAC (loopback + signed only), pushed status, Foyer `GET /api/peer` session body, signed session report-back | UI, compose internals, ICS |
 | **persist** | `src/lib/foyer/persist.ts` | Paired write of site + secrets, journal, last-good | play, compose |
 | **net** | `src/lib/foyer/net.ts` | Indexed NICs, AV-LAN bind, LAN (internet) calendar bind | compose, PINs, calendar parse |
 | **video** | `src/lib/foyer/video.ts` | Indexed local video outputs (DRM scan `/sys/class/drm`; Welcome + Room panel picks + env body) | compose, calendar, listen |
@@ -78,7 +78,7 @@ Setup **Update from GitHub** fetches `origin/main`, builds in a detached worktre
 
 - `FOYER_VIDEO_OUTPUT` — Welcome (explicit pick; F1 fallback to first connected only when Room panel is also unset)
 - `FOYER_ROOM_PANEL_VIDEO_OUTPUT` — Room panel (explicit; empty when unset)
-- `FOYER_ROOM_PANEL_URL` — site `relayUrl` as `http://host[:port]/` (Relay control UI; empty when unset)
+- `FOYER_ROOM_PANEL_URL` — Relay on this PC, `http://<AV-LAN IPv4>:8081/` (Relay control UI; empty until AV-LAN has an IPv4). Rewritten when the AV address moves (follow-the-bridge).
 
 At unit start `scripts/foyer-kiosk-sway.sh` enables the picked head(s) at **1920x1080@60Hz** (sway refuses the mode if the panel does not list it), assigns workspaces per role (`app_id=` **and** `class=` matchers for Chromium `--class`), maps `input type:touch` to the Room panel head when set (else Welcome; omit if neither), and execs:
 

@@ -10,59 +10,14 @@ export function signPeer(key: string, method: string, path: string, ts: string, 
   return createHmac("sha256", key).update(`${ts}\n${method.toUpperCase()}\n${path}\n${body}`).digest("hex");
 }
 
-export function hostnameOf(host: string) {
-  const t = host.trim().toLowerCase();
-  if (!t) return "";
-  if (t.startsWith("[")) {
-    const end = t.indexOf("]");
-    return end > 0 ? t.slice(1, end) : t;
-  }
-  if (/^\d+\.\d+\.\d+\.\d+(?::\d+)?$/.test(t)) return t.split(":")[0];
-  if (t.includes(":") && !t.startsWith("::") && t.split(":").length === 2) return t.split(":")[0];
-  return t;
-}
+/** Relay's HTTP port on this PC (Relay listens on the AV-LAN address). */
+export const RELAY_PORT = 8081;
 
-export function isLoopbackHostname(host: string) {
-  const name = hostnameOf(host);
-  return name === "127.0.0.1" || name === "localhost" || name === "::1";
-}
-
-export function isLoopbackUrl(raw: string) {
-  try {
-    return isLoopbackHostname(new URL(raw).hostname);
-  } catch {
-    return false;
-  }
-}
-
-/** Default Foyer→Relay URL from live AV-LAN IPv4. Soft-fails when AV has no IPv4 (no loopback bait). */
-export function defaultRelayBaseUrl(avIpv4: string | null | undefined, port = 8081):
-  | { ok: true; url: string }
-  | { ok: false; reason: string } {
+/** Foyer → Relay base URL, derived from this PC's live AV-LAN IPv4. Null when AV has no IPv4. */
+export function relayBaseUrl(avIpv4: string | null | undefined): string | null {
   const ip = String(avIpv4 ?? "").trim();
-  if (!ip) {
-    return {
-      ok: false,
-      reason: "AV-LAN has no IPv4 — set AV-LAN before enabling Relay occupancy (lab: http://127.0.0.1:8081 with RELAY_LISTEN_HOST=127.0.0.1).",
-    };
-  }
-  const p = Number(port);
-  const portNum = Number.isFinite(p) && p > 0 ? Math.floor(p) : 8081;
-  return { ok: true, url: `http://${ip}:${portNum}` };
-}
-
-/** http: only; loopback or this PC's AV-LAN IPv4 (Relay listen host). https / other hosts fail closed. */
-export function isAllowedRelayUrl(raw: string, avIpv4?: string | null) {
-  try {
-    const u = new URL(raw);
-    if (u.protocol !== "http:") return false;
-    if (isLoopbackHostname(u.hostname)) return true;
-    const host = hostnameOf(u.hostname);
-    const av = String(avIpv4 ?? "").trim();
-    return Boolean(av && host === av);
-  } catch {
-    return false;
-  }
+  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return null;
+  return `http://${ip}:${RELAY_PORT}`;
 }
 
 /** TCP peer only. Host / X-Forwarded-* are not loopback. */
@@ -194,24 +149,21 @@ export function isRelayDeviceId(raw: string) {
 
 export type ReportTarget = { url: URL; key: string };
 
-/** Where report-back goes, or why it is off. Never leaves loopback / this PC's AV-LAN address. */
+/** Where report-back goes, or why it is off. Always Relay on this PC's AV-LAN address. */
 export function reportTarget(opts: {
-  relayUrl: string | null | undefined;
   deviceId: string | null | undefined;
   key: string;
   avIpv4: string | null | undefined;
 }): { ok: true; target: ReportTarget } | { ok: false; reason: string } {
   const key = opts.key.trim();
   const deviceId = String(opts.deviceId ?? "").trim();
-  const base = String(opts.relayUrl ?? "").trim();
   if (!deviceId) return { ok: false, reason: "No Relay device id set" };
   if (!isRelayDeviceId(deviceId)) return { ok: false, reason: "Relay device id is not valid" };
   if (!key) return { ok: false, reason: "No Relay secret set" };
-  if (!base) return { ok: false, reason: "No Relay URL" };
+  const base = relayBaseUrl(opts.avIpv4);
+  if (!base) return { ok: false, reason: "AV-LAN has no IPv4 (pick the AV-LAN NIC in Setup)" };
   const url = relayEndpoint(base, `/api/device/${deviceId}/in`);
-  if (!url || !isAllowedRelayUrl(url.toString(), opts.avIpv4)) {
-    return { ok: false, reason: "Relay URL must be http on loopback or this PC's AV-LAN address" };
-  }
+  if (!url) return { ok: false, reason: "Relay URL is not valid" };
   return { ok: true, target: { url, key } };
 }
 

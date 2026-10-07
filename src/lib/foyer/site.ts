@@ -69,7 +69,6 @@ export function emptySite(): Site {
     logoPath: null,
     calendars: [],
     sharedCalendarId: null,
-    relayUrl: null,
     relayDeviceId: null,
     openGlass: false,
     demoRev: 0,
