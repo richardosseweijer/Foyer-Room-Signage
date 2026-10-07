@@ -151,7 +151,7 @@ You want:
 | Setup `/config` | `200` |
 | Panel `/` | `302` to `/play/door` |
 | Panel `/play/door` | `200` |
-| Panel `/config` | `200` (Setup PIN gate; allowed on the plate) |
+| Panel `/config` | `404` (Setup is on `:8080`) |
 
 On this PC, Setup listens on **all interfaces**. From the config laptop open `http://FOYER-IP:8080/config` — PIN `1234`. (`ip -br addr` for the address on the outbound NIC.)
 
@@ -641,7 +641,7 @@ The plate shares the **AV-LAN** with Relay-controlled devices. It is not on gues
 Confirm from a laptop on AV-LAN:
 
 ```bash
-curl -sI http://AV-LAN-IP:8082/config          # 200 (Setup, site PIN)
+curl -sI http://AV-LAN-IP:8082/config          # 404 (Setup is on :8080)
 curl -sI http://AV-LAN-IP:8082/play/welcome    # 404
 curl -sI http://AV-LAN-IP:8082/play/dc         # 404
 curl -s  -o /dev/null -w "%{http_code}\n" http://AV-LAN-IP:8082/play/door

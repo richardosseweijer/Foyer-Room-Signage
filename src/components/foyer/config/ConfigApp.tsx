@@ -29,6 +29,7 @@ export function ConfigApp() {
   const [icsOn, setIcsOn] = useState(false);
   const [relaySecret, setRelaySecret] = useState("");
   const [hasRelaySecret, setHasRelaySecret] = useState(false);
+  const [relayReport, setRelayReport] = useState("");
   const [sitePin, setSitePin] = useState("");
   const [techPin, setTechPin] = useState("");
   const [saved, setSaved] = useState(false);
@@ -67,6 +68,7 @@ export function ConfigApp() {
     setGitDirty(result.git.dirty);
     setIcsHost(result.icsHost ?? "");
     setIngestNote(result.ingest?.note ?? "");
+    setRelayReport(result.ingest?.relayReport ?? "");
     setIngestNic(result.ingest?.nic ?? "");
     setIngestNow(result.ingest?.nowTitle ?? "");
     setIngestNext(result.ingest?.nextTitle ?? "");
@@ -107,7 +109,7 @@ export function ConfigApp() {
           icsUrl: icsUrl.trim() || undefined,
           relayUrl: current.relayUrl ?? "",
           relaySecret: relaySecret || undefined,
-          relayEnabled: current.relayEnabled,
+          relayDeviceId: current.relayDeviceId ?? "",
           openGlass: current.openGlass,
           sitePin: sitePin.trim() || undefined,
           techPin: techPin.trim() || undefined,
@@ -129,7 +131,9 @@ export function ConfigApp() {
                 ? "Site PIN and technician PIN must differ."
                 : reason === "same-output"
                   ? "Welcome and Room panel must use different video outputs."
-                  : "Could not save.",
+                  : reason === "device-id"
+                    ? "Relay device id: letters, digits, - and _ only (copy it from the device in Relay)."
+                    : "Could not save.",
         );
         if (reason === "same-output") await load(session);
         return false;
@@ -519,19 +523,10 @@ export function ConfigApp() {
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
           <h2 className="text-xl font-semibold tracking-tight">Relay</h2>
           <p className="text-sm text-muted">
-            Occupancy from Relay over HTTP on this PC’s AV-LAN (:8081); calendar session back to Relay on
-            loopback. This Foyer is this Relay’s room — names do not have to match. Device control stays in
-            Relay. Relay reads the current (or next) session from{" "}
-            <code className="text-fg">GET http://127.0.0.1:8080/api/peer</code>.
+            In Relay, add the Foyer device to the room and give it a shared secret. Relay pushes the room status
+            here and reads the current (or next) session; Foyer reports session changes back to that device. All
+            calls are signed with the secret. This Foyer is this Relay’s room — names do not have to match.
           </p>
-          <label className="flex items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={site.relayEnabled}
-              onChange={(e) => setSite({ ...site, relayEnabled: e.target.checked })}
-            />
-            Read occupancy from Relay on this PC
-          </label>
           <Field label="Relay URL" hint="http://&lt;AV-IPv4&gt;:8081 on this PC (http only).">
             <input
               className={inputClass}
@@ -542,9 +537,19 @@ export function ConfigApp() {
               spellCheck={false}
             />
           </Field>
+          <Field label="Relay device id" hint="The Foyer device’s id in Relay (shown on the device). Session reports go there.">
+            <input
+              className={inputClass}
+              value={site.relayDeviceId ?? ""}
+              onChange={(e) => setSite({ ...site, relayDeviceId: e.target.value })}
+              placeholder="foyer"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </Field>
           <Field
-            label="Peer secret"
-            hint={hasRelaySecret ? "Stored. Not required for occupancy on this PC — leave blank. Paste a new value to replace it." : "Not required on this PC. Loopback occupancy GET is unsigned. Same string as Relay if you set one for macros."}
+            label="Shared secret"
+            hint={hasRelaySecret ? "Stored. Same string as the Foyer device’s secret in Relay. Paste a new value to replace it." : "Same string as the Foyer device’s secret in Relay. Required: unsigned calls are refused."}
           >
             <input
               className={inputClass}
@@ -555,6 +560,7 @@ export function ConfigApp() {
               spellCheck={false}
             />
           </Field>
+          {relayReport ? <p className="text-sm text-muted">Session report: {relayReport}.</p> : null}
         </section>
 
         <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-5">

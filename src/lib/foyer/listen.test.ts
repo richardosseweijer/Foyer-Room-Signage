@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { PANEL_PORT, WELCOME_HOST, WELCOME_PORT, panelDecision, panelUpstreamHeaders } from "./listen.ts";
+import { PANEL_PORT, WELCOME_HOST, WELCOME_PORT, panelDecision, panelUpstreamHeaders, setupHref } from "./listen.ts";
 
 test("welcome and panel ports are distinct", () => {
   assert.equal(WELCOME_PORT, 8080);
@@ -8,9 +8,14 @@ test("welcome and panel ports are distinct", () => {
   assert.equal(WELCOME_HOST, "0.0.0.0");
 });
 
-test("panel listener denies welcome and other plates, allows setup", () => {
-  assert.equal(panelDecision("/config"), "allow");
-  assert.equal(panelDecision("/config/"), "allow");
+test("panel listener denies Setup, welcome, and other plates", () => {
+  assert.equal(panelDecision("/config"), "deny");
+  assert.equal(panelDecision("/config/"), "deny");
+  assert.equal(panelDecision("/config?x=1"), "deny");
+  assert.equal(panelDecision("/CONFIG"), "deny");
+  assert.equal(panelDecision("//config"), "deny");
+  assert.equal(panelDecision("/play/../config"), "deny");
+  assert.equal(panelDecision("/%63onfig"), "deny");
   assert.equal(panelDecision("/play/welcome"), "deny");
   assert.equal(panelDecision("/play/dc"), "deny");
   assert.equal(panelDecision("/play/wayfinding"), "deny");
@@ -25,6 +30,18 @@ test("panel listener allows assets and server functions", () => {
   assert.equal(panelDecision("/src/components/foyer/player/Player.tsx"), "allow");
   assert.equal(panelDecision("/_serverFn/foo"), "allow");
   assert.equal(panelDecision("/api/peer"), "deny");
+});
+
+test("panel listener denies the whole peer API, however the path is spelled", () => {
+  for (const path of ["/api/peer/status", "/api/peer/", "/api", "//api/peer", "/api//peer/status", "/API/Peer", "/x/../api/peer", "/api%2Fpeer", "/%61pi/peer", "/%E0%A4%A"]) {
+    assert.equal(panelDecision(path), "deny", path);
+  }
+});
+
+test("Setup link on the door front points at the welcome port", () => {
+  assert.equal(setupHref({ protocol: "http:", hostname: "10.0.10.10", port: "8082" }), "http://10.0.10.10:8080/config");
+  assert.equal(setupHref({ protocol: "http:", hostname: "10.0.10.10", port: "8080" }), "/config");
+  assert.equal(setupHref({ protocol: "http:", hostname: "127.0.0.1", port: "" }), "/config");
 });
 
 test("panel proxy keeps the tablet Host, not loopback", () => {

@@ -53,6 +53,7 @@ export const getSetup = createServerFn({ method: "POST" })
       ingest: {
         atIso: mem.calendar.atIso,
         note: mem.ingestNote,
+        relayReport: mem.reportNote,
         nic: nic ? nic.label : "Any (not bound)",
         avLan: av ? av.label : "Not set (panel listens on all interfaces)",
         nowTitle: cal?.now?.title ?? "",
@@ -81,7 +82,7 @@ export const saveSetup = createServerFn({ method: "POST" })
       icsUrl: z.string().optional(),
       relayUrl: z.string().optional(),
       relaySecret: z.string().optional(),
-      relayEnabled: z.boolean().optional(),
+      relayDeviceId: z.string().max(64).optional(),
       openGlass: z.boolean().optional(),
       sitePin: z.string().optional(),
       techPin: z.string().optional(),
@@ -140,6 +141,9 @@ export const saveSetup = createServerFn({ method: "POST" })
       index: mem.site.roomPanelVideoOutputIndex,
       name: mem.site.roomPanelVideoOutputName,
     });
+    const { isRelayDeviceId } = await import("./relay.ts");
+    const relayDeviceId = data.relayDeviceId?.trim();
+    if (relayDeviceId && !isRelayDeviceId(relayDeviceId)) return { ok: false as const, reason: "device-id" as const };
     if (
       sameVideoOutputConflict(
         { name: output.name, index: output.index },
@@ -155,7 +159,7 @@ export const saveSetup = createServerFn({ method: "POST" })
       name: data.name.trim() || mem.site.name,
       timezone: data.timezone.trim() || mem.site.timezone,
       relayUrl: data.relayUrl?.trim() || null,
-      relayEnabled: Boolean(data.relayEnabled),
+      relayDeviceId: data.relayDeviceId !== undefined ? data.relayDeviceId.trim() || null : mem.site.relayDeviceId,
       openGlass: data.openGlass ?? mem.site.openGlass,
       outboundNicIndex: nic.index,
       outboundNicName: nic.name,

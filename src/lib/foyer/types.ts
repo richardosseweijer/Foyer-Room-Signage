@@ -129,8 +129,8 @@ export const SiteSchema = z.strictObject({
   calendars: z.array(CalendarFeedSchema).default([]),
   sharedCalendarId: z.string().nullable().default(null),
   relayUrl: z.string().nullable().default(null),
-  relayEnabled: z.boolean().default(false),
-  relayRoomMap: z.record(z.string(), z.string()).default({}),
+  /** This room's Foyer device id in Relay (report-back target). */
+  relayDeviceId: z.string().nullable().default(null),
   openGlass: z.boolean().default(false),
   demoRev: z.number().int().default(0),
   outboundNicIndex: z.number().int().min(0).nullable().default(null),
@@ -237,7 +237,15 @@ export function parseFrame(data: unknown) {
   return FrameSchema.safeParse(data);
 }
 
+/** Keys older Foyer builds wrote; dropped on load so an upgrade keeps the site (strict schema). */
+export const RETIRED_SITE_KEYS = ["relayEnabled", "relayRoomMap"] as const;
+
 export function parseSite(data: unknown) {
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const row = { ...(data as Record<string, unknown>) };
+    for (const key of RETIRED_SITE_KEYS) delete row[key];
+    return SiteSchema.safeParse(row);
+  }
   return SiteSchema.safeParse(data);
 }
 
