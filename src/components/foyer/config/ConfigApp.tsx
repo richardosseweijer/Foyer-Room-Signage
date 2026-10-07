@@ -409,7 +409,7 @@ export function ConfigApp() {
               maxLength={200}
             />
           </Field>
-          <Field label="AV-LAN" hint="Door tablet listens on :8082 on this address. Save to apply.">
+          <Field label="AV-LAN" hint="Setup (:8080) and the door tablet (:8082) listen on this address. Save to apply.">
             <select
               className={inputClass}
               value={site.avLanNicIndex ?? ""}

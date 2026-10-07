@@ -6,10 +6,10 @@ Foyer is a **room appliance**:
 
 | Piece | What it does |
 | --- | --- |
-| Welcome | Chromium kiosk on a local video output under **sway**. Loopback only. Optional second head (Room panel → Relay) is F3 — see §7b. |
-| Room plate | Tablet on **AV-LAN**. Foyer binds **8082** to the AV-LAN IPv4 you pick in Setup. |
+| Welcome | Chromium kiosk on a local video output under **sway**, loading `http://127.0.0.1:8080/`. Optional second head (Room panel → Relay) is F3 — see §7b. |
+| Room plate | Tablet on **AV-LAN**. Foyer binds **8082** (and Setup **8080**) to `127.0.0.1` + the AV-LAN IPv4 you pick in Setup. |
 | Calendar | Pulls Google ICS **only** through the **LAN (internet)** NIC you pick in Setup. |
-| Relay | Occupancy from Relay on this PC via **AV-LAN HTTP** (`http://<av-lan-ipv4>:8081`). Not loopback; not the internet NIC. |
+| Relay | Foyer is a **device in Relay** on this PC (library driver **Foyer**, IP `127.0.0.1`, shared secret). Relay pushes the room status to Foyer and reads the session over loopback `:8080`; Foyer reports session changes to Relay at **AV-LAN** `http://<av-lan-ipv4>:8081`. Pairing: §8b. |
 
 Wayfinding is **not** installed by this guide.
 
@@ -202,7 +202,7 @@ sudo ufw status
 
 Replace `<AV-IFACE>` (`ip -br addr`). Nothing inbound on the internet NIC.
 
-Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080, 8081, or 8082. Foyer occupancy pulls Relay on this PC’s **AV-LAN `:8081`** ([`FOYER-RELAY.md`](FOYER-RELAY.md)); calendar session stays loopback to Foyer `:8080`. HMAC on Relay `:8081` from other AV-LAN peers stays required because the tablet is on the same LAN as the DSP.
+Do **not** `ufw allow 8080/tcp` from anywhere. Do **not** port-forward 8080, 8081, or 8082. Relay on this PC reaches Foyer on loopback `:8080` (signed); Foyer reports sessions to Relay’s **AV-LAN `:8081`** (signed) ([`FOYER-RELAY.md`](FOYER-RELAY.md)). On a Relay box `sudo relay-net apply` installs the `br-av` allows for 8080–8082 and denies them from the internet NIC (IPv4 + IPv6); skip the manual rules above there. HMAC on Relay `:8081` from other AV-LAN peers stays required because the tablet is on the same LAN as the DSP.
 
 A copy-paste sketch lives in `deploy/ufw.example.sh`.
 
@@ -632,9 +632,9 @@ Confirm sway config keeps **both** `app_id=` and `class=` assign/fullscreen rule
 The plate shares the **AV-LAN** with Relay-controlled devices. It is not on guest wifi.
 
 1. Give this PC a static IPv4 on AV-LAN.
-2. In Setup pick that NIC under **AV-LAN** (indexed dropdown). Save. The panel unit rebinds `:8082` to that address.
+2. In Setup pick that NIC under **AV-LAN** (indexed dropdown). Save. Within ~5 s Foyer adds listeners on that address for `:8080` and `:8082` (loopback stays). Without a pick Foyer is loopback-only: no door tablet, no session report to Relay.
 3. Tablet opens `http://AV-LAN-IP:8082/play/door`.
-4. Pick **LAN (internet)** for calendar. Relay occupancy URL is AV-LAN HTTP (`http://<av-lan-ipv4>:8081`), not `127.0.0.1:8081`.
+4. Pick **LAN (internet)** for calendar. Foyer’s Relay URL is AV-LAN HTTP (`http://<av-lan-ipv4>:8081`, from this pick), not `127.0.0.1:8081`.
 
 Confirm from a laptop on AV-LAN:
 
@@ -645,15 +645,26 @@ curl -sI http://AV-LAN-IP:8082/play/dc         # 404
 curl -s  -o /dev/null -w "%{http_code}\n" http://AV-LAN-IP:8082/play/door
 ```
 
+### 8b. Pair with Relay (same PC)
+
+Do §8 first (AV-LAN pick). Then:
+
+1. **Relay Configurator → Drivers**: add **Foyer** from the library.
+2. **Relay → Devices → Add**, driver **Foyer**: tick **Runs on this Relay box** (IP `127.0.0.1`), keep port `8080`, set **Secret** to a long random string. Note the device **id** shown on the device. Save.
+3. **Foyer Setup → Relay**: **Relay device id** = that id; **Shared secret** = the same string. Save. Occupancy **Auto** lets Relay’s status through (a manual value still wins).
+4. Check: in Relay the device’s vars `<id>.kind` / `.title` / `.start` / `.end` fill within ~5 s; a Relay occupancy change shows on the door and welcome; Setup shows no **Session report** note.
+
+`401` in Relay’s device status or a **Session report** note → secret or device id mismatch. Full operator steps: Relay [`FOYER-RELAY.md`](https://github.com/richardosseweijer/Relay-AV-Room-Control-/blob/main/FOYER-RELAY.md) → Appendix A.2.
+
 ---
 
 ## 9. Two NICs (do this before a paying venue)
 
 | Interface | Role | Default route? | Foyer socket |
 | --- | --- | --- | --- |
-| AV-LAN | DSP, door tablet, config laptop | no | **8082** (and Setup **8080** via firewall) |
+| AV-LAN | DSP, door tablet, config laptop | no | **8082** + Setup **8080** |
 | LAN (internet) | Calendar, apt, GitHub, Relay telemetry | yes | none inbound |
-| AV-LAN / loopback | Foyer ↔ Relay ([`FOYER-RELAY.md`](FOYER-RELAY.md)): occupancy on AV `:8081`, session on loopback `:8080` | — | **8081** / **8080** |
+| AV-LAN / loopback | Foyer ↔ Relay ([`FOYER-RELAY.md`](FOYER-RELAY.md)): Relay → Foyer status + session on loopback `:8080`; Foyer → Relay session report on AV `:8081` | — | **8080** / **8081** |
 
 Setup → **LAN (internet)** must be the guest/WAN NIC. If that NIC is selected but has no IPv4, Foyer keeps the last calendar snapshot (fail closed). Setup → **AV-LAN** is the door bind. Foyer does not read Relay’s NIC picks — set the same interfaces in both apps.
 
@@ -740,7 +751,7 @@ Outfit (the typeface) loads from Google Fonts over the outbound NIC. If that NIC
 
 - Keep Foyer on this PC. Do not port-forward 8080 or 8082.
 - Local-video kiosk is **sway** (§7a) with F2 dual Setup pickers and **F3** dual Chromium (§7b).
-- Relay production occupancy is **AV-LAN HTTP** `http://<av-lan-ipv4>:8081` (not the internet NIC). Loopback `http://127.0.0.1:8081` is a **lab escape** only when Relay is forced to listen there. Foyer welcome/Setup is **8080** on loopback + AV-LAN; Relay's Foyer driver stays on loopback `:8080`. Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
+- Foyer reports sessions to Relay over **AV-LAN HTTP** `http://<av-lan-ipv4>:8081` (not the internet NIC); Relay pushes the status to Foyer on loopback `:8080` (§8b). Foyer welcome/Setup is **8080** on loopback + AV-LAN; Relay's Foyer driver stays on loopback `:8080`. Room plate is **8082** on AV-LAN. Wire: [`FOYER-RELAY.md`](FOYER-RELAY.md).
 - Setup occupancy: Auto, Available, In session, Do not disturb, Closed. Manual values beat calendar and Relay.
 - Supported run: `npm start` + `npm run start:panel` after `npm run build`.
 - Tests: `npm test` (Foyer cases live under `src/lib/foyer/*.test.ts`).
