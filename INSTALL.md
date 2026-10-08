@@ -95,6 +95,8 @@ if [ -d ~/Foyer-Room-Signage ]; then
   echo "Then remove the tree deliberately and re-run this section."
   exit 1
 fi
+# Private repo: make this box's read-only deploy key first (§3b; comment foyer-deploy@$(hostname)), then:
+#   git clone --branch main --single-branch git@github.com:richardosseweijer/Foyer-Room-Signage.git
 git clone --branch main --single-branch https://github.com/richardosseweijer/Foyer-Room-Signage.git
 cd ~/Foyer-Room-Signage
 git fetch origin
@@ -107,6 +109,26 @@ npm ci --include=dev
 `--include=dev` is required: systemd sets `NODE_ENV=production`, and Vite lives in devDependencies.
 
 The clone has no site file and no secrets file. Those appear under `data/` after the first start. Do not copy `data/foyer-secrets.json` from another machine unless you intend to move that room.
+
+### 3b. Private repo: per-box deploy key
+
+If the GitHub repo is private, each box pulls with its own **read-only** deploy key (never a personal or classic token on a box). Same idea as Relay [`LINUX.md` §8b](https://github.com/richardosseweijer/Relay-AV-Room-Control-/blob/main/LINUX.md) — Foyer needs its **own** key (GitHub: one key cannot serve two repos). As the service user:
+
+```bash
+ssh-keygen -t ed25519 -N '' -C "foyer-deploy@$(hostname)" -f ~/.ssh/foyer-deploy
+# github.com host key, as published at https://api.github.com/meta (ssh_keys) — never a blind keyscan
+echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> ~/.ssh/known_hosts
+cat >> ~/.ssh/config <<'CFG'
+Host github.com
+  IdentityFile ~/.ssh/foyer-deploy
+  IdentitiesOnly yes
+CFG
+cat ~/.ssh/foyer-deploy.pub   # add in GitHub → repo Settings → Deploy keys (Allow write access OFF)
+git -C ~/Foyer-Room-Signage remote set-url origin git@github.com:richardosseweijer/Foyer-Room-Signage.git
+git -C ~/Foyer-Room-Signage fetch origin
+```
+
+One key per box; revoke a stolen/retired box by deleting its key. Day-one dual-head order (including Relay’s signed Update pin): Relay [`FOYER-RELAY.md`](https://github.com/richardosseweijer/Relay-AV-Room-Control-/blob/main/FOYER-RELAY.md) Appendix A.1. For a larger fleet, prefer one GitHub **machine user** with read-only access to both repos and one SSH key per box on that account.
 
 ---
 
@@ -695,6 +717,12 @@ bash scripts/foyer-status.sh
 The updater resets the source tree to `origin/main` (local source edits are discarded). `data/foyer-*.json` is not in git and is left alone.
 
 The updater then moves staged `node_modules` + `.vercel` (Nitro/`vite preview` output; marker `.vercel/output/nitro.json`) into the live checkout and `try-restart`s **foyer**, **foyer-panel** (room plate), and **foyer-kiosk**. That needs the units + `/etc/sudoers.d/foyer-kiosk` from §6a / §7 (`scripts/install-host.sh` / `scripts/install-host-sudoers.sh`). Update / pull / reboot do **not** install those host files.
+
+**After Update / reboot — host units + sudoers checklist:**
+
+- [ ] Ran `sudo bash scripts/install-host.sh` (or verified units + `/etc/sudoers.d/foyer-kiosk` present)
+- [ ] `foyer` + `foyer-panel` + `foyer-kiosk` enabled when this box owns the displays (§6a / §7a)
+- [ ] Private repo: `origin` is SSH and `git fetch` works with this box’s deploy key (§3b)
 
 ---
 
